@@ -24,7 +24,8 @@ sap.ui.define([
 				/**
 				 * Internal aggregation to hold the inner Button.
 				 */
-				_btn : {type : "sap.m.Button", multiple : false, visibility : "hidden"}
+				_btn1 : {type : "sap.m.Button", multiple : false, visibility : "hidden"},
+				_btn2 : {type : "sap.m.Button", multiple : false, visibility : "hidden"}				
 			},
 			events : {
 		
@@ -36,12 +37,18 @@ sap.ui.define([
 			var oBarcodeStatus;
 			if (sap.client.getCurrentApplication().getRuntimeEnvironment().isRunningInContainer()) {
 				jQuery.sap.require("sap.client.cod.newui.shared.js.BarcodeScanner");
-				this.setAggregation("_btn", new sap.m.Button({
+				this.setAggregation("_btn1", new sap.m.Button({
 					icon: "sap-icon://bar-code",
 					width: "100%",
 					text: "Scan Model No",
-					press: jQuery.proxy(this._onBtnPressed, this)
+					press: jQuery.proxy(this._onBtn1Pressed, this)
 				}));
+				this.setAggregation("_btn2", new sap.m.Button({
+					icon: "sap-icon://bar-code",
+					width: "100%",
+					text: "Scan Serial No",
+					press: jQuery.proxy(this._onBtn2Pressed, this)
+				}));				
 				
 				oBarcodeStatus = sap.client.cod.newui.shared.BarcodeScanner.getStatusModel();
 				this.setModel(oBarcodeStatus, "status");
@@ -69,18 +76,31 @@ sap.ui.define([
 			}
 		},
 
-		_onBtnPressed : function (oEvent) {
+		_onBtn1Pressed : function (oEvent) {
 			sap.client.cod.newui.shared.BarcodeScanner.scan(
-				jQuery.proxy(this._onScanSuccess, this),
+				jQuery.proxy(this._onScanSuccess1, this),
 				jQuery.proxy(this._onScanFail, this),
 				jQuery.proxy(this._onInputLiveUpdate, this)
 			);
 		},
+		
+		_onBtn2Pressed : function (oEvent) {
+			sap.client.cod.newui.shared.BarcodeScanner.scan(
+				jQuery.proxy(this._onScanSuccess2, this),
+				jQuery.proxy(this._onScanFail, this),
+				jQuery.proxy(this._onInputLiveUpdate, this)
+			);
+		},		
 
-		_onScanSuccess : function (mArguments) {
+		_onScanSuccess1 : function (mArguments) {
 
-			this._setResult(mArguments.text);
+			this._setResult(mArguments.text,"/Root/Lead/ProductID");
 		},
+		
+		_onScanSuccess2 : function (mArguments) {
+
+			this._setResult(mArguments.text,"/Root/Lead/SerialID");
+		},		
 
 		_onScanFail : function (mArguments) {
 
@@ -98,23 +118,30 @@ sap.ui.define([
 			
 			if (bValue !== bFallback) {
 				this.setProperty("provideFallback", bFallback);
-				oBtn = this.getAggregation("_btn");
+				oBtn = this.getAggregation("_btn1");
 				if (bFallback) {
 					oBtn.unbindProperty("visible");
 					oBtn.setVisible(true);
 				} else {
 					oBtn.bindProperty("visible", "status>/available");
 				}
+				oBtn = this.getAggregation("_btn2");
+				if (bFallback) {
+					oBtn.unbindProperty("visible");
+					oBtn.setVisible(true);
+				} else {
+					oBtn.bindProperty("visible", "status>/available");
+				}				
 			}
 		
 			return this;
 		},
 
-		_setResult : function (sResult) {
+		_setResult : function (sResult,sPath) {
 			if (sResult) {
 				var oDataModel = this.getModel();
-				var oGTIN = oDataModel.getDataObject("/Root/Lead/ProductID");
-				oGTIN.setValue(sResult);
+				var oField = oDataModel.getDataObject(sPath);
+				oField.setValue(sResult);
 			}
 		},
 
@@ -126,7 +153,8 @@ sap.ui.define([
 			oRM.write("<span");
 			oRM.writeControlData(oControl);
 			oRM.write(">");
-			oRM.renderControl(oControl.getAggregation("_btn"));
+			oRM.renderControl(oControl.getAggregation("_btn1"));
+			oRM.renderControl(oControl.getAggregation("_btn2"));
 			oRM.write("</span>");
 		}
 	});
