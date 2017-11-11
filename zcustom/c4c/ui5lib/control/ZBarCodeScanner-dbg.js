@@ -38,6 +38,8 @@ sap.ui.define([
 				jQuery.sap.require("sap.client.cod.newui.shared.js.BarcodeScanner");
 				this.setAggregation("_btn", new sap.m.Button({
 					icon: "sap-icon://bar-code",
+					width: "100%",
+					text: "Scan Model No",
 					press: jQuery.proxy(this._onBtnPressed, this)
 				}));
 				
