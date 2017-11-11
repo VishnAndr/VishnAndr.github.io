@@ -3,10 +3,10 @@ sap.ui.define([
 ], function (Control) {
 	"use strict";
 
-	return Control.extend("zcustom.C4C.ui5lib.control.ZBarCodeScanner",  { 
+	return Control.extend("zcustom.c4c.ui5lib.control.ZBarCodeScanner",  { 
 		metadata : {
 		
-			library : "zcustom.C4C.ui5lib",
+			library : "zcustom.c4c.ui5lib",
 			properties : {
 		
 				/**
