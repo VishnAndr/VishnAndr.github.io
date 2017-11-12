@@ -54,8 +54,6 @@ sap.ui.define([
 				press: jQuery.proxy(this._onCheckIn, this)
 			}));	
 			
-			this._setIcon(this.getAggregation("_btnG"), "/Root/Lead/ProductID");
-			
 			var oBarcodeStatus;
 			if (sap.client.getCurrentApplication().getRuntimeEnvironment().isRunningInContainer()) {
 				jQuery.sap.require("sap.client.cod.newui.shared.js.BarcodeScanner");
@@ -72,9 +70,6 @@ sap.ui.define([
 					text: "Scan Serial No",
 					press: jQuery.proxy(this._onBtn2Pressed, this)
 				}));
-				
-				//this._setIcon(this.getAggregation("_btn1"), "/Root/Lead/ProductID");
-				//this._setIcon(this.getAggregation("_btn2"), "/Root/Lead/SerialID");
 				
 				oBarcodeStatus = sap.client.cod.newui.shared.BarcodeScanner.getStatusModel();
 				this.setModel(oBarcodeStatus, "status");
@@ -179,6 +174,9 @@ sap.ui.define([
 				var oDataModel = this.getModel();
 				var oField = oDataModel.getDataObject(sPath);
 				oField.setValue(sResult);
+
+				this._setIcon(this.getAggregation("_btn1"), "/Root/Lead/ProductID");
+				this._setIcon(this.getAggregation("_btn2"), "/Root/Lead/SerialID");				
 			}
 		},
 		
