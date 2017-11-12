@@ -38,6 +38,7 @@ sap.ui.define([
 		},
 	
 		autocomplete : '',
+		CheckedIn : '',
 	
 		init : function () {
 			
@@ -55,7 +56,7 @@ sap.ui.define([
 				icon: "sap-icon://locate-me",
 				width: "100%",
 				text: "Check-In",
-				press: jQuery.proxy(this._onCheckIn, this)
+				press: jQuery.proxy(this._onLocateMe, this)
 			}));	
 			
 			var oBarcodeStatus;
@@ -184,7 +185,7 @@ sap.ui.define([
 			}
 		},
 		
-		_onCheckIn : function () {
+		_onLocateMe : function () {
 			var options = {
 			    enableHighAccuracy: true,
 			    timeout: 5000,
@@ -203,11 +204,20 @@ sap.ui.define([
 			position.lat = oPosition.coords.latitude;
 			position.lng = oPosition.coords.longitude;
 			
+			if (!this.CheckedIn) {
 			//Check-In
-			this._setResult(position.lat, "/Root/Lead/ZStartLatitudeMeasure/content");
-			this._setResult(position.lng, "/Root/Lead/ZStartLongitudeMeasure/content");
-			this._setResult((new Date().toISOString()), "/Root/Lead/ZStartTime");
-			    
+				this._setResult(position.lat, "/Root/Lead/ZStartLatitudeMeasure");
+				this._setResult(position.lng, "/Root/Lead/ZStartLongitudeMeasure");
+				this._setResult((new Date().toISOString()), "/Root/Lead/ZStartTime");
+				this.CheckedIn = true;
+				var oBtn = this.getAggregation("_btnG");
+				oBtn.text = "Check-Out";
+			} else {
+				this._setResult(position.lat, "/Root/Lead/ZEndLatitudeMeasure");
+				this._setResult(position.lng, "/Root/Lead/ZEndLongitudeMeasure");
+				this._setResult((new Date().toISOString()), "/Root/Lead/ZEndTime");				
+			}
+			
 			jQuery.sap.log.info("Geocoords: " + JSON.stringify(position,null,4));
 			    
 			new google.maps.Geocoder().geocode({
