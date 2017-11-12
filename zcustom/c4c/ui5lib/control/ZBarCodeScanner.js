@@ -187,7 +187,7 @@ sap.ui.define([
 			};
 				
 			if (navigator.geolocation) {
-			    navigator.geolocation.getCurrentPosition( function (oPosition) { this._onGeoCurrentPositionSuccess(oPosition); }, 
+			    navigator.geolocation.getCurrentPosition( jQuery.proxy(this._onGeoCurrentPositionSuccess, this), 
 			    										  function (err) { jQuery.sap.log.info("ERROR(" + err.code + "): " + err.message); }, 
 			    										  options);
 			}			
@@ -202,7 +202,7 @@ sap.ui.define([
 			    
 			new google.maps.Geocoder().geocode({
 				latLng: position
-			}, function (results) { this._onGeoResponses(results); });			
+			}, jQuery.proxy(this._onGeoResponses,this));			
 		},
 		
 		_onGeoResponses : function (results) {
