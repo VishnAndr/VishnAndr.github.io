@@ -34,13 +34,14 @@ sap.ui.define([
 			}
 		},
 	
+		autocomplete : '',
 	
 		init : function () {
 			
 			this.that = this;
 			
 			jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
-									"google.maps", null, null);
+									"google.maps", jQuery.proxy(this._initAutocomplete,this), null);
 									
 			this.setAggregation("_inpField", new sap.m.Input({
 				width : "100%",
@@ -51,7 +52,9 @@ sap.ui.define([
 				width: "100%",
 				text: "Check-In",
 				press: jQuery.proxy(this._onCheckIn, this)
-			}));			
+			}));	
+			
+			this._setIcon(this.getAggregation("_btnG"), "/Root/Lead/ProductID");
 			
 			var oBarcodeStatus;
 			if (sap.client.getCurrentApplication().getRuntimeEnvironment().isRunningInContainer()) {
@@ -214,6 +217,22 @@ sap.ui.define([
 			} else {
 				jQuery.sap.log.info("Cannot determine address at this location.");
 			}			
+		},
+		
+		_initAutocomplete : function () {
+        	this.autocomplete = new google.maps.places.Autocomplete(
+	        	(this.getAggregation("_inpField")),
+	            {types: ["geocode"]});	
+	            
+	        this.autocomplete.addListener('place_changed', jQuery.proxy(this._fillInAddress,this));
+			
+		},
+		
+		_fillInAddress : function () {
+        // Get the place details from the autocomplete object.
+	        var place = this.autocomplete.getPlace();
+			
+			console.log( "Address Selected = " + JSON.stringify(place, null,4));
 		},
 
 		renderer: function (oRM, oControl) {
