@@ -225,12 +225,10 @@ sap.ui.define([
 			oRM.write("<span");
 			oRM.writeControlData(oControl);
 			oRM.write(">");
-			if (oControl.getAggregation("_btn1").getVisible()) {
+			oRM.renderControl(oControl.getAggregation("_inpField"));
+			oRM.renderControl(oControl.getAggregation("_btnG"));
 			oRM.renderControl(oControl.getAggregation("_btn1"));
-			}
-			if (oControl.getAggregation("_btn2").getVisible()) {
 			oRM.renderControl(oControl.getAggregation("_btn2"));
-			}
 			oRM.write("</span>");
 		}
 	});
