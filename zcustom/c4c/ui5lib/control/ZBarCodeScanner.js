@@ -179,8 +179,8 @@ sap.ui.define([
 				var oField = oDataModel.getDataObject(sPath);
 				oField.setValue(sResult);
 
-				this._setIcon(this.getAggregation("_btn1"), "/Root/Lead/ProductID");
-				this._setIcon(this.getAggregation("_btn2"), "/Root/Lead/SerialID");				
+				//this._setIcon(this.getAggregation("_btn1"), "/Root/Lead/ProductID");
+				//this._setIcon(this.getAggregation("_btn2"), "/Root/Lead/SerialID");				
 			}
 		},
 		
@@ -202,6 +202,11 @@ sap.ui.define([
 			var position = {};
 			position.lat = oPosition.coords.latitude;
 			position.lng = oPosition.coords.longitude;
+			
+			//Check-In
+			this._setResult(position.lat, "/Root/Lead/ZStartLatitudeMeasure/content");
+			this._setResult(position.lng, "/Root/Lead/ZStartLongitudeMeasure/content");
+			this._setResult((new Date().toISOString()), "/Root/Lead/ZStartTime");
 			    
 			jQuery.sap.log.info("Geocoords: " + JSON.stringify(position,null,4));
 			    
@@ -223,7 +228,7 @@ sap.ui.define([
 		
 		_initAutocomplete : function () {
         	this.autocomplete = new google.maps.places.Autocomplete(
-	        	(function() { return sap.ui.getCore().byId("googleautocomplete")._$input; }),
+	        	(function() { return sap.ui.getCore().byId("googleautocomplete")._$input[0]; }),
 	            {types: ["geocode"]});	
 	            
 	        this.autocomplete.addListener('place_changed', jQuery.proxy(this._fillInAddress,this));
