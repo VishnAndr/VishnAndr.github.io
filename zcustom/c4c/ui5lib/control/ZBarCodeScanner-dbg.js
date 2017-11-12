@@ -36,6 +36,9 @@ sap.ui.define([
 	
 	
 		init : function () {
+			
+			this.that = this;
+			
 			jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
 									"google.maps", null, null);
 									
@@ -67,8 +70,8 @@ sap.ui.define([
 					press: jQuery.proxy(this._onBtn2Pressed, this)
 				}));
 				
-				this._setIcon(this.getAggregation("_btn1"), "/Root/Lead/ProductID");
-				this._setIcon(this.getAggregation("_btn2"), "/Root/Lead/SerialID");
+				//this._setIcon(this.getAggregation("_btn1"), "/Root/Lead/ProductID");
+				//this._setIcon(this.getAggregation("_btn2"), "/Root/Lead/SerialID");
 				
 				oBarcodeStatus = sap.client.cod.newui.shared.BarcodeScanner.getStatusModel();
 				this.setModel(oBarcodeStatus, "status");
@@ -188,22 +191,11 @@ sap.ui.define([
 			    position.lat = oPosition.coords.latitude;
 			    position.lng = oPosition.coords.longitude;
 			    
-			    jQuery.sap.log.info("Geocoords: " + position);
+			    jQuery.sap.log.info("Geocoords: " + JSON.stringify(position,null,4));
 			    
-				var responses = function(results) {
-				    if (results && results.length > 0) {
-				        //sap.ui.getCore().byId("MainView1").byId("addressValue").setValue(results[0].formatted_address);
-				        results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + item.toString()); });
-				    	var oInput = this.getAggregation("_inpField");
-				    	oInput.setValue(results[0].formatted_address);
-				    	
-				    } else {
-				        jQuery.sap.log.info("Cannot determine address at this location.");
-				    }
-				};
 				new google.maps.Geocoder().geocode({
 				    latLng: position
-				}, responses);
+				}, function (results) { this._onGeoResponses(results); });
 			    
 			    //sap.ui.getCore().byId("MainView1").byId("addressValue").setValue(position.lat + ", " + position.lng);
 			};
@@ -214,6 +206,18 @@ sap.ui.define([
 				
 			if (navigator.geolocation) {
 			    navigator.geolocation.getCurrentPosition(success, error, options);
+			}			
+		},
+		
+		_onGeoResponses : function (results) {
+			if (results && results.length > 0) {
+				//sap.ui.getCore().byId("MainView1").byId("addressValue").setValue(results[0].formatted_address);
+				results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
+				var oInput = this.getAggregation("_inpField");
+				oInput.setValue(results[0].formatted_address);
+    	
+			} else {
+				jQuery.sap.log.info("Cannot determine address at this location.");
 			}			
 		},
 
