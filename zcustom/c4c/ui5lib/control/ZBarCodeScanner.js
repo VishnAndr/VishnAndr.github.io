@@ -1,7 +1,6 @@
 sap.ui.define([
-	"sap/ui/core/Control",
-	"google.maps"
-], function (Control, gmaps) {
+	"sap/ui/core/Control"
+], function (Control) {
 	"use strict";
 
 	return Control.extend("zcustom.c4c.ui5lib.control.ZBarCodeScanner",  { 
@@ -37,8 +36,8 @@ sap.ui.define([
 	
 	
 		init : function () {
-			//jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
-			//						"google.maps", null, null);
+			jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
+									"google.maps", null, null);
 									
 			this.setAggregation("_inpField", new sap.m.Input({
 				width : "100%",
@@ -202,8 +201,7 @@ sap.ui.define([
 				        jQuery.sap.log.info("Cannot determine address at this location.");
 				    }
 				};
-				//new google.maps.Geocoder().geocode({
-				new gmaps.Geocoder().geocode({
+				new google.maps.Geocoder().geocode({
 				    latLng: position
 				}, responses);
 			    
