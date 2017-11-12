@@ -227,8 +227,10 @@ sap.ui.define([
 		},
 		
 		_initAutocomplete : function () {
+			var eInput = document.getElementById('googleautocomplete-inner');
+			console.log("eInput == " + eInput);
         	this.autocomplete = new google.maps.places.Autocomplete(
-	        	(function() { return sap.ui.getCore().byId("googleautocomplete")._$input[0]; }),
+	        	(eInput),
 	            {types: ["geocode"]});	
 	            
 	        this.autocomplete.addListener('place_changed', jQuery.proxy(this._fillInAddress,this));
