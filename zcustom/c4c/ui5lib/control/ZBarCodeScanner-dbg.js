@@ -22,8 +22,10 @@ sap.ui.define([
 			aggregations : {
 		
 				/**
-				 * Internal aggregation to hold the inner Button.
+				 * Internal aggregation to hold the inner Elements.
 				 */
+				_inpField : {type : "sap.m.InputField", multiple : false, visibility : "hidden"},
+				_btnG : {type : "sap.m.Button", multiple : false, visibility : "hidden"},
 				_btn1 : {type : "sap.m.Button", multiple : false, visibility : "hidden"},
 				_btn2 : {type : "sap.m.Button", multiple : false, visibility : "hidden"}				
 			},
@@ -34,9 +36,24 @@ sap.ui.define([
 	
 	
 		init : function () {
+			jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
+									"google.maps", null, null);
+									
+			this.setAggregation("_inpField", new sap.m.Input({
+				width : "100%",
+				placeholder : "Enter Address ..."
+			}));
+			this.setAggregation("_btnG", new sap.m.Button({
+				icon: "sap-icon://locate-me",
+				width: "100%",
+				text: "Check-In",
+				press: jQuery.proxy(this._onCheckIn, this)
+			}));			
+			
 			var oBarcodeStatus;
 			if (sap.client.getCurrentApplication().getRuntimeEnvironment().isRunningInContainer()) {
 				jQuery.sap.require("sap.client.cod.newui.shared.js.BarcodeScanner");
+			
 				this.setAggregation("_btn1", new sap.m.Button({
 					icon: "sap-icon://bar-code",
 					width: "100%",
@@ -48,7 +65,10 @@ sap.ui.define([
 					width: "100%",
 					text: "Scan Serial No",
 					press: jQuery.proxy(this._onBtn2Pressed, this)
-				}));				
+				}));
+				
+				this._setIcon(this.getAggregation("_btn1"), "/Root/Lead/ProductID");
+				this._setIcon(this.getAggregation("_btn2"), "/Root/Lead/SerialID");
 				
 				oBarcodeStatus = sap.client.cod.newui.shared.BarcodeScanner.getStatusModel();
 				this.setModel(oBarcodeStatus, "status");
@@ -73,6 +93,17 @@ sap.ui.define([
 					return;
 				}
 				
+			}
+		},
+		
+		_setIcon : function (oBtn, sPath) {
+			var oDataModel = this.getModel();
+			var oField = oDataModel.getDataObject(sPath);
+			
+			var vIcon = ( oField.getValue() ? "sap-icon://complete" : "sap-icon://bar-code" );
+
+			if (oBtn) {
+				oBtn.icon = vIcon;
 			}
 		},
 
@@ -144,6 +175,47 @@ sap.ui.define([
 				oField.setValue(sResult);
 			}
 		},
+		
+		_onCheckIn : function () {
+			var options = {
+			    enableHighAccuracy: true,
+			    timeout: 5000,
+			    maximumAge: 0 
+			};
+				
+			var success = function(oPosition) {
+			    var position = {};
+			    position.lat = oPosition.coords.latitude;
+			    position.lng = oPosition.coords.longitude;
+			    
+			    jQuery.sap.log.info("Geocoords: " + position);
+			    
+				var responses = function(results) {
+				    if (results && results.length > 0) {
+				        //sap.ui.getCore().byId("MainView1").byId("addressValue").setValue(results[0].formatted_address);
+				        results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + item.toString()); });
+				    	var oInput = this.getAggregation("_inpField");
+				    	oInput.setValue(results[0].formatted_address);
+				    	
+				    } else {
+				        jQuery.sap.log.info("Cannot determine address at this location.");
+				    }
+				};
+				new google.maps.Geocoder().geocode({
+				    latLng: position
+				}, responses);
+			    
+			    //sap.ui.getCore().byId("MainView1").byId("addressValue").setValue(position.lat + ", " + position.lng);
+			};
+				
+			var error = function(err) {
+			    jQuery.sap.log.info("ERROR(" + err.code + "): " + err.message);
+			};
+				
+			if (navigator.geolocation) {
+			    navigator.geolocation.getCurrentPosition(success, error, options);
+			}			
+		},
 
 		renderer: function (oRM, oControl) {
 			if (!oControl.getVisible()) {
@@ -153,8 +225,12 @@ sap.ui.define([
 			oRM.write("<span");
 			oRM.writeControlData(oControl);
 			oRM.write(">");
+			if (oControl.getAggregation("_btn1").getVisible()) {
 			oRM.renderControl(oControl.getAggregation("_btn1"));
+			}
+			if (oControl.getAggregation("_btn2").getVisible()) {
 			oRM.renderControl(oControl.getAggregation("_btn2"));
+			}
 			oRM.write("</span>");
 		}
 	});
