@@ -2,6 +2,9 @@ sap.ui.define([
 	"sap/ui/core/Control"
 ], function (Control) {
 	"use strict";
+	
+	/* global google */
+	/* global captuvoPlugin */
 
 	return Control.extend("zcustom.c4c.ui5lib.control.ZBarCodeScanner",  { 
 		metadata : {
@@ -44,6 +47,7 @@ sap.ui.define([
 									"google.maps", jQuery.proxy(this._initAutocomplete,this), null);
 									
 			this.setAggregation("_inpField", new sap.m.Input({
+				id : "googleautocomplete",
 				width : "100%",
 				placeholder : "Enter Address ..."
 			}));
@@ -219,7 +223,7 @@ sap.ui.define([
 		
 		_initAutocomplete : function () {
         	this.autocomplete = new google.maps.places.Autocomplete(
-	        	(this.getAggregation("_inpField")),
+	        	(function() { return sap.ui.getCore().byId("googleautocomplete")._$input; }),
 	            {types: ["geocode"]});	
 	            
 	        this.autocomplete.addListener('place_changed', jQuery.proxy(this._fillInAddress,this));
