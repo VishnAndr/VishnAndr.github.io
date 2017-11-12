@@ -186,32 +186,27 @@ sap.ui.define([
 			    maximumAge: 0 
 			};
 				
-			var success = function(oPosition) {
-			    var position = {};
-			    position.lat = oPosition.coords.latitude;
-			    position.lng = oPosition.coords.longitude;
-			    
-			    jQuery.sap.log.info("Geocoords: " + JSON.stringify(position,null,4));
-			    
-				new google.maps.Geocoder().geocode({
-				    latLng: position
-				}, function (results) { this._onGeoResponses(results); });
-			    
-			    //sap.ui.getCore().byId("MainView1").byId("addressValue").setValue(position.lat + ", " + position.lng);
-			};
-				
-			var error = function(err) {
-			    jQuery.sap.log.info("ERROR(" + err.code + "): " + err.message);
-			};
-				
 			if (navigator.geolocation) {
-			    navigator.geolocation.getCurrentPosition(success, error, options);
+			    navigator.geolocation.getCurrentPosition( function (oPosition) { this._onGeoCurrentPositionSuccess(oPosition); }, 
+			    										  function (err) { jQuery.sap.log.info("ERROR(" + err.code + "): " + err.message); }, 
+			    										  options);
 			}			
+		},
+		
+		_onGeoCurrentPositionSuccess : function (oPosition) {
+			var position = {};
+			position.lat = oPosition.coords.latitude;
+			position.lng = oPosition.coords.longitude;
+			    
+			jQuery.sap.log.info("Geocoords: " + JSON.stringify(position,null,4));
+			    
+			new google.maps.Geocoder().geocode({
+				latLng: position
+			}, function (results) { this._onGeoResponses(results); });			
 		},
 		
 		_onGeoResponses : function (results) {
 			if (results && results.length > 0) {
-				//sap.ui.getCore().byId("MainView1").byId("addressValue").setValue(results[0].formatted_address);
 				results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
 				var oInput = this.getAggregation("_inpField");
 				oInput.setValue(results[0].formatted_address);
