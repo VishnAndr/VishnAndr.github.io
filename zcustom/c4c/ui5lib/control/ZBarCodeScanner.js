@@ -186,6 +186,7 @@ sap.ui.define([
 		},
 		
 		_onLocateMe : function () {
+			var oControl = this; 
 			var options = {
 			    enableHighAccuracy: true,
 			    timeout: 5000,
@@ -193,13 +194,22 @@ sap.ui.define([
 			};
 				
 			if (navigator.geolocation) {
+				oControl.setBusy(true);
 			    navigator.geolocation.getCurrentPosition( jQuery.proxy(this._onGeoCurrentPositionSuccess, this), 
-			    										  function (err) { jQuery.sap.log.info("ERROR(" + err.code + "): " + err.message); }, 
+			    										  jQuery.proxy(this._onGeoCurrentPositionError, this), 
 			    										  options);
 			}			
 		},
 		
+		_onGeoCurrentPositionError : function (err) {
+			var oControl = this;
+			oControl.setBusy(false);	
+			jQuery.sap.log.error("ERROR(" + err.code + "): " + err.message);
+		},
+		
 		_onGeoCurrentPositionSuccess : function (oPosition) {
+			var oControl = this;
+			
 			var position = {};
 			position.lat = oPosition.coords.latitude;
 			position.lng = oPosition.coords.longitude;
@@ -210,22 +220,29 @@ sap.ui.define([
 				this._setResult(position.lng, "/Root/Lead/ZStartLongitudeMeasure");
 				this._setResult((new Date().toISOString()), "/Root/Lead/ZStartTime");
 				this.CheckedIn = true;
+				
 				var oBtn = this.getAggregation("_btnG");
-				oBtn.text = "Check-Out";
+				oBtn.mProperties.text = "Check-Out";
+				
+				new google.maps.Geocoder().geocode({
+					latLng: position
+				}, jQuery.proxy(this._onGeoResponses,this));				
 			} else {
+			//Check-Out
 				this._setResult(position.lat, "/Root/Lead/ZEndLatitudeMeasure");
 				this._setResult(position.lng, "/Root/Lead/ZEndLongitudeMeasure");
-				this._setResult((new Date().toISOString()), "/Root/Lead/ZEndTime");				
+				this._setResult((new Date().toISOString()), "/Root/Lead/ZEndTime");
+				
+				oControl.setBusy(false);
 			}
 			
 			jQuery.sap.log.info("Geocoords: " + JSON.stringify(position,null,4));
-			    
-			new google.maps.Geocoder().geocode({
-				latLng: position
-			}, jQuery.proxy(this._onGeoResponses,this));			
+			
 		},
 		
 		_onGeoResponses : function (results) {
+			var oControl = this;
+			oControl.setBusy(false);
 			if (results && results.length > 0) {
 				results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
 				var oInput = this.getAggregation("_inpField");
@@ -238,7 +255,6 @@ sap.ui.define([
 		
 		_initAutocomplete : function () {
 			var eInput = document.getElementById('googleautocomplete-inner');
-			console.log("eInput == " + eInput);
         	this.autocomplete = new google.maps.places.Autocomplete(
 	        	(eInput),
 	            {types: ["geocode"]});	
@@ -252,6 +268,12 @@ sap.ui.define([
 	        var place = this.autocomplete.getPlace();
 			
 			console.log( "Address Selected = " + JSON.stringify(place, null,4));
+			
+			var oControl = this.getController();
+			oControl = oControl.getParentController();
+			var oStreetNumber = oControl.getDataContainer().getDataObject("/Root/RFL_CStreetNumber_f8d5c99d9d964b0b3c3f25b5458740c2");
+			var vStreetNumber = oStreetNumber.getValue();
+			console.log( "current Street Number = " + vStreetNumber);
 		},
 
 		renderer: function (oRM, oControl) {
