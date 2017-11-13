@@ -55,9 +55,9 @@ sap.ui.define([
 			});
 			// to make "clear" button available
 			oInput.addEventDelegate({
-			    onAfterRendering: jQuery.proxy(this._onAfterRenderingInput, this),
-			    fireValueHelpRequest: jQuery.proxy(this._onClearInput, this)
+			    onAfterRendering: jQuery.proxy(this._onAfterRenderingInput, this)
 			}, this);
+			oInput.attachValueHelpRequest(this._onClearInput);
 
 			this.setAggregation("_inpField", oInput);
 			
@@ -124,8 +124,9 @@ sap.ui.define([
 		},
 		
 		_onClearInput : function () {
-			var oInput = this.getAggregation("_inpField");
-			oInput.setValue("");
+			//var oInput = this.getAggregation("_inpField");
+			//oInput.setValue("");
+			this.setValue("");
 		},
 		
 		_setIcon : function (oBtn, sPath) {
@@ -264,9 +265,15 @@ sap.ui.define([
 				
 				oBtn.mProperties.text = "Check-Out";
 				
-				new google.maps.Geocoder().geocode({
-					latLng: position
-				}, jQuery.proxy(this._onGeoResponses,this));				
+				//geocode coords only if there is no address selected yet
+				var oInput = this.getAggregation("_inpField");
+				if (!oInput.getValue()) {
+					new google.maps.Geocoder().geocode({
+						latLng: position
+					}, jQuery.proxy(this._onGeoResponses,this));
+				} else {
+					oControl.setBusy(false);
+				}
 			} else {
 			//Check-Out
 				this._setResult(position.lat, "/Root/Lead/ZEndLatitudeMeasure");
@@ -281,17 +288,19 @@ sap.ui.define([
 			
 			oBtn.invalidate();
 			
-			jQuery.sap.log.info("Geocoords: " + JSON.stringify(position,null,4));
-			
 		},
 		
 		_onGeoResponses : function (results) {
 			var oControl = this;
 			oControl.setBusy(false);
 			if (results && results.length > 0) {
-				results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
+				//results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
 				var oInput = this.getAggregation("_inpField");
 				oInput.setValue(results[0].formatted_address);
+				
+				var place = results[0];
+				
+				this._fillInAddressFromPlace(place);
     	
 			} else {
 				jQuery.sap.log.info("Cannot determine address at this location.");
@@ -308,37 +317,42 @@ sap.ui.define([
 			
 		},
 		
-		_fillInAddress : function () {
-        // Get the place details from the autocomplete object.
-	        var place = this.autocomplete.getPlace();
-			
-			console.log( "Address Selected = " + JSON.stringify(place, null,4));
-			
+		_fillInAddressFromPlace : function (oPlace) {
 			var sStreetNumber = "";
 			var sStreetName = "";
 			var sSuburb = "";
 			var sState = "";
 			
-			for (var i = 0; i < place.address_components.length; i++) {
-	          if (place.address_components[i].types.includes("street_number")) {
-	            sStreetNumber = place.address_components[i].short_name;
+			for (var i = 0; i < oPlace.address_components.length; i++) {
+	          if (oPlace.address_components[i].types.includes("street_number")) {
+	            sStreetNumber = oPlace.address_components[i].short_name;
 	            
-	          } else if (place.address_components[i].types.includes("route")) {
-	          	sStreetName = place.address_components[i].short_name;
+	          } else if (oPlace.address_components[i].types.includes("route")) {
+	          	sStreetName = oPlace.address_components[i].short_name;
 	          	
-	          } else if (place.address_components[i].types.includes("locality")) {
-	          	sSuburb = place.address_components[i].long_name;
+	          } else if (oPlace.address_components[i].types.includes("locality")) {
+	          	sSuburb = oPlace.address_components[i].long_name;
 	          	
-	          } else if (place.address_components[i].types.includes("administrative_area_level_1")) {
-	          	sState = place.address_components[i].short_name;
+	          } else if (oPlace.address_components[i].types.includes("administrative_area_level_1")) {
+	          	sState = oPlace.address_components[i].short_name;
 	          	
 	          }
 	        }
 			
 			this._setResultIntoNearest(sStreetNumber, "/Root/RFL_CStreetNumber_f8d5c99d9d964b0b3c3f25b5458740c2");
-			this._setResultIntoNearest(sStreetName, "/Root/RFL_CStreetName_8a90ca3b0dc921608412613");
+			this._setResultIntoNearest(sStreetName, "/Root/RFL_CStreetName_8a90ca3b0dc9216084126131c52991ad");
 			this._setResultIntoNearest(sSuburb, "/Root/RFL_CSuburb_e09b0c6b797cfe0e96dcb9e4642137ff");
-			this._setResultIntoNearest(sState, "/Root/RFL_CState_0c757ce9e338b9da7867ee71990b089b");
+			this._setResultIntoNearest(sState, "/Root/RFL_CState_0c757ce9e338b9da7867ee71990b089b");			
+		},
+		
+		_fillInAddress : function () {
+        // Get the place details from the autocomplete object.
+	        var place = this.autocomplete.getPlace();
+	        
+	        this._fillInAddressFromPlace(place);
+			
+			//console.log( "Address Selected = " + JSON.stringify(place, null,4));
+			
 		},
 
 		renderer: function (oRM, oControl) {
