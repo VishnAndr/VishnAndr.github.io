@@ -43,9 +43,10 @@ sap.ui.define([
 		init : function () {
 			
 			this.that = this;
-			
-			jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
-									"google.maps", jQuery.proxy(this._initAutocomplete,this), null);
+			if (!google.maps) {
+				jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
+										"google.maps", jQuery.proxy(this._initAutocomplete,this), function () { console.log("Error initializing Google Places API");});
+			}
 			
 			var oInput = new sap.m.Input({
 				id : "googleautocomplete",
@@ -258,8 +259,8 @@ sap.ui.define([
 			
 			if (!this.CheckedIn) {
 			//Check-In
-				this._setResult(position.lat, "/Root/Lead/ZStartLatitudeMeasure");
-				this._setResult(position.lng, "/Root/Lead/ZStartLongitudeMeasure");
+				this._setResult(position.lat.toFixed(13), "/Root/Lead/ZStartLatitudeMeasure");
+				this._setResult(position.lng.toFixed(13), "/Root/Lead/ZStartLongitudeMeasure");
 				this._setResult((new Date().toISOString()), "/Root/Lead/ZStartTime");
 				this.CheckedIn = true;
 				
@@ -276,8 +277,8 @@ sap.ui.define([
 				}
 			} else {
 			//Check-Out
-				this._setResult(position.lat, "/Root/Lead/ZEndLatitudeMeasure");
-				this._setResult(position.lng, "/Root/Lead/ZEndLongitudeMeasure");
+				this._setResult(position.lat.toFixed(13), "/Root/Lead/ZEndLatitudeMeasure");
+				this._setResult(position.lng.toFixed(13), "/Root/Lead/ZEndLongitudeMeasure");
 				this._setResult((new Date().toISOString()), "/Root/Lead/ZEndTime");
 				this.CheckedIn = false;
 
