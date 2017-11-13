@@ -43,7 +43,7 @@ sap.ui.define([
 		init : function () {
 			
 			this.that = this;
-			if (!google.maps) {
+			if (!google) {
 				jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
 										"google.maps", jQuery.proxy(this._initAutocomplete,this), function () { console.log("Error initializing Google Places API");});
 			}
