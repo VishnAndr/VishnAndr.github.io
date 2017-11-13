@@ -122,6 +122,8 @@ sap.ui.define([
 		    var icon = oInput._getValueHelpIcon();
 		    icon.setSrc("sap-icon://sys-cancel");
 		    icon.setSize("1.25rem");
+		    
+		    this._initAutocomplete();
 		},
 		
 		_onClearInput : function () {
@@ -309,13 +311,14 @@ sap.ui.define([
 		},
 		
 		_initAutocomplete : function () {
-			var eInput = document.getElementById('googleautocomplete-inner');
-        	this.autocomplete = new google.maps.places.Autocomplete(
-	        	(eInput),
-	            {types: ["geocode"]});	
-	            
-	        this.autocomplete.addListener('place_changed', jQuery.proxy(this._fillInAddress,this));
-			
+			var eInput = document.getElementById("googleautocomplete-inner");
+			if (eInput) {
+	        	this.autocomplete = new google.maps.places.Autocomplete(
+		        	(eInput),
+		            {types: ["geocode"]});	
+		            
+		        this.autocomplete.addListener("place_changed", jQuery.proxy(this._fillInAddress,this));
+			}
 		},
 		
 		_fillInAddressFromPlace : function (oPlace) {
