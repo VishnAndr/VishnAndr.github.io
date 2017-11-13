@@ -46,12 +46,27 @@ sap.ui.define([
 			
 			jQuery.sap.includeScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyC4AW-ryf58z7at7ZK15abTfiyGJ_VMMcM&libraries=places",
 									"google.maps", jQuery.proxy(this._initAutocomplete,this), null);
-									
-			this.setAggregation("_inpField", new sap.m.Input({
+			
+			var oInput = new sap.m.Input({
 				id : "googleautocomplete",
 				width : "100%",
-				placeholder : "Enter Address ..."
-			}));
+				placeholder : "Enter Address ...",
+				showValueHelp : true
+			});
+			// to make "clear" button available
+			oInput.addEventDelegate({
+			    onAfterRendering: function () {
+				    var icon = this._getValueHelpIcon();
+				    icon.setSrc("sap-icon://sys-cancel");
+				    icon.setSize("1.25rem");
+			     },
+			    fireValueHelpRequest: function(){
+    				this.setValue("");
+				}
+			}, this);
+
+			this.setAggregation("_inpField", oInput);
+			
 			this.setAggregation("_btnG", new sap.m.Button({
 				icon: "sap-icon://locate-me",
 				width: "100%",
@@ -63,18 +78,23 @@ sap.ui.define([
 			if (sap.client.getCurrentApplication().getRuntimeEnvironment().isRunningInContainer()) {
 				jQuery.sap.require("sap.client.cod.newui.shared.js.BarcodeScanner");
 			
-				this.setAggregation("_btn1", new sap.m.Button({
+				var oBtn1 = new sap.m.Button({
 					icon: "sap-icon://bar-code",
 					width: "100%",
 					text: "Scan Model No",
 					press: jQuery.proxy(this._onBtn1Pressed, this)
-				}));
-				this.setAggregation("_btn2", new sap.m.Button({
+				});
+				
+				this.setAggregation("_btn1", oBtn1);
+				
+				var oBtn2 = new sap.m.Button({
 					icon: "sap-icon://bar-code",
 					width: "100%",
 					text: "Scan Serial No",
 					press: jQuery.proxy(this._onBtn2Pressed, this)
-				}));
+				});
+				
+				this.setAggregation("_btn2", oBtn2);
 				
 				oBarcodeStatus = sap.client.cod.newui.shared.BarcodeScanner.getStatusModel();
 				this.setModel(oBarcodeStatus, "status");
@@ -185,6 +205,19 @@ sap.ui.define([
 			}
 		},
 		
+		_setResultIntoNearest : function (sResult,sPath) {
+			var oObject = this;
+			var olModel;
+			while (oObject) {
+				olModel = oObject.getModel();
+				if (olModel && olModel.getDataObject(sPath)) {
+					olModel.getDataObject(sPath).setValue(sResult);
+					break;
+				}
+				oObject = oObject.getParent();
+			}
+		},
+		
 		_onLocateMe : function () {
 			var oControl = this; 
 			var options = {
@@ -214,6 +247,8 @@ sap.ui.define([
 			position.lat = oPosition.coords.latitude;
 			position.lng = oPosition.coords.longitude;
 			
+			var oBtn = this.getAggregation("_btnG");
+			
 			if (!this.CheckedIn) {
 			//Check-In
 				this._setResult(position.lat, "/Root/Lead/ZStartLatitudeMeasure");
@@ -221,7 +256,6 @@ sap.ui.define([
 				this._setResult((new Date().toISOString()), "/Root/Lead/ZStartTime");
 				this.CheckedIn = true;
 				
-				var oBtn = this.getAggregation("_btnG");
 				oBtn.mProperties.text = "Check-Out";
 				
 				new google.maps.Geocoder().geocode({
@@ -232,9 +266,14 @@ sap.ui.define([
 				this._setResult(position.lat, "/Root/Lead/ZEndLatitudeMeasure");
 				this._setResult(position.lng, "/Root/Lead/ZEndLongitudeMeasure");
 				this._setResult((new Date().toISOString()), "/Root/Lead/ZEndTime");
+				this.CheckedIn = false;
+
+				oBtn.mProperties.text = "Check-In";
 				
 				oControl.setBusy(false);
 			}
+			
+			oBtn.invalidate();
 			
 			jQuery.sap.log.info("Geocoords: " + JSON.stringify(position,null,4));
 			
@@ -269,11 +308,31 @@ sap.ui.define([
 			
 			console.log( "Address Selected = " + JSON.stringify(place, null,4));
 			
-			var oControl = this.getController();
-			oControl = oControl.getParentController();
-			var oStreetNumber = oControl.getDataContainer().getDataObject("/Root/RFL_CStreetNumber_f8d5c99d9d964b0b3c3f25b5458740c2");
-			var vStreetNumber = oStreetNumber.getValue();
-			console.log( "current Street Number = " + vStreetNumber);
+			var sStreetNumber = "";
+			var sStreetName = "";
+			var sSuburb = "";
+			var sState = "";
+			
+			for (var i = 0; i < place.address_components.length; i++) {
+	          if (place.address_components[i].types.includes("street_number")) {
+	            sStreetNumber = place.address_components[i].short_name;
+	            
+	          } else if (place.address_components[i].types.includes("route")) {
+	          	sStreetName = place.address_components[i].short_name;
+	          	
+	          } else if (place.address_components[i].types.includes("locality")) {
+	          	sSuburb = place.address_components[i].long_name;
+	          	
+	          } else if (place.address_components[i].types.includes("administrative_area_level_1")) {
+	          	sState = place.address_components[i].short_name;
+	          	
+	          }
+	        }
+			
+			this._setResultIntoNearest("/Root/RFL_CStreetNumber_f8d5c99d9d964b0b3c3f25b5458740c2", sStreetNumber);
+			this._setResultIntoNearest("/Root/RFL_CStreetName_8a90ca3b0dc921608412613", sStreetName);
+			this._setResultIntoNearest("/Root/RFL_CSuburb_e09b0c6b797cfe0e96dcb9e4642137ff", sSuburb);
+			this._setResultIntoNearest("/Root/RFL_CState_0c757ce9e338b9da7867ee71990b089b", sState);
 		},
 
 		renderer: function (oRM, oControl) {
