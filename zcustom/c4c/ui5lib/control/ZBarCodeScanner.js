@@ -55,14 +55,8 @@ sap.ui.define([
 			});
 			// to make "clear" button available
 			oInput.addEventDelegate({
-			    onAfterRendering: function () {
-				    var icon = this._getValueHelpIcon();
-				    icon.setSrc("sap-icon://sys-cancel");
-				    icon.setSize("1.25rem");
-			     },
-			    fireValueHelpRequest: function(){
-    				this.setValue("");
-				}
+			    onAfterRendering: jQuery.proxy(this._onAfterRenderingInput, this),
+			    fireValueHelpRequest: jQuery.proxy(this._onClearInput, this)
 			}, this);
 
 			this.setAggregation("_inpField", oInput);
@@ -120,6 +114,18 @@ sap.ui.define([
 				}
 				
 			}
+		},
+		
+		_onAfterRenderingInput : function () {
+			var oInput = this.getAggregation("_inpField");
+		    var icon = oInput._getValueHelpIcon();
+		    icon.setSrc("sap-icon://sys-cancel");
+		    icon.setSize("1.25rem");
+		},
+		
+		_onClearInput : function () {
+			var oInput = this.getAggregation("_inpField");
+			oInput.setValue("");
 		},
 		
 		_setIcon : function (oBtn, sPath) {
@@ -329,10 +335,10 @@ sap.ui.define([
 	          }
 	        }
 			
-			this._setResultIntoNearest("/Root/RFL_CStreetNumber_f8d5c99d9d964b0b3c3f25b5458740c2", sStreetNumber);
-			this._setResultIntoNearest("/Root/RFL_CStreetName_8a90ca3b0dc921608412613", sStreetName);
-			this._setResultIntoNearest("/Root/RFL_CSuburb_e09b0c6b797cfe0e96dcb9e4642137ff", sSuburb);
-			this._setResultIntoNearest("/Root/RFL_CState_0c757ce9e338b9da7867ee71990b089b", sState);
+			this._setResultIntoNearest(sStreetNumber, "/Root/RFL_CStreetNumber_f8d5c99d9d964b0b3c3f25b5458740c2");
+			this._setResultIntoNearest(sStreetName, "/Root/RFL_CStreetName_8a90ca3b0dc921608412613");
+			this._setResultIntoNearest(sSuburb, "/Root/RFL_CSuburb_e09b0c6b797cfe0e96dcb9e4642137ff");
+			this._setResultIntoNearest(sState, "/Root/RFL_CState_0c757ce9e338b9da7867ee71990b089b");
 		},
 
 		renderer: function (oRM, oControl) {
