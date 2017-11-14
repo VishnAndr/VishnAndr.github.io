@@ -47,7 +47,6 @@ sap.ui.define([
 									"google.maps", jQuery.proxy(this._initAutocomplete,this), function () { console.log("Error initializing Google Places API");});
 
 			var oInput = new sap.m.Input({
-				id : "googleautocomplete",
 				width : "100%",
 				placeholder : "Enter Address ...",
 				showValueHelp : true
@@ -309,15 +308,19 @@ sap.ui.define([
 		},
 		
 		_initAutocomplete : function () {
-			var eInput = document.getElementById("googleautocomplete-inner");
-			if (eInput) {
-				try {
-		        	this.autocomplete = new google.maps.places.Autocomplete(
-			        	(eInput),
-			            {types: ["geocode"]});	
-			            
-			        this.autocomplete.addListener("place_changed", jQuery.proxy(this._fillInAddress,this));
-				} catch (e) { this.autocomplete = ''; }
+			var oInput = this.getAggregation("_inpField");
+			if (oInput) {
+				var sInputId = oInput.getId().toString() + "-inner";
+				var eInput = document.getElementById(sInputId);
+				if (eInput) {
+					try {
+			        	this.autocomplete = new google.maps.places.Autocomplete(
+				        	(eInput),
+				            {types: ["geocode"]});	
+				            
+				        this.autocomplete.addListener("place_changed", jQuery.proxy(this._fillInAddress,this));
+					} catch (e) { this.autocomplete = ''; }
+				}
 			}
 		},
 		
