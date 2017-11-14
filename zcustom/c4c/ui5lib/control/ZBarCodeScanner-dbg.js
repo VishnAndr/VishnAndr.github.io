@@ -311,11 +311,13 @@ sap.ui.define([
 		_initAutocomplete : function () {
 			var eInput = document.getElementById("googleautocomplete-inner");
 			if (eInput) {
-	        	this.autocomplete = new google.maps.places.Autocomplete(
-		        	(eInput),
-		            {types: ["geocode"]});	
-		            
-		        this.autocomplete.addListener("place_changed", jQuery.proxy(this._fillInAddress,this));
+				try {
+		        	this.autocomplete = new google.maps.places.Autocomplete(
+			        	(eInput),
+			            {types: ["geocode"]});	
+			            
+			        this.autocomplete.addListener("place_changed", jQuery.proxy(this._fillInAddress,this));
+				} catch (e) { this.autocomplete = ''; }
 			}
 		},
 		
