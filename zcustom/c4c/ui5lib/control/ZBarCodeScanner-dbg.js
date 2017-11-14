@@ -256,6 +256,7 @@ sap.ui.define([
 			
 			var oBtn = this.getAggregation("_btnG");
 			
+			this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
 			if (!this.CheckedIn) {
 			//Check-In
 				this._setResult(position.lat.toFixed(13), "/Root/Lead/ZStartLatitudeMeasure");
@@ -288,6 +289,19 @@ sap.ui.define([
 			
 			oBtn.invalidate();
 			
+		},
+		
+		_getCurrentDate : function () {
+			var d = new Date();
+			
+			var month = d.getMonth()+1;
+			var day = d.getDate();
+			
+			var output = d.getFullYear() + "-" +
+			    ((""+month).length<2 ? "0" : "") + month + "-" +
+			    ((""+day).length<2 ? "0" : "") + day;
+			    
+			return output;
 		},
 		
 		_onGeoResponses : function (results) {
