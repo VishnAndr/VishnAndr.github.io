@@ -69,10 +69,10 @@ sap.ui.define([
 			oRM.write("<span");
 			oRM.writeControlData(oControl);
 			oRM.write(">");
-			oRM.renderControl(oControl.oGrid);
-			//oRM.renderControl(oControl.getAggregation("_inpField"));
-			//oRM.renderControl(oControl.getAggregation("_btnG"));
-			//oRM.renderControl(oControl.getAggregation("_btn1"));
+			// oRM.renderControl(oControl.oGrid);
+			oRM.renderControl(oControl.getAggregation("_inpField"));
+			oRM.renderControl(oControl.getAggregation("_btnG"));
+			oRM.renderControl(oControl.getAggregation("_btn1"));
 			//oRM.renderControl(oControl.getAggregation("_btn2"));
 			oRM.write("</span>");
 		},
@@ -171,14 +171,14 @@ sap.ui.define([
 
 			}
 
-			// Make a layout
+/*			// Make a layout
 			this.oVerticalLayout = new sap.ui.layout.VerticalLayout();
 			this.oVerticalLayout.addContent(this.inpField);
 			this.oVerticalLayout.addContent(this.btnG);
 			this.oVerticalLayout.addContent(this.btn1);
 			this.oGrid = new sap.ui.layout.Grid();
 			this.oGrid.addContent(this.oVerticalLayout);
-			this.addContent(this.oGrid);
+			this.addContent(this.oGrid);*/
 		},
 
 		autocomplete: '',
