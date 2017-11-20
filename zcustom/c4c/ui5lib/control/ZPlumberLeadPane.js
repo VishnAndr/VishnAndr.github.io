@@ -75,6 +75,7 @@ sap.ui.define([
 				//oRM.renderControl(oControl.getAggregation("_btn2"));
 				oRM.write("</span>");
 			},
+			
 			initializePane: function() {
 
 				var that = this;
@@ -201,6 +202,8 @@ sap.ui.define([
 
 				this._setResult(mArguments.text, "/Root/ScannedValue");
 				this._ProcessBarCodeResult(mArguments.text);
+				this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
+				this._triggerLeadOnSave();
 			},
 
 			_onScanSuccess2: function(mArguments) {
@@ -273,7 +276,7 @@ sap.ui.define([
 				};
 
 				if (navigator.geolocation) {
-					oControl.setBusy(true);
+					sap.ui.core.BusyIndicator.show(); //oControl.setBusy(true);
 					navigator.geolocation.getCurrentPosition(jQuery.proxy(this._onGeoCurrentPositionSuccess, this),
 						jQuery.proxy(this._onGeoCurrentPositionError, this),
 						options);
@@ -282,7 +285,7 @@ sap.ui.define([
 
 			_onGeoCurrentPositionError: function(err) {
 				var oControl = this;
-				oControl.setBusy(false);
+				sap.ui.core.BusyIndicator.hide(); //oControl.setBusy(false);
 				jQuery.sap.log.error("ERROR(" + err.code + "): " + err.message);
 			},
 
@@ -295,7 +298,8 @@ sap.ui.define([
 
 				var oBtn = this.getAggregation("_btnG");
 
-				this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
+				// if we're triggering OnSave - all data required for model at once
+				//this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
 				if (!this.CheckedIn) {
 					//Check-In
 					this._setResult(position.lat.toFixed(13), "/Root/Lead/ZStartLatitudeMeasure");
@@ -312,7 +316,7 @@ sap.ui.define([
 							latLng: position
 						}, jQuery.proxy(this._onGeoResponses, this));
 					} else {
-						oControl.setBusy(false);
+						sap.ui.core.BusyIndicator.hide();//oControl.setBusy(false);
 					}
 				} else {
 					//Check-Out
@@ -323,7 +327,8 @@ sap.ui.define([
 
 					oBtn.mProperties.text = "Check-In";
 
-					oControl.setBusy(false);
+					sap.ui.core.BusyIndicator.hide();//oControl.setBusy(false);
+					this._triggerLeadOnSave();
 				}
 
 				oBtn.invalidate();
@@ -345,7 +350,7 @@ sap.ui.define([
 
 			_onGeoResponses: function(results) {
 				var oControl = this;
-				oControl.setBusy(false);
+				sap.ui.core.BusyIndicator.hide(); //oControl.setBusy(false);
 				if (results && results.length > 0) {
 					//results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
 					var oInput = this.getAggregation("_inpField");
@@ -406,6 +411,8 @@ sap.ui.define([
 				this._setResultIntoNearest(sStreetName, "/Root/RFL_CStreetName_8a90ca3b0dc9216084126131c52991ad");
 				this._setResultIntoNearest(sSuburb, "/Root/RFL_CSuburb_e09b0c6b797cfe0e96dcb9e4642137ff");
 				this._setResultIntoNearest(sState, "/Root/RFL_CState_0c757ce9e338b9da7867ee71990b089b");
+				
+				this._triggerLeadOnSave();
 			},
 
 			_fillInAddress: function() {
@@ -413,8 +420,6 @@ sap.ui.define([
 				var place = this.autocomplete.getPlace();
 
 				this._fillInAddressFromPlace(place);
-
-				//console.log( "Address Selected = " + JSON.stringify(place, null,4));
 
 			},
 
@@ -492,6 +497,11 @@ sap.ui.define([
 					vError = "Barcode parsing failed.\r\nValue :" + sResult;
 					MessageToast.show(vResult);
 				}
+			},
+			
+			_triggerLeadOnSave : function () {
+				var oEventContext = new sap.client.evt.EventContext(this);
+				this.getController().getParentController().getEventProcessor().handleEvent("OnSave", oEventContext);
 			}
 		});
 
