@@ -29,7 +29,8 @@ sap.ui.define([
 		types: [],
 		interfaces: [],
 		controls: [
-			"zcustom.c4c.ui5lib.control.ZBarCodeScanner"
+			"zcustom.c4c.ui5lib.control.ZBarCodeScanner",
+			"zcustom.c4c.ui5lib.contorl.ZPlumberLeadPane"
 		],
 		elements: [],
 		version: "0.1.0"

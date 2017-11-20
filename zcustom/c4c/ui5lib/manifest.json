@@ -3,7 +3,8 @@
 	"sap.app": {
 		"id": "zcustom.c4c.ui5lib",
 		"type": "library",
-		"embeds": ["comp/button/helloworld"],
+		"embeds": ["control/ZBarCodeScanner",
+				   "control/ZPlumberLeadPane"],
 		"applicationVersion": {
 			"version": "0.1.0"
 		},
