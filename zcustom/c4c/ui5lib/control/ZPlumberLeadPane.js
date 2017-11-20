@@ -61,7 +61,7 @@ sap.ui.define([
 			}
 		},
 
-/*		renderer: function(oRM, oControl) {
+		renderer: function(oRM, oControl) {
 			if (!oControl.getVisible()) {
 				return;
 			}
@@ -69,12 +69,13 @@ sap.ui.define([
 			oRM.write("<span");
 			oRM.writeControlData(oControl);
 			oRM.write(">");
-			oRM.renderControl(oControl.getAggregation("_inpField"));
-			oRM.renderControl(oControl.getAggregation("_btnG"));
-			oRM.renderControl(oControl.getAggregation("_btn1"));
+			oRM.renderControl(oControl.oGrid);
+			//oRM.renderControl(oControl.getAggregation("_inpField"));
+			//oRM.renderControl(oControl.getAggregation("_btnG"));
+			//oRM.renderControl(oControl.getAggregation("_btn1"));
 			//oRM.renderControl(oControl.getAggregation("_btn2"));
 			oRM.write("</span>");
-		},*/
+		},
 
 		initializePane: function() {
 
@@ -171,21 +172,13 @@ sap.ui.define([
 			}
 
 			// Make a layout
-			this.oVertLayout = new sap.ui.commons.layout.VerticalLayout({
-				width: "100%",
-				content: [this.inpField, this.btnG, this.btn1]
-			});
-			this.oCenterLayout = new sap.ui.commons.layout.BorderLayoutArea({
-				size: "100%",
-				contentAlign: "center",
-				visible: true,
-				content: [this.oVertLayout]
-			});
-			this.oBorderLayout = new sap.ui.commons.layout.BorderLayout({
-				width: "100%",
-				center: this.oCenterLayout
-			});
-			this.addContent(this.oBorderLayout);
+			this.oVerticalLayout = new sap.ui.layout.VerticalLayout();
+			this.oVerticalLayout.addContent(this.inpField);
+			this.oVerticalLayout.addContent(this.btnG);
+			this.oVerticalLayout.addContent(this.btn1);
+			this.oGrid = new sap.ui.layout.Grid();
+			this.oGrid.addContent(this.oVerticalLayout);
+			this.addContent(this.oGrid);
 		},
 
 		autocomplete: '',
