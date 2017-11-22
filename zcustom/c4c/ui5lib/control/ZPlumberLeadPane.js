@@ -1,7 +1,8 @@
 sap.ui.define([
 	"sap/client/basecontrols/core/CustomPane",
-	"sap/m/MessageToast"
-], function(CustomPane, MessageToast) {
+	"sap/m/MessageToast",
+	"sap/m/MessageBox"
+], function(CustomPane, MessageToast, MessageBox) {
 	"use strict";
 
 	/* global google */
@@ -84,6 +85,8 @@ sap.ui.define([
 			this.btnG = null;
 			this.btn1 = null;
 			this.btn2 = null;
+			
+			this.geoResponseResult = null;
 
 			var vGoogleURL = "https://maps.googleapis.com/maps/api/js?libraries=places&key=";
 			var vAPIKey = this.getParameter("API_KEY"); //API Key is stored in Custom Pane Parameters under API_KEY parameter
@@ -345,16 +348,31 @@ sap.ui.define([
 			sap.ui.core.BusyIndicator.hide(); //oControl.setBusy(false);
 			if (results && results.length > 0) {
 				//results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
-				var oInput = this.getAggregation("_inpField");
-				oInput.setValue(results[0].formatted_address);
-
-				var place = results[0];
-
-				this._fillInAddressFromPlace(place);
+				this.geoResponseResult = results[0];
+				
+				MessageBox.show(
+			      "Are you at \r\n" + this.geoResponseResult.formatted_address + "?", {
+			          icon: MessageBox.Icon.QUESTION,
+			          title: "Confirm",
+			          actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+			          onClose: jQuery.proxy(this._onConfirm, this)
+			      }
+			    );
 
 			} else {
 				jQuery.sap.log.info("Cannot determine address at this location.");
 			}
+		},
+		
+		_onConfirm : function(oAction) {
+			if (oAction === MessageBox.Action.YES) {
+				var oInput = this.getAggregation("_inpField");
+				oInput.setValue(this.geoResponseResult.formatted_address);
+
+				this._fillInAddressFromPlace(this.geoResponseResult);				
+			}
+			
+			this.geoResponseResult = null;
 		},
 
 		_initAutocomplete: function() {
