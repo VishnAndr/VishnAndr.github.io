@@ -29,6 +29,7 @@ sap.ui.define([
 		types: [],
 		interfaces: [],
 		controls: [
+			"zcustom.c4c.ui5lib.control.ZCustomEmptyPane",
 			"zcustom.c4c.ui5lib.control.ZBarCodeScanner",
 			"zcustom.c4c.ui5lib.contorl.ZPlumberLeadPane"
 		],

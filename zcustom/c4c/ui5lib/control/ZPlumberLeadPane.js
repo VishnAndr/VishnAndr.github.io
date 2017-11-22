@@ -223,7 +223,7 @@ sap.ui.define([
 			//this._setResult(mArguments.text,"/Root/Lead/ProductID");
 
 			this._setResult(mArguments.text, "/Root/ScannedValue");
-			this._ProcessBarCodeResult(mArguments.text);
+			this._ProcessBarCodeResult(mArguments);
 			this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
 			this._triggerLeadOnSave();
 		},
@@ -434,7 +434,8 @@ sap.ui.define([
 		},
 
 		_ProcessBarCodeResult: function(sResult) {
-			var vResult = sResult;
+			var vResult = sResult.text;
+			var vFormat = sResult.format;
 			var vModel = "";
 			var vSerial = "";
 			var aParts = [];
@@ -504,7 +505,7 @@ sap.ui.define([
 				this._setResult(vSerial, "/Root/Lead/SerialID");
 
 			} catch (err) {
-				vError = "Barcode parsing failed.\r\nValue =\r\n" + sResult;
+				vError = "Barcode parsing failed.\r\nValue =\r\n" + vResult + "\r\n" + sResult;
 				MessageToast.show(vError);
 			}
 		},
