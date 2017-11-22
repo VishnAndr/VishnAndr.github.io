@@ -471,7 +471,7 @@ sap.ui.define([
 						vResult = vResult.substring(4); // MMYY removed
 					}
 				} else {
-					vError = "First AI not recognized in Barcode value:" + sResult;
+					vError = "First AI not recognized in Barcode value:" + vResult;
 					jQuery.sap.log.error(vError);
 					throw vError;
 				}
@@ -496,7 +496,7 @@ sap.ui.define([
 				}
 
 				if (!vModel || !vSerial) {
-					vError = "vModel (" + vModel + ") or vSerial (" + vSerial + ") not found in Barcode value: " + sResult;
+					vError = "vModel (" + vModel + ") or vSerial (" + vSerial + ") not found in Barcode value: " + vResult;
 					jQuery.sap.log.error(vError);
 					throw vError;
 				}
@@ -505,7 +505,7 @@ sap.ui.define([
 				this._setResult(vSerial, "/Root/Lead/SerialID");
 
 			} catch (err) {
-				vError = "Barcode parsing failed.\r\nValue =\r\n" + vResult + "\r\n" + sResult;
+				vError = "Barcode parsing failed.\r\nValue =\r\n" + vResult + "\r\nFormat = " + sResult.format;
 				MessageToast.show(vError);
 			}
 		},
