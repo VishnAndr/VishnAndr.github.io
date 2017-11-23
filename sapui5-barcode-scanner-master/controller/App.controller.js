@@ -122,7 +122,10 @@ sap.ui.define([
 
 					// Set barcode value in input field
 					this.getView().byId("scannedValue").setValue(result.codeResult.code);
-
+					this.getView().byId("scannedCode0").setValue(result.decodedCodes[0].code);
+					this.getView().byId("scannedCode1").setValue(result.decodedCodes[1].code);
+					this.getView().byId("scannedCode2").setValue(result.decodedCodes[2].code);
+					this.getView().byId("scannedCode3").setValue(result.decodedCodes[3].code);
 					// Close dialog
 					this._oScanDialog.close();
 				}.bind(this));
