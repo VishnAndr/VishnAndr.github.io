@@ -2,7 +2,7 @@
 	xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mvc="sap.ui.core.mvc" 
 	xmlns:core="sap.ui.core"
 	xmlns:l="sap.ui.layout" xmlns:f="sap.ui.layout.form"
-	displayBlock="true" xmlns="sap.m">
+	displayBlock="true" xmlns:m="sap.m">
 	
 	<f:SimpleForm
 		layout="ResponsiveGridLayout" 
