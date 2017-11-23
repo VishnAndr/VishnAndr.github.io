@@ -28,16 +28,8 @@
 			visibleRowCount="7">
 			<columns>
 				<Column width="10%">
-					<m:Label text="#" />
-					<template>
-						<m:Text text="{id}" wrapping="false" />
-					</template>
 				</Column>				
 				<Column width="90%">
-					<m:Label text="Code" />
-					<template>
-						<m:Text text="{Code}" wrapping="false" />
-					</template>
 				</Column>
 			</columns>
 		</Table>		
