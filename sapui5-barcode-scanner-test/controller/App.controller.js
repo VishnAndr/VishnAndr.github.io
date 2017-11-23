@@ -1,27 +1,11 @@
 /* global Quagga:true */
 sap.ui.define([
 	"sap/ui/core/mvc/Controller",
-	"sap/m/MessageBox",
-	"sap/ui/model/json/JSONModel"
-], function(Controller, MessageBox, JSONModel) {
+	"sap/m/MessageBox"
+], function(Controller, MessageBox) {
 	"use strict";
 
-	var oApp = Controller.extend("barcodeScanner.controller.App", {
-		onInit : function () {
-			var JSONModel = this.initDataModel();
-			this.getView().setModel(JSONModel);
-		},
-
-		initDataModel : function () {
-			var data = {
-			    CodesCollection: [
-			    	{    id: 0, Code: "100"  },
-			        {    id: 1, Code: "110"  }
-			        ]
-			};
-			var oModel = new JSONModel(data);	
-		},
-
+	return Controller.extend("barcodeScanner.controller.App", {
 		onScanForValue: function(oEvent){
 			if(!this._oScanDialog){
 				this._oScanDialog = new sap.m.Dialog({
@@ -150,6 +134,4 @@ sap.ui.define([
 			return oDeferred.promise();
 		}
 	});
-
-	return oApp;
 });
