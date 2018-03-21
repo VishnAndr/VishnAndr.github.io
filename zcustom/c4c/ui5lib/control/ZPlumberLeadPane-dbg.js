@@ -85,7 +85,7 @@ sap.ui.define([
 			this.btnG = null;
 			this.btn1 = null;
 			this.btn2 = null;
-			
+
 			this.geoResponseResult = null;
 
 			var vGoogleURL = "https://maps.googleapis.com/maps/api/js?libraries=places&key=";
@@ -174,14 +174,85 @@ sap.ui.define([
 
 			}
 
-/*			// Make a layout
-			this.oVerticalLayout = new sap.ui.layout.VerticalLayout();
-			this.oVerticalLayout.addContent(this.inpField);
-			this.oVerticalLayout.addContent(this.btnG);
-			this.oVerticalLayout.addContent(this.btn1);
-			this.oGrid = new sap.ui.layout.Grid();
-			this.oGrid.addContent(this.oVerticalLayout);
-			this.addContent(this.oGrid);*/
+			this.getModel().attachDataContainerUpdateFinished(function() {
+				that._checkBtnState();
+			});
+
+			/*			// Make a layout
+						this.oVerticalLayout = new sap.ui.layout.VerticalLayout();
+						this.oVerticalLayout.addContent(this.inpField);
+						this.oVerticalLayout.addContent(this.btnG);
+						this.oVerticalLayout.addContent(this.btn1);
+						this.oGrid = new sap.ui.layout.Grid();
+						this.oGrid.addContent(this.oVerticalLayout);
+						this.addContent(this.oGrid);*/
+		},
+
+		onAfterRendering: function() {
+			var that = this;
+			try {
+				var oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
+					"/Root/ZL_CheckOut_Done_567360ce52f782bf520d25d5c099515b");
+				oDataObject.attachValueChanged(function() {
+					that._checkBtnState();
+				});
+
+				oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
+					"/Root/ZL_CheckIn_InProgress_d7b7d40d01365299258b51d7a39af7cc");
+				oDataObject.attachValueChanged(function() {
+					that._checkBtnState();
+				});
+			} catch (err) {
+				console.log("Cannot attach to data field: " + err.message);
+			}
+		},
+
+		_checkBtnState: function() {
+			try {
+				var fCheckOutState = this._getValueFromNearest("/Root/ZL_CheckOut_Done_567360ce52f782bf520d25d5c099515b");
+				var fCheckInState = this._getValueFromNearest("/Root/ZL_CheckIn_InProgress_d7b7d40d01365299258b51d7a39af7cc");
+				var sCheckedIn = this._getValueFromNearest("/Root/Lead/ZStartTime");
+
+				if (fCheckOutState) { // already checked-out
+					if (this.btnG) {
+						this.btnG.setText("Checked-Out");
+						this.btnG.setEnabled(false);
+					}
+
+					if (this.btn1) {
+						this.btn1.setEnabled(false);
+					}
+
+					if (this.inpField) {
+						this.inpField.setEnabled(false);
+					}
+				} else if (fCheckInState || sCheckedIn) { // already checked-in
+
+					this.CheckedIn = true;
+					
+					if (this.btnG) {
+						this.btnG.setText("Check-Out");
+					}
+				} else { //Initial state
+				
+					this.CheckedIn = false;
+					
+					if (this.btnG) {
+						this.btnG.setText("Check-In");
+						this.btnG.setEnabled(true);
+					}
+					
+					if (this.btn1) {
+						this.btn1.setEnabled(true);
+					}
+
+					if (this.inpField) {
+						this.inpField.setEnabled(true);
+					}					
+				}
+			} catch (err) {
+				console.log("Error during _checkBtnState: " + err.message);
+			}
 		},
 
 		autocomplete: '',
@@ -223,9 +294,13 @@ sap.ui.define([
 			//this._setResult(mArguments.text,"/Root/Lead/ProductID");
 
 			this._setResult(mArguments.text, "/Root/ScannedValue");
-			this._ProcessBarCodeResult(mArguments);
-			this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
-			this._triggerLeadOnSave();
+			try {
+				this._ProcessBarCodeResult(mArguments);
+				this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
+				this._triggerLeadOnSave();
+			} catch (e) {
+				jQuery.sap.log.error("Barcode has not been recognized");
+			}
 		},
 
 		_onScanSuccess2: function(mArguments) {
@@ -260,6 +335,22 @@ sap.ui.define([
 				}
 				oObject = oObject.getParent();
 			}
+		},
+
+		_getValueFromNearest: function(sPath) {
+			var rValue;
+			var oObject = this;
+			var olModel;
+			while (oObject) {
+				olModel = oObject.getModel();
+				if (olModel && olModel.getDataObject(sPath)) {
+					rValue = olModel.getDataObject(sPath).getValue();
+					break;
+				}
+				oObject = oObject.getParent();
+			}
+
+			return rValue;
 		},
 
 		_onLocateMe: function() {
@@ -300,6 +391,7 @@ sap.ui.define([
 				this._setResult(position.lat.toFixed(13), "/Root/Lead/ZStartLatitudeMeasure");
 				this._setResult(position.lng.toFixed(13), "/Root/Lead/ZStartLongitudeMeasure");
 				this._setResult((new Date().toISOString()), "/Root/Lead/ZStartTime");
+				this._setResultIntoNearest("X", "/Root/ZL_CheckIn_InProgress_d7b7d40d01365299258b51d7a39af7cc");
 				this.CheckedIn = true;
 
 				oBtn.mProperties.text = "Check-Out";
@@ -318,9 +410,10 @@ sap.ui.define([
 				this._setResult(position.lat.toFixed(13), "/Root/Lead/ZEndLatitudeMeasure");
 				this._setResult(position.lng.toFixed(13), "/Root/Lead/ZEndLongitudeMeasure");
 				this._setResult((new Date().toISOString()), "/Root/Lead/ZEndTime");
+				this._setResultIntoNearest("X", "/Root/ZL_CheckOut_InProgress_be3d0b36bc2a920210c6ac5c07a6ec42");
 				this.CheckedIn = false;
 
-				oBtn.mProperties.text = "Check-In";
+				//oBtn.mProperties.text = "Check-In";
 
 				sap.ui.core.BusyIndicator.hide(); //oControl.setBusy(false);
 				this._triggerLeadOnSave();
@@ -349,29 +442,29 @@ sap.ui.define([
 			if (results && results.length > 0) {
 				//results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
 				this.geoResponseResult = results[0];
-				
+
 				MessageBox.show(
-			      "Are you at \r\n" + this.geoResponseResult.formatted_address + "?", {
-			          icon: MessageBox.Icon.QUESTION,
-			          title: "Confirm",
-			          actions: [MessageBox.Action.YES, MessageBox.Action.NO],
-			          onClose: jQuery.proxy(this._onConfirm, this)
-			      }
-			    );
+					"Are you at \r\n" + this.geoResponseResult.formatted_address + "?", {
+						icon: MessageBox.Icon.QUESTION,
+						title: "Confirm",
+						actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+						onClose: jQuery.proxy(this._onConfirm, this)
+					}
+				);
 
 			} else {
 				jQuery.sap.log.info("Cannot determine address at this location.");
 			}
 		},
-		
-		_onConfirm : function(oAction) {
+
+		_onConfirm: function(oAction) {
 			if (oAction === MessageBox.Action.YES) {
 				var oInput = this.getAggregation("_inpField");
 				oInput.setValue(this.geoResponseResult.formatted_address);
 
-				this._fillInAddressFromPlace(this.geoResponseResult);				
+				this._fillInAddressFromPlace(this.geoResponseResult);
 			}
-			
+
 			this.geoResponseResult = null;
 		},
 
@@ -400,6 +493,7 @@ sap.ui.define([
 			var sStreetName = "";
 			var sSuburb = "";
 			var sState = "";
+			var sPostalCode = "";
 
 			for (var i = 0; i < oPlace.address_components.length; i++) {
 				if (oPlace.address_components[i].types.includes("street_number")) {
@@ -414,6 +508,8 @@ sap.ui.define([
 				} else if (oPlace.address_components[i].types.includes("administrative_area_level_1")) {
 					sState = oPlace.address_components[i].short_name;
 
+				} else if (oPlace.address_components[i].types.includes("postal_code")) {
+					sPostalCode = oPlace.address_components[i].short_name;
 				}
 			}
 
@@ -421,6 +517,7 @@ sap.ui.define([
 			this._setResultIntoNearest(sStreetName, "/Root/RFL_CStreetName_8a90ca3b0dc9216084126131c52991ad");
 			this._setResultIntoNearest(sSuburb, "/Root/RFL_CSuburb_e09b0c6b797cfe0e96dcb9e4642137ff");
 			this._setResultIntoNearest(sState, "/Root/RFL_CState_0c757ce9e338b9da7867ee71990b089b");
+			this._setResultIntoNearest(sPostalCode, "/Root/ZRFL_PostCode_7834540e1c06fed78ba92204ff988027");
 
 			this._triggerLeadOnSave();
 		},
@@ -438,75 +535,81 @@ sap.ui.define([
 			var vFormat = sResult.format;
 			var vModel = "";
 			var vSerial = "";
-			var aParts = [];
-			var vError;
+			var vOwner = "";
+			var vMMYY = "";
+			var vMsg;
 
-			var reRating = new RegExp(/^(10)/, "");
-			var reCarton = new RegExp(/^(240)/, "");
-			var reMatnr = new RegExp(/^(90)/, "");
-			var reSerial = new RegExp(/^21/, "");
-			var reOwner = new RegExp(/^10000/, "");
+			var reRating = new RegExp(/^(10)\d{4,4}/, "");
+			var reCarton = new RegExp(/^(240)\d{5,5}/, "");
+			var reMatnr = new RegExp(/^90/, "");
+			var reSerial = new RegExp(/21$/, "");
+			var reMatnrSerial = new RegExp(/^90\w{1,13}21/);
+			var reNotWords = new RegExp(/\W+/);
 
 			try {
+				if (reNotWords.test(vResult)) {
+					vMsg = "There are special characters:";
+					var arNotWords = vResult.match(reNotWords);
+					for (var i=0; i<arNotWords.length;i++) {
+						vMsg += "\r\n" + arNotWords[i];
+					}
+					vMsg += "\r\nPosition = " + arNotWords.index;
+					throw vMsg;
+				}
+				
 				// carton 
 				// (AI240)OWNER(AI90)MATNR(AI21)SERNR 
 				//
 				// rating
 				// (AI10)MMYY(AI90)MATNR(AI21)SERNR
+				if (vFormat !== "CODE_128") {
+					vMsg = "Format has not been recognized\r\n Format = " + vFormat;
+					jQuery.sap.log.error(vMsg);
+					throw vMsg;
+				}
 				if (reCarton.test(vResult)) {
-					aParts = vResult.split(reCarton); // AI240 removed
-					if (aParts.length() === 3) {
-						vResult = aParts[2];
-						if (reOwner.test(vResult)) {
-							aParts.split(reOwner); // Owner removed
-							if (aParts.length() === 3) {
-								vResult = aParts[2];
-							}
-						}
-					}
+					vOwner = vResult.match(reCarton)[0].replace("240", "");
+					vResult = vResult.replace(reCarton, "");
 				} else if (reRating.test(vResult)) {
-					aParts = vResult.split(reRating); // AI10 removed
-					if (aParts.length() === 3) {
-						vResult = aParts[2];
-						vResult = vResult.substring(4); // MMYY removed
-					}
+					vMMYY = vResult.match(reRating)[0].replace("10", "");
+					vResult = vResult.replace(reRating, "");
 				} else {
-					vError = "First AI not recognized in Barcode value:" + vResult;
-					jQuery.sap.log.error(vError);
-					throw vError;
+					vMsg = "First AI not recognized in Barcode value:" + vResult;
+					jQuery.sap.log.error(vMsg);
+					throw vMsg;
 				}
 
 				// common part
-				if (reMatnr.test(vResult)) {
-					aParts = vResult.split(reMatnr); // AI90 removed
-					if (aParts.lengrh() === 3) {
-						vResult = aParts[2];
-						if (vResult) {
-							vModel = vResult.substring(0, 13); // Model No
-
-							vResult = vResult.substring(13);
-							if (reSerial.test(vResult)) {
-								aParts = vResult.split(reSerial); // AI21 removed
-								if (aParts.length() === 3) {
-									vSerial = aParts[2];
-								}
-							}
-						}
-					}
+				if (reMatnrSerial.test(vResult)) {
+					vModel = vResult.match(reMatnrSerial)[0].replace(reMatnr, ""); // AI90 removed
+					vModel = vModel.replace(reSerial, ""); //AI21 removed
+					vResult = vResult.replace(reMatnrSerial, "");
+					vSerial = vResult;
+				} else {
+					vMsg = "(AI90)MATNR(AI21)SERNR pattern not recognized in Barcode value:" + vResult;
+					jQuery.sap.log.error(vMsg);
+					throw vMsg;
 				}
 
 				if (!vModel || !vSerial) {
-					vError = "vModel (" + vModel + ") or vSerial (" + vSerial + ") not found in Barcode value: " + vResult;
-					jQuery.sap.log.error(vError);
-					throw vError;
+					vMsg = "vModel (" + vModel + ") or vSerial (" + vSerial + ") not found in Barcode value: " + vResult;
+					jQuery.sap.log.error(vMsg);
+					throw vMsg;
 				}
 
 				this._setResult(vModel, "/Root/Lead/ProductID");
 				this._setResult(vSerial, "/Root/Lead/SerialID");
 
+				//vMsg = "Barcode parsed.\r\nModel = " + vModel + "\r\nSerial = " + vSerial + "\r\nFormat = " + vFormat;
+				vMsg = "Model Number: " + vModel + "\r\nand Serial Number: " + vSerial + "\r\nread successfully";
+				MessageToast.show(vMsg);
+
 			} catch (err) {
-				vError = "Barcode parsing failed.\r\nValue =\r\n" + vResult + "\r\nFormat = " + sResult.format;
-				MessageToast.show(vError);
+				//vMsg = "Barcode could not be read, please try re-scanning or enter manually";
+				vMsg = err + "\r\n" + sResult.text;
+				MessageToast.show(vMsg);
+				throw vMsg;
+				//MessageBox.alert(vMsg);
 			}
 		},
 

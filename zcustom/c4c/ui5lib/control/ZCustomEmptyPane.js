@@ -26,6 +26,18 @@ sap.ui.define([
 
 			var that = this;
 
+		},
+		
+		onBeforeRendering: function() {
+			
+			var that = this;	
+			
+		},
+		
+		onAfterRendering: function() {
+			
+			var that = this;	
+			
 		}
 	});
 
