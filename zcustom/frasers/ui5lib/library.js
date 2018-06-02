@@ -25,7 +25,7 @@ sap.ui.define([
 	// delegate further initialization of this library to the Core
 	sap.ui.getCore().initLibrary({
 		name : "zcustom.frasers.ui5lib",
-		dependencies : [], //["sap.ui.core", "sap.m" , "sap.ui.unified"],
+		dependencies : [],
 		types: [],
 		interfaces: [],
 		controls: [
@@ -33,8 +33,8 @@ sap.ui.define([
 			"zcustom.frasers.ui5lib.control.ZFeederEnhancementPane"
 		],
 		elements: [],
-		version: "0.1.0",
-		noLibraryCSS: true
+		noLibraryCSS: true,
+		version: "0.1.0"
 	});
 
 	return zcustom.frasers.ui5lib;
