@@ -22,9 +22,8 @@ sap.ui.define([
 		},
 
 		renderer: function(oRM, oControl) {
-			console.info(">> renderer");
-			console.trace("ZPoCCustomPane.renderer");
-			
+			jQuery.sap.log.debug(">> renderer");
+
 			if (!oControl.getVisible()) {
 				return;
 			}
@@ -37,9 +36,8 @@ sap.ui.define([
 		},
 
 		initializePane: function() {
-			console.info(">> initializePane");
-			console.trace("ZPoCCustomPane.initializePane");
-			
+			jQuery.sap.log.debug(">> initializePane");
+
 			var that = this;
 
 			this.btn = new sap.m.Button({
@@ -52,29 +50,27 @@ sap.ui.define([
 		},
 
 		onBeforeRendering: function() {
-			console.info(">> onBeforeRendering");
-			console.trace("ZPoCCustomPane.onBeforeRendering");
-			
+			jQuery.sap.log.debug(">> onBeforeRendering");
+
 			var that = this;
 
 		},
 
 		onAfterRendering: function() {
-			console.info(">> onAfterRendering");
-			console.trace("ZPoCCustomPane.onAfterRendering");
-			
+			jQuery.sap.log.debug(">> onAfterRendering");
+
 			var that = this;
 
 		},
-		
-		_onButtonPressed: function () {
-			console.info(">> _onButtonPressed");
-			
+
+		_onButtonPressed: function() {
+			jQuery.sap.log.debug(">> _onButtonPressed");
+
 			try {
-				this.getController().getParentController().getDataContainer().getDataObject("/Root/zFeederRelevant/SelectedSMAPEmail").setValue("vishneuski@gmail.com");
-			} catch (err)
-			{
-				console.log("Error in _onButtonPressed: " + err.message);
+				this.getController().getParentController().getDataContainer().getDataObject("/Root/zFeederRelevant/SelectedSMAPEmail").setValue(
+					"vishneuski@gmail.com");
+			} catch (err) {
+				jQuery.sap.log.error("Error in _onButtonPressed: " + err.message);
 			}
 		}
 	});

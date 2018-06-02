@@ -14,8 +14,7 @@ sap.ui.define([
 		},
 
 		renderer: function(oRM, oControl) {
-			console.info(">> renderer");
-			console.trace("ZFeederEnhancementPane.renderer");
+			jQuery.sap.log.info(">> renderer");
 
 			if (!oControl.getVisible()) {
 				return;
@@ -30,8 +29,7 @@ sap.ui.define([
 
 		initializePane: function() {
 			debugger;
-			console.info(">> initializePane");
-			console.trace("ZFeederEnhancementPane.initializePane");
+			jQuery.sap.log.info(">> initializePane");
 
 			var that = this;
 
@@ -51,7 +49,7 @@ sap.ui.define([
 		oCurrentFeeder: null,
 
 		_getControls: function(iIndex) {
-			console.info(">> _getControls");
+			jQuery.sap.log.info(">> _getControls");
 
 			var that = this;
 
@@ -110,7 +108,7 @@ sap.ui.define([
 		},
 
 		_initializeControls: function() {
-			console.info(">> _initializeControls");
+			jQuery.sap.log.info(">> _initializeControls");
 
 			var that = this;
 
@@ -176,13 +174,12 @@ sap.ui.define([
 		},
 
 		onBeforeRendering: function() {
-			console.info(">> onBeforeRendering");
-			console.trace("ZFeederEnhancementPane.onBeforeRendering");
+			jQuery.sap.log.info(">> onBeforeRendering");
+
 		},
 
 		onAfterRendering: function() {
-			console.info(">> onAfterRendering");
-			console.trace("ZFeederEnhancementPane.onAfterRendering");
+			jQuery.sap.log.info(">> onAfterRendering");
 
 			var that = this;
 
@@ -203,8 +200,8 @@ sap.ui.define([
 				//so let's search the latest one				
 				if (oCustomPane._a && oCustomPane._a.jsTypeName && oCustomPane._a.jsTypeName.indexOf("Feeder") >= 0) {
 					var tmpFeeder = null;
-					for (var i = 0; i <= 9999; i++) {
-						var sFeederId = "__feeder" + i;
+					for (var j = 0; j <= 9999; j++) {
+						var sFeederId = "__feeder" + j;
 						tmpFeeder = sap.ui.getCore().byId(sFeederId);
 						if (tmpFeeder && tmpFeeder.oReplyLayout) {
 							oFeeder = tmpFeeder;
@@ -276,7 +273,7 @@ sap.ui.define([
 		},
 
 		_getNewLayout: function(iIndex) {
-			console.info(">> _getNewLayout");
+			jQuery.sap.log.info(">> _getNewLayout");
 
 			var oControls = this._getControls(iIndex);
 			var oLayout = null;
@@ -291,14 +288,14 @@ sap.ui.define([
 		},
 
 		_onDataContainerUpdateFinished: function() {
-			console.info(">> _onDataContainerUpdateFinished");
+			jQuery.sap.log.info(">> _onDataContainerUpdateFinished");
 
 			this._onRecipientChange();
 			this._onFromUserChange(this.fFromUser);
 		},
 
 		_onFromUserChange: function(fNewValue) {
-			console.info(">> _onFromUserChange");
+			jQuery.sap.log.info(">> _onFromUserChange");
 
 			try {
 				if (this.fFromUser !== fNewValue || !this.sUserEmail) {
@@ -320,12 +317,12 @@ sap.ui.define([
 					}
 				}
 			} catch (err) {
-				console.info("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
+				jQuery.sap.log.info("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
 			}
 		},
 
 		_onToAccountChange: function(fNewValue) {
-			console.info(">> _onToAccountChange");
+			jQuery.sap.log.info(">> _onToAccountChange");
 
 			if (this.fToAccount !== fNewValue) {
 				this.fToAccount = fNewValue;
@@ -341,7 +338,7 @@ sap.ui.define([
 		},
 
 		_onToVendorChange: function(fNewValue) {
-			console.info(">> _onToVendorChange");
+			jQuery.sap.log.info(">> _onToVendorChange");
 
 			if (this.fToVendor !== fNewValue) {
 				this.fToVendor = fNewValue;
@@ -357,7 +354,7 @@ sap.ui.define([
 		},
 
 		_onToAgentChange: function(fNewValue) {
-			console.info(">> _onToAgentChange");
+			jQuery.sap.log.info(">> _onToAgentChange");
 
 			if (this.fToAgent !== fNewValue) {
 				this.fToAgent = fNewValue;
@@ -373,7 +370,7 @@ sap.ui.define([
 		},
 
 		_onRecipientChange: function() {
-			console.info(">> _onRecipientChange");
+			jQuery.sap.log.info(">> _onRecipientChange");
 
 			if (this.oCurrentFeeder) {
 				if (this.oCurrentFeeder.bComposeNewEmail || this.oCurrentFeeder.bIsReply) {
@@ -405,35 +402,35 @@ sap.ui.define([
 				this._setValue("/Root/zFeederRelevant/ToList", this.sTo);
 				this._setValue("/Root/zFeederRelevant/NewToEmail", this.sTo);
 			} catch (err) {
-				console.info("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
+				jQuery.sap.log.info("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
 			}
 		},
 
 		_setFromField: function(sValue) {
-			console.info(">> _setFromField");
+			jQuery.sap.log.info(">> _setFromField");
 
 			try {
 				this._setValue("/Root/zFeederRelevant/SelectedSMAPEmail", sValue);
 			} catch (err) {
-				console.info("Error in _setFromField: " + err.message); // eslint-disable-line no-console	
+				jQuery.sap.log.info("Error in _setFromField: " + err.message); // eslint-disable-line no-console	
 			}
 		},
 
 		_getUserEmail: function() {
-			console.info(">> _getUserEmail");
+			jQuery.sap.log.info(">> _getUserEmail");
 
 			var sEmail = "";
 			try {
 				sEmail = this._getValue("/Root/ZCurrentUserEmail");
 			} catch (err) {
-				console.info("Error in _getUserEmail: " + err.message); // eslint-disable-line no-console	
+				jQuery.sap.log.info("Error in _getUserEmail: " + err.message); // eslint-disable-line no-console	
 			}
 
 			return sEmail;
 		},
 
 		_setValue: function(sPath, sValue) {
-			console.info(">> _setValue");
+			jQuery.sap.log.info(">> _setValue");
 
 			var oController = this.getController();
 			while (oController) {
@@ -448,7 +445,7 @@ sap.ui.define([
 		},
 
 		_getValue: function(sPath) {
-			console.info(">> _getValue");
+			jQuery.sap.log.info(">> _getValue");
 
 			var sValue = "";
 
