@@ -22,6 +22,9 @@ sap.ui.define([
 		},
 
 		renderer: function(oRM, oControl) {
+			console.info(">> renderer");
+			console.trace("ZPoCCustomPane.renderer");
+			
 			if (!oControl.getVisible()) {
 				return;
 			}
@@ -34,7 +37,9 @@ sap.ui.define([
 		},
 
 		initializePane: function() {
-
+			console.info(">> initializePane");
+			console.trace("ZPoCCustomPane.initializePane");
+			
 			var that = this;
 
 			this.btn = new sap.m.Button({
@@ -47,18 +52,24 @@ sap.ui.define([
 		},
 
 		onBeforeRendering: function() {
-
+			console.info(">> onBeforeRendering");
+			console.trace("ZPoCCustomPane.onBeforeRendering");
+			
 			var that = this;
 
 		},
 
 		onAfterRendering: function() {
-
+			console.info(">> onAfterRendering");
+			console.trace("ZPoCCustomPane.onAfterRendering");
+			
 			var that = this;
 
 		},
 		
 		_onButtonPressed: function () {
+			console.info(">> _onButtonPressed");
+			
 			try {
 				this.getController().getParentController().getDataContainer().getDataObject("/Root/zFeederRelevant/SelectedSMAPEmail").setValue("vishneuski@gmail.com");
 			} catch (err)

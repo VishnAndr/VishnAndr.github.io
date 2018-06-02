@@ -14,7 +14,7 @@ sap.ui.define([
 		},
 
 		renderer: function(oRM, oControl) {
-			console.log(">> renderer");
+			console.info(">> renderer");
 			console.trace("ZFeederEnhancementPane.renderer");
 
 			if (!oControl.getVisible()) {
@@ -30,7 +30,7 @@ sap.ui.define([
 
 		initializePane: function() {
 			debugger;
-			console.log(">> initializePane");
+			console.info(">> initializePane");
 			console.trace("ZFeederEnhancementPane.initializePane");
 
 			var that = this;
@@ -51,7 +51,7 @@ sap.ui.define([
 		oCurrentFeeder: null,
 
 		_getControls: function(iIndex) {
-			console.log(">> _getControls");
+			console.info(">> _getControls");
 
 			var that = this;
 
@@ -110,7 +110,7 @@ sap.ui.define([
 		},
 
 		_initializeControls: function() {
-			console.log(">> _initializeControls");
+			console.info(">> _initializeControls");
 
 			var that = this;
 
@@ -176,12 +176,12 @@ sap.ui.define([
 		},
 
 		onBeforeRendering: function() {
-			console.log(">> onBeforeRendering");
+			console.info(">> onBeforeRendering");
 			console.trace("ZFeederEnhancementPane.onBeforeRendering");
 		},
 
 		onAfterRendering: function() {
-			console.log(">> onAfterRendering");
+			console.info(">> onAfterRendering");
 			console.trace("ZFeederEnhancementPane.onAfterRendering");
 
 			var that = this;
@@ -276,7 +276,7 @@ sap.ui.define([
 		},
 
 		_getNewLayout: function(iIndex) {
-			console.log(">> _getNewLayout");
+			console.info(">> _getNewLayout");
 
 			var oControls = this._getControls(iIndex);
 			var oLayout = null;
@@ -291,14 +291,14 @@ sap.ui.define([
 		},
 
 		_onDataContainerUpdateFinished: function() {
-			console.log(">> _onDataContainerUpdateFinished");
+			console.info(">> _onDataContainerUpdateFinished");
 
 			this._onRecipientChange();
 			this._onFromUserChange(this.fFromUser);
 		},
 
 		_onFromUserChange: function(fNewValue) {
-			console.log(">> _onFromUserChange");
+			console.info(">> _onFromUserChange");
 
 			try {
 				if (this.fFromUser !== fNewValue || !this.sUserEmail) {
@@ -320,12 +320,12 @@ sap.ui.define([
 					}
 				}
 			} catch (err) {
-				console.log("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
+				console.info("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
 			}
 		},
 
 		_onToAccountChange: function(fNewValue) {
-			console.log(">> _onToAccountChange");
+			console.info(">> _onToAccountChange");
 
 			if (this.fToAccount !== fNewValue) {
 				this.fToAccount = fNewValue;
@@ -341,7 +341,7 @@ sap.ui.define([
 		},
 
 		_onToVendorChange: function(fNewValue) {
-			console.log(">> _onToVendorChange");
+			console.info(">> _onToVendorChange");
 
 			if (this.fToVendor !== fNewValue) {
 				this.fToVendor = fNewValue;
@@ -357,7 +357,7 @@ sap.ui.define([
 		},
 
 		_onToAgentChange: function(fNewValue) {
-			console.log(">> _onToAgentChange");
+			console.info(">> _onToAgentChange");
 
 			if (this.fToAgent !== fNewValue) {
 				this.fToAgent = fNewValue;
@@ -373,7 +373,7 @@ sap.ui.define([
 		},
 
 		_onRecipientChange: function() {
-			console.log(">> _onRecipientChange");
+			console.info(">> _onRecipientChange");
 
 			if (this.oCurrentFeeder) {
 				if (this.oCurrentFeeder.bComposeNewEmail || this.oCurrentFeeder.bIsReply) {
@@ -405,35 +405,35 @@ sap.ui.define([
 				this._setValue("/Root/zFeederRelevant/ToList", this.sTo);
 				this._setValue("/Root/zFeederRelevant/NewToEmail", this.sTo);
 			} catch (err) {
-				console.log("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
+				console.info("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
 			}
 		},
 
 		_setFromField: function(sValue) {
-			console.log(">> _setFromField");
+			console.info(">> _setFromField");
 
 			try {
 				this._setValue("/Root/zFeederRelevant/SelectedSMAPEmail", sValue);
 			} catch (err) {
-				console.log("Error in _setFromField: " + err.message); // eslint-disable-line no-console	
+				console.info("Error in _setFromField: " + err.message); // eslint-disable-line no-console	
 			}
 		},
 
 		_getUserEmail: function() {
-			console.log(">> _getUserEmail");
+			console.info(">> _getUserEmail");
 
 			var sEmail = "";
 			try {
 				sEmail = this._getValue("/Root/ZCurrentUserEmail");
 			} catch (err) {
-				console.log("Error in _getUserEmail: " + err.message); // eslint-disable-line no-console	
+				console.info("Error in _getUserEmail: " + err.message); // eslint-disable-line no-console	
 			}
 
 			return sEmail;
 		},
 
 		_setValue: function(sPath, sValue) {
-			console.log(">> _setValue");
+			console.info(">> _setValue");
 
 			var oController = this.getController();
 			while (oController) {
@@ -448,7 +448,7 @@ sap.ui.define([
 		},
 
 		_getValue: function(sPath) {
-			console.log(">> _getValue");
+			console.info(">> _getValue");
 
 			var sValue = "";
 
