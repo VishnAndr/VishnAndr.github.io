@@ -14,8 +14,8 @@ sap.ui.define([
 		},
 
 		renderer: function(oRM, oControl) {
-			console.log('>> renderer');
-			console.trace('ZFeederEnhancementPane.renderer');
+			console.log(">> renderer");
+			console.trace("ZFeederEnhancementPane.renderer");
 
 			if (!oControl.getVisible()) {
 				return;
@@ -29,8 +29,9 @@ sap.ui.define([
 		},
 
 		initializePane: function() {
-			console.log('>> initializePane');
-			console.trace('ZFeederEnhancementPane.initializePane');
+			debugger;
+			console.log(">> initializePane");
+			console.trace("ZFeederEnhancementPane.initializePane");
 
 			var that = this;
 
@@ -50,7 +51,7 @@ sap.ui.define([
 		oCurrentFeeder: null,
 
 		_getControls: function(iIndex) {
-			console.log('>> _getControls');
+			console.log(">> _getControls");
 
 			var that = this;
 
@@ -109,79 +110,79 @@ sap.ui.define([
 		},
 
 		_initializeControls: function() {
-			console.log('>> _initializeControls');
-			
+			console.log(">> _initializeControls");
+
 			var that = this;
-			
+
 			this.aControls = [];
 			this.fFromUser = true;
 			this.fToAccount = false;
 			this.fToVendor = true;
 			this.fToAgent = false;
-			
+
 			this._onRecipientChange();
 			this._onFromUserChange(this.fFromUser);
 
-/*			this.oRecipientLayout = null;
-			this.oFromUser = null;
-			this.oToAccount = null;
-			this.oToVendor = null;
-			this.oToAgent = null;
+			/*			this.oRecipientLayout = null;
+						this.oFromUser = null;
+						this.oToAccount = null;
+						this.oToVendor = null;
+						this.oToAgent = null;
 
-			this.oFromUser = new sap.ui.commons.CheckBox({
-				text: "Use user’s email as sender",
-				tooltip: "Use user’s email as sender",
-				checked: true,
-				change: function() {
-					that._onFromUserChange();
-				}
-			});
-			this.oFromUser.addStyleClass("outlookBox");
+						this.oFromUser = new sap.ui.commons.CheckBox({
+							text: "Use user’s email as sender",
+							tooltip: "Use user’s email as sender",
+							checked: true,
+							change: function() {
+								that._onFromUserChange();
+							}
+						});
+						this.oFromUser.addStyleClass("outlookBox");
 
-			this.oToAccount = new sap.ui.commons.CheckBox({
-				text: "Use Account’s email as recipient",
-				tooltip: "Use Account’s email as recipient",
-				checked: false,
-				change: function() {
-					that._onToAccountChange();
-				}
-			});
-			this.oToAccount.addStyleClass("outlookBox");
+						this.oToAccount = new sap.ui.commons.CheckBox({
+							text: "Use Account’s email as recipient",
+							tooltip: "Use Account’s email as recipient",
+							checked: false,
+							change: function() {
+								that._onToAccountChange();
+							}
+						});
+						this.oToAccount.addStyleClass("outlookBox");
 
-			this.oToVendor = new sap.ui.commons.CheckBox({
-				text: "Use Partner’s email as recipient",
-				tooltip: "Use Partner’s email as recipient",
-				checked: true,
-				change: function() {
-					that._onToVendorChange();
-				}
-			});
-			this.oToVendor.addStyleClass("outlookBox");
+						this.oToVendor = new sap.ui.commons.CheckBox({
+							text: "Use Partner’s email as recipient",
+							tooltip: "Use Partner’s email as recipient",
+							checked: true,
+							change: function() {
+								that._onToVendorChange();
+							}
+						});
+						this.oToVendor.addStyleClass("outlookBox");
 
-			this.oToAgent = new sap.ui.commons.CheckBox({
-				text: "Use Agent’s email as recipient",
-				tooltip: "Use Agent’s email as recipient",
-				checked: false,
-				change: function() {
-					that._onToAgentChange();
-				}
-			});
-			this.oToAgent.addStyleClass("outlookBox");
+						this.oToAgent = new sap.ui.commons.CheckBox({
+							text: "Use Agent’s email as recipient",
+							tooltip: "Use Agent’s email as recipient",
+							checked: false,
+							change: function() {
+								that._onToAgentChange();
+							}
+						});
+						this.oToAgent.addStyleClass("outlookBox");
 
-			this.oRecipientLayout = new sap.ui.commons.layout.VerticalLayout({
-				width: "100%",
-				content: [this.oToAccount, this.oToVendor, this.oToAgent]
-			});*/
+						this.oRecipientLayout = new sap.ui.commons.layout.VerticalLayout({
+							width: "100%",
+							content: [this.oToAccount, this.oToVendor, this.oToAgent]
+						});*/
 		},
 
 		onBeforeRendering: function() {
-			console.log('>> onBeforeRendering');
-			console.trace('ZFeederEnhancementPane.onBeforeRendering');
+			console.log(">> onBeforeRendering");
+			console.trace("ZFeederEnhancementPane.onBeforeRendering");
 		},
 
 		onAfterRendering: function() {
-			console.log('>> onAfterRendering');
-			console.trace('ZFeederEnhancementPane.onAfterRendering');
+			console.log(">> onAfterRendering");
+			console.trace("ZFeederEnhancementPane.onAfterRendering");
 
 			var that = this;
 
@@ -202,7 +203,7 @@ sap.ui.define([
 				//so let's search the latest one				
 				if (oCustomPane._a && oCustomPane._a.jsTypeName && oCustomPane._a.jsTypeName.indexOf("Feeder") >= 0) {
 					var tmpFeeder = null;
-					for (var i=0; i<=9999; i++) {
+					for (var i = 0; i <= 9999; i++) {
 						var sFeederId = "__feeder" + i;
 						tmpFeeder = sap.ui.getCore().byId(sFeederId);
 						if (tmpFeeder && tmpFeeder.oReplyLayout) {
@@ -210,16 +211,17 @@ sap.ui.define([
 						} else {
 							break;
 						}
-					}				
+					}
 					if (oFeeder && oFeeder.oReplyLayout) {
 						oFeeder.oReplyLayout.addContent(this._getNewLayout(iFeederId));
 						oFeeder.addEventDelegate({
 							onAfterRendering: function(oEvent) {
 								that.oCurrentFeeder = oEvent.srcControl;
-							}});
+							}
+						});
 						iFeederId++;
 						this.oCurrentFeeder = oFeeder;
-						
+
 						//set Use Microsoft Outlook® to false by default
 						if (this.oCurrentFeeder.oOutlookScoped) {
 							this.oCurrentFeeder.oOutlookScoped.setChecked(false);
@@ -227,21 +229,22 @@ sap.ui.define([
 					}
 				}
 			}
-			
+
 			if (this.oCurrentFeeder) {
 				var oThatFeeder = this.oCurrentFeeder;
 				var origcancelButtonPress = this.oCurrentFeeder.cancelButtonPress;
-				this.oCurrentFeeder.cancelButtonPress = function () {
+				this.oCurrentFeeder.cancelButtonPress = function() {
 					oThatFeeder.bIsReply = false; // right place to reset this bloody flag
 					origcancelButtonPress.apply(oThatFeeder);
 				};
-				
+
 				if (oThatFeeder.oEmailSendButton) {
 					// and another right place to reset this bloody flag
-					oThatFeeder.oEmailSendButton.attachPress( function() { oThatFeeder.bIsReply = false; }); 
+					oThatFeeder.oEmailSendButton.attachPress(function() {
+						oThatFeeder.bIsReply = false;
+					});
 				}
 			}
-			
 
 			var oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
 				"/Root/zFeederRelevant/ToList");
@@ -256,10 +259,10 @@ sap.ui.define([
 					that._onRecipientChange();
 				}
 			});
-			
+
 			oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
 				"/Root/zFeederRelevant/NewToEmail");
-			oDataObject.attachValueChanged(function () {
+			oDataObject.attachValueChanged(function() {
 				var sReplyEmail = that._getValue("Root/zFeederRelevant/ReplyEmail");
 				var sNewToEmail = that._getValue("/Root/zFeederRelevant/NewToEmail");
 				if (sReplyEmail) {
@@ -268,13 +271,13 @@ sap.ui.define([
 					}
 				} else if (sNewToEmail !== that.sTo) {
 					that._onRecipientChange();
-				}				
-			});			
+				}
+			});
 		},
 
 		_getNewLayout: function(iIndex) {
-			console.log('>> _getNewLayout');
-			
+			console.log(">> _getNewLayout");
+
 			var oControls = this._getControls(iIndex);
 			var oLayout = null;
 			if (oControls) {
@@ -288,14 +291,14 @@ sap.ui.define([
 		},
 
 		_onDataContainerUpdateFinished: function() {
-			console.log('>> _onDataContainerUpdateFinished');
+			console.log(">> _onDataContainerUpdateFinished");
 
 			this._onRecipientChange();
 			this._onFromUserChange(this.fFromUser);
 		},
 
 		_onFromUserChange: function(fNewValue) {
-			console.log('>> _onFromUserChange');
+			console.log(">> _onFromUserChange");
 
 			try {
 				if (this.fFromUser !== fNewValue || !this.sUserEmail) {
@@ -322,7 +325,7 @@ sap.ui.define([
 		},
 
 		_onToAccountChange: function(fNewValue) {
-			console.log('>> _onToAccountChange');
+			console.log(">> _onToAccountChange");
 
 			if (this.fToAccount !== fNewValue) {
 				this.fToAccount = fNewValue;
@@ -338,7 +341,7 @@ sap.ui.define([
 		},
 
 		_onToVendorChange: function(fNewValue) {
-			console.log('>> _onToVendorChange');
+			console.log(">> _onToVendorChange");
 
 			if (this.fToVendor !== fNewValue) {
 				this.fToVendor = fNewValue;
@@ -354,7 +357,7 @@ sap.ui.define([
 		},
 
 		_onToAgentChange: function(fNewValue) {
-			console.log('>> _onToAgentChange');
+			console.log(">> _onToAgentChange");
 
 			if (this.fToAgent !== fNewValue) {
 				this.fToAgent = fNewValue;
@@ -370,14 +373,14 @@ sap.ui.define([
 		},
 
 		_onRecipientChange: function() {
-			console.log('>> _onRecipientChange');
-			
+			console.log(">> _onRecipientChange");
+
 			if (this.oCurrentFeeder) {
 				if (this.oCurrentFeeder.bComposeNewEmail || this.oCurrentFeeder.bIsReply) {
 					return;
 				}
 			}
-			
+
 			try {
 				var cEMailAddressDelimiter = "; ";
 				var sAccountEmail = this._getValue("/Root/ZAccountEmail");
@@ -407,7 +410,7 @@ sap.ui.define([
 		},
 
 		_setFromField: function(sValue) {
-			console.log('>> _setFromField');
+			console.log(">> _setFromField");
 
 			try {
 				this._setValue("/Root/zFeederRelevant/SelectedSMAPEmail", sValue);
@@ -417,7 +420,7 @@ sap.ui.define([
 		},
 
 		_getUserEmail: function() {
-			console.log('>> _getUserEmail');
+			console.log(">> _getUserEmail");
 
 			var sEmail = "";
 			try {
@@ -430,7 +433,7 @@ sap.ui.define([
 		},
 
 		_setValue: function(sPath, sValue) {
-			console.log('>> _setValue');
+			console.log(">> _setValue");
 
 			var oController = this.getController();
 			while (oController) {
@@ -445,7 +448,7 @@ sap.ui.define([
 		},
 
 		_getValue: function(sPath) {
-			console.log('>> _getValue');
+			console.log(">> _getValue");
 
 			var sValue = "";
 
