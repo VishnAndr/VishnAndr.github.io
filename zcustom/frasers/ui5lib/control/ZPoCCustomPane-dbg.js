@@ -70,7 +70,7 @@ sap.ui.define([
 				this.getController().getParentController().getDataContainer().getDataObject("/Root/zFeederRelevant/SelectedSMAPEmail").setValue(
 					"vishneuski@gmail.com");
 			} catch (err) {
-				jQuery.sap.log.error("Error in _onButtonPressed: " + err.message);
+				jQuery.sap.log.error("Error in _onButtonPressed: ", err.message,"zcustom");
 			}
 		}
 	});
