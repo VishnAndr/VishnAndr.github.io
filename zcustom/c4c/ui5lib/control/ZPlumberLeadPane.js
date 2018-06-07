@@ -529,6 +529,22 @@ sap.ui.define([
 			this._fillInAddressFromPlace(place);
 
 		},
+		
+		_removeSpecialChars: function(str) {
+		/*
+		//	1st regex /(?!\w|\s)./g remove any character that is not a word or whitespace. \w is equivalent to [A-Za-z0-9_]
+		//	2nd regex /\s+/g find any appearance of 1 or more whitespaces and replace it with one single white space
+		//	3rd regex /^(\s*)([\W\w]*)(\b\s*$)/g trim the string to remove any whitespace at the beginning or the end.
+		
+		  return str.replace(/(?!\w|\s)./g, '')
+		    .replace(/\s+/g, ' ')
+		    .replace(/^(\s*)([\W\w]*)(\b\s*$)/g, '$2');
+		*/
+		
+		// just leave [A-Za-z0-9_]
+		  return str.replace(/(?!\w)./g, '');
+		
+		},
 
 		_ProcessBarCodeResult: function(sResult) {
 			var vResult = sResult.text;
@@ -547,6 +563,11 @@ sap.ui.define([
 			var reNotWords = new RegExp(/\W+/);
 
 			try {
+				
+				vResult = this._removeSpecialChars(vResult);
+				
+				// old check, let's remove special characters
+				/*
 				if (reNotWords.test(vResult)) {
 					vMsg = "There are special characters:";
 					var arNotWords = vResult.match(reNotWords);
@@ -556,6 +577,7 @@ sap.ui.define([
 					vMsg += "\r\nPosition = " + arNotWords.index;
 					throw vMsg;
 				}
+				*/
 				
 				// carton 
 				// (AI240)OWNER(AI90)MATNR(AI21)SERNR 
