@@ -14,7 +14,7 @@ sap.ui.define([
 		},
 
 		renderer: function(oRM, oControl) {
-			jQuery.sap.log.debug(">> renderer","","zCustomPane");
+			jQuery.sap.log.debug(">> renderer", "", "zCustomPane");
 
 			if (!oControl.getVisible()) {
 				return;
@@ -28,7 +28,7 @@ sap.ui.define([
 		},
 
 		initializePane: function() {
-			jQuery.sap.log.debug(">> initializePane","","zCustomPane");
+			jQuery.sap.log.debug(">> initializePane", "", "zCustomPane");
 
 			var that = this;
 
@@ -48,7 +48,7 @@ sap.ui.define([
 		oCurrentFeeder: null,
 
 		_getControls: function(iIndex) {
-			jQuery.sap.log.debug(">> _getControls","","zCustomPane");
+			jQuery.sap.log.debug(">> _getControls", "", "zCustomPane");
 
 			var that = this;
 
@@ -107,7 +107,7 @@ sap.ui.define([
 		},
 
 		_initializeControls: function() {
-			jQuery.sap.log.debug(">> _initializeControls","","zCustomPane");
+			jQuery.sap.log.debug(">> _initializeControls", "", "zCustomPane");
 
 			var that = this;
 
@@ -173,12 +173,12 @@ sap.ui.define([
 		},
 
 		onBeforeRendering: function() {
-			jQuery.sap.log.debug(">> onBeforeRendering","","zCustomPane");
+			jQuery.sap.log.debug(">> onBeforeRendering", "", "zCustomPane");
 
 		},
 
 		onAfterRendering: function() {
-			jQuery.sap.log.debug(">> onAfterRendering","","zCustomPane");
+			jQuery.sap.log.debug(">> onAfterRendering", "", "zCustomPane");
 
 			var that = this;
 
@@ -186,42 +186,53 @@ sap.ui.define([
 			this.aControls = [];
 			this._onDataContainerUpdateFinished();
 
+			var fFeederExists = false;
 			var iFeederId = 0;
 			var oFeeder = null;
 			var aCustomPanes = this.getController().getParentController()._oCurrentComponentModel._mNodeNames.CustomPane;
 
 			for (var i = 0; i < aCustomPanes.length; i++) {
 				var oCustomPane = aCustomPanes[i];
-				//if (oCustomPane._cid && oCustomPane._cid.indexOf("feeder") >= 0) {
-				//	oFeeder = sap.ui.getCore().byId(oCustomPane._cid);
-				// !!!
-				//_cid is not available anymore since 1802 for feeder
-				//so let's search the latest one				
 				if (oCustomPane._a && oCustomPane._a.jsTypeName && oCustomPane._a.jsTypeName.indexOf("Feeder") >= 0) {
-					var tmpFeeder = null;
-					for (var j = 0; j <= 9999; j++) {
-						var sFeederId = "__feeder" + j;
-						tmpFeeder = sap.ui.getCore().byId(sFeederId);
-						if (tmpFeeder && tmpFeeder.oReplyLayout) {
+					fFeederExists = true;
+					break;
+				}
+			}
+
+			if (fFeederExists) {
+
+				var tmpFeeder = null;
+				for (i = 0; i <= 9999; i++) {
+					var sFeederId = "__feeder" + i;
+					tmpFeeder = sap.ui.getCore().byId(sFeederId);
+					if (tmpFeeder) {
+						if (tmpFeeder.oReplyLayout) {
 							oFeeder = tmpFeeder;
-						} else {
+						}
+					} else {
+						if (oFeeder) {
+							//propper feeder has been found on the previous iteration
 							break;
+						} else {
+							//we haven't found the propper feeder yet, keep searching
+							continue;
 						}
 					}
-					if (oFeeder && oFeeder.oReplyLayout) {
-						oFeeder.oReplyLayout.addContent(this._getNewLayout(iFeederId));
-						oFeeder.addEventDelegate({
-							onAfterRendering: function(oEvent) {
-								that.oCurrentFeeder = oEvent.srcControl;
-							}
-						});
-						iFeederId++;
-						this.oCurrentFeeder = oFeeder;
+				}
 
-						//set Use Microsoft Outlook® to false by default
-						if (this.oCurrentFeeder.oOutlookScoped) {
-							this.oCurrentFeeder.oOutlookScoped.setChecked(false);
+				if (oFeeder && oFeeder.oReplyLayout) {
+					oFeeder.oReplyLayout.addContent(this._getNewLayout(iFeederId));
+					oFeeder.addEventDelegate({
+						onAfterRendering: function(oEvent) {
+							that.oCurrentFeeder = oEvent.srcControl;
 						}
+					});
+					iFeederId++;
+					this.oCurrentFeeder = oFeeder;
+
+					//set Use Microsoft Outlook® to false by default
+					if (this.oCurrentFeeder.oOutlookScoped) {
+						this.oCurrentFeeder.oOutlookScoped.setChecked(false);
 					}
 				}
 			}
@@ -272,7 +283,7 @@ sap.ui.define([
 		},
 
 		_getNewLayout: function(iIndex) {
-			jQuery.sap.log.debug(">> _getNewLayout","","zCustomPane");
+			jQuery.sap.log.debug(">> _getNewLayout", "", "zCustomPane");
 
 			var oControls = this._getControls(iIndex);
 			var oLayout = null;
@@ -287,7 +298,7 @@ sap.ui.define([
 		},
 
 		_onDataContainerUpdateFinished: function() {
-			jQuery.sap.log.debug(">> _onDataContainerUpdateFinished","","zCustomPane");
+			jQuery.sap.log.debug(">> _onDataContainerUpdateFinished", "", "zCustomPane");
 
 			this._onRecipientChange();
 			this._onFromUserChange(this.fFromUser);
@@ -321,7 +332,7 @@ sap.ui.define([
 		},
 
 		_onToAccountChange: function(fNewValue) {
-			jQuery.sap.log.debug(">> _onToAccountChange","","zCustomPane");
+			jQuery.sap.log.debug(">> _onToAccountChange", "", "zCustomPane");
 
 			if (this.fToAccount !== fNewValue) {
 				this.fToAccount = fNewValue;
@@ -337,7 +348,7 @@ sap.ui.define([
 		},
 
 		_onToVendorChange: function(fNewValue) {
-			jQuery.sap.log.debug(">> _onToVendorChange","","zCustomPane");
+			jQuery.sap.log.debug(">> _onToVendorChange", "", "zCustomPane");
 
 			if (this.fToVendor !== fNewValue) {
 				this.fToVendor = fNewValue;
@@ -353,7 +364,7 @@ sap.ui.define([
 		},
 
 		_onToAgentChange: function(fNewValue) {
-			jQuery.sap.log.debug(">> _onToAgentChange","","zCustomPane");
+			jQuery.sap.log.debug(">> _onToAgentChange", "", "zCustomPane");
 
 			if (this.fToAgent !== fNewValue) {
 				this.fToAgent = fNewValue;
@@ -369,7 +380,7 @@ sap.ui.define([
 		},
 
 		_onRecipientChange: function() {
-			jQuery.sap.log.debug(">> _onRecipientChange","","zCustomPane");
+			jQuery.sap.log.debug(">> _onRecipientChange", "", "zCustomPane");
 
 			if (this.oCurrentFeeder) {
 				if (this.oCurrentFeeder.bComposeNewEmail || this.oCurrentFeeder.bIsReply) {
@@ -406,7 +417,7 @@ sap.ui.define([
 		},
 
 		_setFromField: function(sValue) {
-			jQuery.sap.log.debug(">> _setFromField","","zCustomPane");
+			jQuery.sap.log.debug(">> _setFromField", "", "zCustomPane");
 
 			try {
 				this._setValue("/Root/zFeederRelevant/SelectedSMAPEmail", sValue);
@@ -416,7 +427,7 @@ sap.ui.define([
 		},
 
 		_getUserEmail: function() {
-			jQuery.sap.log.debug(">> _getUserEmail","","zCustomPane");
+			jQuery.sap.log.debug(">> _getUserEmail", "", "zCustomPane");
 
 			var sEmail = "";
 			try {
@@ -429,7 +440,7 @@ sap.ui.define([
 		},
 
 		_setValue: function(sPath, sValue) {
-			jQuery.sap.log.debug(">> _setValue","","zCustomPane");
+			jQuery.sap.log.debug(">> _setValue", "", "zCustomPane");
 
 			var oController = this.getController();
 			while (oController) {
@@ -444,7 +455,7 @@ sap.ui.define([
 		},
 
 		_getValue: function(sPath) {
-			jQuery.sap.log.debug(">> _getValue","","zCustomPane");
+			jQuery.sap.log.debug(">> _getValue", "", "zCustomPane");
 
 			var sValue = "";
 
