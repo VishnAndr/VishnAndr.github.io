@@ -200,9 +200,20 @@ sap.ui.define([
 			}
 
 			if (fFeederExists) {
-
+				// a bit of performance optimization
+				var startI = 0;
+				if (this.oCurrentFeeder) {
+					try {
+						startI = parseInt(this.oCurrentFeeder.sId.replace("__feeder",""),10);
+					} catch (err) {
+						startI = 0;
+					}
+				} else {
+					startI = 0;
+				}
+				
 				var tmpFeeder = null;
-				for (i = 0; i <= 9999; i++) {
+				for (i = startI; i <= Number.MAX_SAFE_INTEGER; i++) {
 					var sFeederId = "__feeder" + i;
 					tmpFeeder = sap.ui.getCore().byId(sFeederId);
 					if (tmpFeeder) {
