@@ -212,8 +212,10 @@ sap.ui.define([
 					startI = 0;
 				}
 				
+				var lvMax = Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : Number.MAX_VALUE;
+				
 				var tmpFeeder = null;
-				for (i = startI; i <= Number.MAX_SAFE_INTEGER; i++) {
+				for (i = startI; i <= lvMax; i++) {
 					var sFeederId = "__feeder" + i;
 					tmpFeeder = sap.ui.getCore().byId(sFeederId);
 					if (tmpFeeder) {
