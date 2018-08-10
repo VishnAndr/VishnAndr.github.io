@@ -274,23 +274,31 @@ sap.ui.define([
 			//
 			// <<< The end of standard FileUploaderWrapper
 			//
-
+			
+			var oImageBrowseTile = new sap.m.ImageContent({
+						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
+						src: "sap-icon://open-folder"
+					});
+			var oTileContentBrowseTile = new sap.m.TileContent( { footer: "Browse"} );
+			oTileContentBrowseTile.addContent(oImageBrowseTile);
+			
 			var oBrowseTile = new sap.m.GenericTile(this.getControlPrefixId() + "-browseTile", {
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				press: function () {
 					// use oFileUploader
 					this.oFileUploader.press();
-				}.bind(this),
-				content: new sap.m.TileContent( {
-					footer: "Browse",
-					content: new sap.m.ImageContent({
-						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
-						src: "sap-icon://open-folder"
-					})
-				})
+				}.bind(this)
 			});
+			oBrowseTile.addContent(oTileContentBrowseTile);
 			this.setBrowseTile(oBrowseTile);
 
+			var oImageCameraTile = new sap.m.ImageContent({
+						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
+						src: "sap-icon://add-photo"
+					});
+			var oTileContentCameraTile = new sap.m.TileContent( { footer: "Camera"} );
+			oTileContentCameraTile.addContent(oImageCameraTile);
+			
 			var oCameraTile = new sap.m.GenericTile(this.getControlPrefixId() + "-cameraTile", {
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				press: function (evt) {
@@ -298,17 +306,18 @@ sap.ui.define([
 					if (this.oPictureButton) {
 						this.oPictureButton.press();
 					}
-				}.bind(this),
-				content: new sap.m.TileContent( {
-					footer: "Camera",
-					content: new sap.m.ImageContent({
-						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
-						src: "sap-icon://add-photo"
-					})
-				})				
+				}.bind(this)			
 			});
+			oCameraTile.addContent(oTileContentCameraTile);
 			this.setCameraTile(oCameraTile);
 
+			var oImageAttachmentTile = new sap.m.ImageContent({
+						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
+						src: "sap-icon://pdf-attachment"
+					});
+			var oTileContentAttachmentTile = new sap.m.TileContent( { footer: "File"} );
+			oTileContentAttachmentTile.addContent(oImageAttachmentTile);
+			
 			var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				scope: GenericTileScope.Actions,
@@ -318,16 +327,17 @@ sap.ui.define([
 					} else {
 						MessageToast.show("Attachment has been pressed.");
 					}
-				}.bind(this),
-				content: new sap.m.TileContent( {
-					footer: "File",
-					content: new sap.m.ImageContent({
-						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
-						src: "sap-icon://pdf-attachment"
-					})
-				})					
+				}.bind(this)				
 			});
+			oAttachment.addContent(oTileContentAttachmentTile);
 			this.addAttachment(oAttachment);
+			
+			var oImageAttachment2Tile = new sap.m.ImageContent({
+						class: "sapUiTinyMarginBeginEnd sapUiTinyMarginTopBottom",
+						src: "https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg"
+					});
+			var oTileContentAttachment2Tile = new sap.m.TileContent( { footer: "File"} );
+			oTileContentAttachment2Tile.addContent(oImageAttachment2Tile);
 			
 			var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
@@ -338,15 +348,9 @@ sap.ui.define([
 					} else {
 						MessageToast.show("Attachment has been pressed.");
 					}
-				}.bind(this),
-				content: new sap.m.TileContent( {
-					footer: "File",
-					content: new sap.m.ImageContent({
-						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
-						src: "https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg"
-					})
-				})					
+				}.bind(this)				
 			});
+			this.addContent(oTileContentAttachment2Tile);
 			this.addAttachment(oAttachment2);			
 
 		},
