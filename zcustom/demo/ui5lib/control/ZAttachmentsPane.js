@@ -3,8 +3,10 @@ sap.ui.define([
 	"sap/m/MessageToast",
 	"sap/m/MessageBox",
 	"sap/m/GenericTile",
-	"sap/m/GenericTileScope"
-], function(CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope) {
+	"sap/m/GenericTileScope",
+	"sap/ui/unified/FileUploader",
+	"sap/client/m/util/ImageResizer"	
+], function (CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope, FileUploader, ImageResizer) {
 	"use strict";
 
 	// Provides control zcustom.sandbox.ui5lib.control.ZCustomEmptyPane
@@ -12,74 +14,293 @@ sap.ui.define([
 		metadata: {
 
 			library: "zcustom.demo.ui5lib",
-			properties: {
-			},
+			properties: {},
 			aggregations: {
-				"browseButton" : { 
-					type : "sap.m.GenericTile", 
-					multiple : false
-				},	
-				"cameraButton" : {
-					type : "sap.m.GenericTile", 
-					multiple : false
+				"browseTile": {
+					type: "sap.m.GenericTile",
+					multiple: false
 				},
-				"attachments" : { 
-					type : "sap.m.GenericTile", 
-					multiple : true,
-					singularName : "attachment"
+				"cameraTile": {
+					type: "sap.m.GenericTile",
+					multiple: false
+				},
+				"attachments": {
+					type: "sap.m.GenericTile",
+					multiple: true,
+					singularName: "attachment"
 				}
 			},
-			events: {
-			}
+			events: {}
 		},
 
-		renderer: function(oRM, oControl) {
+		renderer: function (oRM, oControl) {
 			oRM.write("<div");
 			oRM.writeControlData(oControl);
 			oRM.addClass("zAttachments");
-            oRM.writeClasses();
-            oRM.write(">");
-			
-			oRM.renderControl(oControl.getBrowseButton());
-			oRM.renderControl(oControl.getCameraButton());
-			
-			$.each(oControl.getAttachments(),function(key,value){
+			oRM.writeClasses();
+			oRM.write(">");
+
+			oRM.renderControl(oControl.getBrowseTile());
+			oRM.renderControl(oControl.getCameraTile());
+
+			$.each(oControl.getAttachments(), function (key, value) {
 				oRM.renderControl(value);
 			});
-			
+
 			oRM.write("</div>");
 		},
+		
+		getControlID: function () {
+			return this.getControlPrefixId();
+		},
 
-		initializePane: function() {
-
-			//var that = this;
+		initializePane: function () {
 			
-			var oBrowseButton = new sap.m.GenericTile(this.getControlPrefixId() + "-browseButton", {
-				backgroundImage : sap.ui.core.IconPool.getIconURI('open-folder'),
-				press : function() {
-					// use the file picker plugin
-					window.FilePicker.pickOne(function(oFile) {
-						var sDataUri = "data:" + oFile.mimeType + ";base64," + oFile.content;
-						
-						//this._uploadFile(sDataUri, oFile.name);
-						MessageToast.show("File picked: \"" + oFile.name);		
-						});
+			// >>> We're doing some standard stuff from FileUploaderWrapper.
+			// At the end of the day we will have oFileUploader and oPictureButton.
+			// They will not be rendered, but their events trigger when corresponding tiles pressed
+			
+			var primaryPath = sap.client.util.BindingUtil.getBindingInfo("Value", this.oNode, null, this.sParentBinding).path;
+			var mControlBindings = null;
+			var oRuntimeEnviroment = this.oController.getRuntimeEnvironment();
+			var isContainer = oRuntimeEnviroment.isRunningInContainer();
+			var isIOS = sap.ui.Device.os.ios;
+			var imageSize;
+			var oSettings = this._oApplication.getSettings();
+			if (this._oApplication.isOfflineMode()) {
+				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOffline();
+			} else {
+				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOnline();
+			}
+			this._setupImageResize(imageSize);
+
+			var sEnableImageProcessor = this.oNode._a.enableImageProcessor;
+			if (sEnableImageProcessor === "Crop" && this.oController) {
+				var isRunningOnWindowsContainer = oRuntimeEnviroment.isRunningOnWindowsContainer();
+				if (!isRunningOnWindowsContainer) {
+					//Instantiating Image Processor
+					jQuery.sap.require("sap.client.basecontrols.core.ImageProcessor");
+					var oImageProcessor = new sap.client.basecontrols.core.ImageProcessor(this, primaryPath);
+					this.oController.setImageProcessor(oImageProcessor);
+				}
+			}
+
+			var bEnableImageResize = this._iCompressedWidthHeight && !this.oController.getImageProcessor();
+
+			if (bEnableImageResize) {
+				this.oImageResizer = new ImageResizer(this._iCompressedWidthHeight, this._iCompressedWidthHeight);
+			}
+			
+			if ((this.oImageResizer || this._oApplication.isOfflineMode()) && window.FilePicker) {
+				this.oFileUploader = new sap.m.Button(this.getControlID() + "-browseButton", {
+					icon: sap.ui.core.IconPool.getIconURI('open-folder'),
+					press: function() {
+						// use the file picker plugin
+						window.FilePicker.pickOne(function(oFile) {
+							var sDataUri = "data:" + oFile.mimeType + ";base64," + oFile.content;
+							if (this.isImageFile(oFile) && this.oImageResizer) {
+								this.oImageResizer.resizeImage(sDataUri).then(function(sResizedImageDataUri) {
+									this._onImageResized(null, sResizedImageDataUri, oFile.name);
+								}.bind(this), function(error) {
+									this._uploadFile(sDataUri, oFile.name);
+								}.bind(this));
+							} else {
+								if (this._oApplication.isOfflineMode()) {
+									var fileUploader = this._oApplication.getFileTransfer();
+									this._showUploadingDialog();
+
+									var options = {
+										fileKey: "file",
+										fileName: oFile.name,
+										mimeType: oFile.type,
+										content: oFile.content,
+										size: oFile.size
+									};
+
+									var success = this.onFileUploadSuccess.bind(this);
+									var fail = this.onFileUploadFail.bind(this);
+									fileUploader.upload(oFile.name, null, success, fail, options);
+								} else {
+									this._uploadFile(sDataUri, oFile.name);
+								}
+							}
+						}.bind(this));
+					}.bind(this)
+				});
+
+				this.oFileUploader.addStyleClass("sapClientMButtonFileUploader");
+
+				mControlBindings = {
+					Visible: "visible",
+					Enabled: "enabled"
+				};
+
+			} else {
+				this.oFileUploader = new FileUploader(this.getControlID(), {
+					shallPicturesBeOnlyTakenByCamera: oSettings.shallPicturesBeOnlyTakenByCamera(),
+					uploadOnChange: false, // we have to wait for the change event
+					sameFilenameAllowed: true,
+					buttonOnly: true,
+					// sendXHR: bRunningOnWindows81,
+					sendXHR: true,
+					change: function(oControlEvent) {
+						var mParameters = oControlEvent.mParameters;
+						if (mParameters && !mParameters.newValue) {
+							// workaround for IE uploading duplicate files
+							return;
+						}
+
+						if (this.isImageFileUploader(oControlEvent.oSource) && this.oImageResizer) {
+							var oControlEventCopy = {
+								mParameters: oControlEvent.mParameters,
+								oSource: oControlEvent.oSource
+							};
+
+							var oFile = oControlEvent.mParameters.files[0];
+
+							this.oImageResizer.resizeImageFile(oFile)
+								.then(function(sResizedImageDataUri) {
+									this._onImageResized(oControlEventCopy, sResizedImageDataUri);
+								}.bind(this), function(oReason) {
+									this._onFileChange(oControlEventCopy);
+								}.bind(this));
+						} else {
+							this._onFileChange(oControlEvent);
+						}
+
+					}.bind(this),
+					uploadAborted: function() {
+						this._closeUploadingDialog();
+						// that.oController.setGlobalInteractionPending(false);
+					}.bind(this),
+					// uploadProgress: function(oControlEvent) {
+					// var odummy;
+					// },
+					uploadComplete: function(oControlEvent) {
+						// that.oController.setGlobalInteractionPending(false);
+						this._closeUploadingDialog();
+
+						var response = oControlEvent.mParameters.response || oControlEvent.mParameters.responseRaw;
+						if (!response) {
+							// Even cancel was uploading an empty file; so return if no response
+							return;
+						}
+
+						response = unescape(decodeURI(response));
+						response = response.replace(/[\r]/g, "");
+						var items = response.split("\n");
+						if (items.length === 3) {
+							var id = items[0].split("=")[1];
+							var fileName = items[1].split("=")[1];
+							var fileSize = items[2].split("=")[1];
+							var oDataContainer = this.oController.getDataContainer();
+							if (sap.ui.Device.os.ios) {
+								var sGUID = sap.client.util.Util.createGuid();
+								var aFileParts = fileName.split('.');
+								if (aFileParts.length < 2) { // not '.', not extension found
+									fileName = fileName + "-" + sGUID;
+								} else {
+									var sFileExt = aFileParts.pop(); //extension without the dot
+									var sFileName = aFileParts.pop(); //name without the dot
+									fileName = sFileName + "-" + sGUID + "." + sFileExt;
+								}
+							}
+							// TODO binding in list is not supported
+							oDataContainer.setProperty(primaryPath + "/content", "id=" + id, this.getBindingContext());
+
+							// The fileName and fileSize can be bound only if on the same BO instance we have a fileName and fileSize property.
+							oDataContainer.setProperty(primaryPath + "/fileName", fileName, this.getBindingContext());
+							oDataContainer.setProperty(primaryPath + "/fileSize", fileSize, this.getBindingContext());
+
+							oDataContainer.checkUpdate(primaryPath + "/fileName.FormattedValue");
+						}
+
+						// Handle the onFileSelected Event if exist
+						var oEventContext;
+
+						if (oControlEvent && oControlEvent.getSource) {
+							oEventContext = new sap.client.evt.EventContext(oControlEvent.getSource());
+						}
+
+						var sEvent = this.oNode._a.onFileSelected;
+						if (sEvent) {
+							this.oController.getEventProcessor().handleEvent(sEvent, oEventContext);
+						}
+
+					}.bind(this),
+
+					fileSizeExceed: function(oControlEvent) {
+						sap.m.MessageToast.show(sap.client.m.Util.getLocaleText("FileUploadExceedLimitMsg", "Exceeds maximum file size of 2MB"));
 					}
 				});
-			this.setBrowseButton(oBrowseButton);
+
+				this.oFileUploader.setTooltip(sap.client.m.Util.getLocaleText("FileUploader_ToolTip", "No file chosen"));
+
+				mControlBindings = {
+					Visible: "visible",
+					Enabled: "enabled",
+					Text: "buttonText"
+				};
+
+				// running in container mode changes the buttons
+				// to be icons only to accommodate smaller screen sizes except for ios
+				// since the icon-only mode doesn't work with ios. Probably
+				// a bug in UI5 :(
+				if (isContainer && !isIOS) {
+					this.oFileUploader.setIcon(sap.ui.core.IconPool.getIconURI('open-folder'));
+					this.oFileUploader.setIconOnly(true);
+				}
+			}
 			
-			var oCameraButton = new sap.m.GenericTile(this.getControlPrefixId() + "-cameraButton", {
-				backgroundImage : "sap-icon://add-photo",
-				press : function (evt) {
-					this.onCameraButtonPress();
+			// Check if camera got to be hidden
+			var bHideCamera = false;
+			/*// For some controller, don't show the camera
+			var sControllerId = this.oController.getControllerID();
+			if (sControllerId && sControllerId.indexOf("/BYD_COD/SalesOnDemand/Marketing/Content/COD_CONTENT_TI.TI.uicomponent") > 0) {
+				bHideCamera = true;
+			}*/
+			
+			// check is this in a NOT iOS and there the cordova camera plugin
+			// and return a layout with the fileUploader and the 'Take Picture' Button
+			if (isContainer && !isIOS && sap.ui.Device.camera && !bHideCamera) {
+				// add extra button for the camera launch
+				var oPictureButton = new sap.m.Button(this.getControlID() + "-pictureButton", {
+					icon: sap.ui.core.IconPool.getIconURI('camera'),
+					press: [this.onPictureButtonPress, this]
+				});
+			}
+			
+			//
+			// <<< The end of standard FileUploaderWrapper
+			//
+
+			var oBrowseTile = new sap.m.GenericTile(this.getControlPrefixId() + "-browseTile", {
+				backgroundImage: sap.ui.core.IconPool.getIconURI("open-folder"),
+				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
+				press: function () {
+					// use oFileUploader
+					this.oFileUploader.press();
 				}.bind(this)
 			});
-			this.setCameraButton(oCameraButton);
-			
-			var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1" , {
-				backgroundImage : "sap-icon://pdf-attachment",
-				scope : GenericTileScope.Actions,
-				press : function (evt) {
+			this.setBrowseTile(oBrowseTile);
+
+			var oCameraTile = new sap.m.GenericTile(this.getControlPrefixId() + "-cameraTile", {
+				backgroundImage: "sap-icon://add-photo",
+				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
+				press: function (evt) {
+					// use oPictureButton
+					if (this.oPictureButton) {
+						this.oPictureButton.press();
+					}
+				}.bind(this)
+			});
+			this.setCameraTile(oCameraTile);
+
+			var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
+				backgroundImage: "sap-icon://pdf-attachment",
+				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
+				scope: GenericTileScope.Actions,
+				press: function (evt) {
 					if (evt.getParameter("action") === "Remove") {
 						MessageToast.show("Remove action of attachment");
 					} else {
@@ -90,42 +311,297 @@ sap.ui.define([
 			this.addAttachment(oAttachment);
 
 		},
-		
-		onBeforeRendering: function() {
-			
-			//var that = this;	
-			
-		},
-		
-		onAfterRendering: function() {
-			
-			//var that = this;	
-			
-		},
-		
-		onCameraButtonPress: function () {
-			var destinationType = sap.ui.Device.camera.DestinationType.FILE_URI;
-			var quality = 45;
-			if (this._oApplication.isOfflineMode() && window.FilePicker) {
-				quality = 10;
-				destinationType = sap.ui.Device.camera.DestinationType.DATA_URL;
-			}
-			
-			var options = {
-				quality: quality,
-				targetWidth: 1024,
-				targetHeight: 768,
-				saveToPhotoAlbum: false,
-				destinationType: destinationType
-			};
-			sap.ui.Device.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
-			
-		},
-		
-		onTakePictureSuccess: function(sImagePath) {
-			sap.m.MessageToast.show("Picture taken");
 
-/*			if (this.oImageResizer) {
+		onBeforeRendering: function () {
+
+			//var that = this;	
+
+		},
+
+		onAfterRendering: function () {
+
+			//var that = this;	
+
+		},
+
+
+		_setupImageResize: function(sImageUploadSize) {
+			if (sImageUploadSize && this.oController.getRuntimeEnvironment().isRunningInContainer()) {
+				switch (sImageUploadSize) {
+					case "L":
+						this._iCompressedWidthHeight = this.LARGE_WIDTH_HEIGHT;
+						break;
+					case "M":
+						this._iCompressedWidthHeight = this.MEDIUM_WIDTH_HEIGHT;
+						break;
+					case "S":
+						this._iCompressedWidthHeight = this.SMALL_WIDTH_HEIGHT;
+						break;
+					default:
+						this._iCompressedWidthHeight = null;
+				}
+			}
+		},
+
+		_showUploadingDialog: function() {
+			if (!this._oDialog) {
+				this._oDialog = new sap.m.Dialog(this.getControlID() + "-dialog", {
+					title: sap.client.m.Util.getLocaleText("UploadInProgress", "Uploading..."),
+					// type: sap.m.DialogType.Message,
+					content: new sap.m.Text(this.getControlID() + "-text", {
+						text: sap.client.m.Util.getLocaleText("FileUploadingMsg", "Uploading file to server, please wait ...")
+					})
+				});
+			}
+
+			this._oDialog.open();
+
+		},
+
+		_closeUploadingDialog: function() {
+			if (this._oDialog) {
+				this._oDialog.close();
+			}
+		},
+
+		_onImageResized: function(oControlEvent, sResizedImageDataUri, sFileName) {
+			var sFinalFileName = sFileName;
+
+			if (oControlEvent) {
+				var oOriginalFile = oControlEvent.mParameters.files[0];
+
+				if (oOriginalFile) {
+					sFinalFileName = oOriginalFile.name;
+				}
+			}
+
+			if (this._oApplication.isOfflineMode()) {
+				var oImageBlob = this._dataUriToBlob(sResizedImageDataUri);
+				this._uploadFile(oImageBlob, sFinalFileName);
+			} else {
+				this._uploadFile(sResizedImageDataUri, sFinalFileName);
+			}
+
+		},
+
+		_dataUriToBlob: function(sDataUri) {
+			var arr = sDataUri.split(','),
+				mime = arr[0].match(/:(.*?);/)[1],
+				bstr = atob(arr[1]),
+				n = bstr.length,
+				u8arr = new Uint8Array(n);
+			while (n--) {
+				u8arr[n] = bstr.charCodeAt(n);
+			}
+			return new Blob([u8arr], {
+				type: mime
+			});
+		},
+
+		_uploadFile: function(oFile, sFileName) {
+			var oFileTransfer = new window.FileTransfer();
+			if (this._oApplication.isOfflineMode()) {
+				oFileTransfer = this.getOfflineFileTransfer();
+			}
+
+			var oRuntimeEnviroment = this.oController.getRuntimeEnvironment();
+			var isContainer = oRuntimeEnviroment.isRunningInContainer();
+
+			var options = new window.FileUploadOptions();
+
+			var sFinalFileName;
+
+			if (sFileName) {
+				sFinalFileName = sFileName;
+			} else if (oFile.name) {
+				sFinalFileName = oFile.name;
+			} else {
+				sFinalFileName = "file";
+			}
+
+			options.fileName = sFinalFileName;
+			options.fileKey = "file";
+			options.chunkedMode = false;
+
+			if (typeof oFile === 'string' && oFile.match('image.*')) {
+				options.mimeType = "image/png";
+			} else if (typeof oFile === 'string' && oFile.match('data:.*')) {
+				options.mimeType = oFile.split(";")[0].split(":")[1];
+			} else {
+				options.mimeType = oFile.type;
+			}
+
+			options.headers = {
+				'Referer': window.location.href
+			};
+
+			this._showUploadingDialog();
+			var url = this.getUploadURL();
+			var success = this.onFileUploadSuccess.bind(this);
+			var fail = this.onFileUploadFail.bind(this);
+			oFileTransfer.upload(oFile, url, success, fail, options);
+		},
+
+		_onFileChange: function(oControlEvent) {
+			var fileUploader;
+			if (this._oApplication.isOfflineMode()) {
+				fileUploader = this._oApplication.getFileTransfer();
+				this._showUploadingDialog();
+
+				var oFile = oControlEvent.mParameters.files[0];
+				var options = {
+					fileKey: "file",
+					fileName: oFile.name,
+					mimeType: oFile.type
+				};
+
+				var success = this.onFileUploadSuccess.bind(this);
+				var fail = this.onFileUploadFail.bind(this);
+				fileUploader.upload(oFile, null, success, fail, options);
+			} else {
+				fileUploader = oControlEvent.oSource;
+
+				var url = this.getUploadURL();
+				// now we set the Action URL and trigger the post
+				fileUploader.setUploadUrl(url);
+
+				var oImageProcessor = this.oController.getImageProcessor();
+				if (oImageProcessor) {
+					if (this.isImageFileUploader(fileUploader)) {
+						oImageProcessor.openPreview(url, oControlEvent);
+					} else {
+						fileUploader.upload();
+						oImageProcessor.closePreview(url, oControlEvent);
+					}
+
+				} else {
+					this._showUploadingDialog();
+					fileUploader.upload();
+				}
+			}
+		},
+
+		isImageFileUploader: function(fileUploader) {
+			if (fileUploader && fileUploader.oFileUpload) {
+				var oFile = fileUploader.oFileUpload.files[0];
+				return this.isImageFile(oFile);
+			}
+			return false;
+		},
+
+		isImageFile: function(oFile) {
+			if (oFile && oFile.type && oFile.type.match('image.*') ||
+				(oFile && oFile.mimeType && oFile.mimeType.match('image.*'))) {
+				return true;
+			}
+			return false;
+		},
+
+		getOfflineFileTransfer: function() {
+			if (!this.oOfflineFileTransfer) {
+				var FileTransfer = sap.ui.requireSync('sap/client/setup/offline/FileTransfer');
+				var oOfflineAPI = this._oApplication.getOfflineAPI();
+				this.oOfflineFileTransfer = new FileTransfer(oOfflineAPI);
+			}
+
+			return this.oOfflineFileTransfer;
+		},
+
+		setControlWidth: function(sWidth) {
+			if (this.oControl.setWidth) {
+				this.oControl.setWidth("100%"); // not needed in for responsive parent dialog box
+			}
+		},
+
+		getUploadURL: function() {
+			// first test to calculate the post action Url
+			var n;
+			var url = this._oApplication.getRepositoryUrl();
+			if (url) {
+				// insert the sessionID into the url
+				n = url.indexOf("/sap/") + 4;
+				if (n >= 0) {
+					var sessionID = this.oController.getSession().getSessionID();
+					url = url.substr(0, n) + "(" + sessionID + ")" + url.substr(n);
+				}
+			}
+			if (url) {
+				// append "/fileupload"
+				n = url.lastIndexOf("/");
+				if (n >= 0) {
+					url = url.substr(0, n) + "/fileupload";
+				}
+			}
+			return url;
+		},
+
+		uploadComplete: function(sFileId, sFileName, sFileSize) {
+/*			var primaryPath = sap.client.util.BindingUtil.getBindingInfo("Value", this.oNode, null, this.sParentBinding).path;
+			if (sFileId !== null && sFileName !== null && sFileSize !== null) {
+				var oDataContainer = this.oController.getDataContainer();
+				oDataContainer.setProperty(primaryPath + "/content", "id=" + sFileId, this.getBindingContext());
+				// The fileName and fileSize can be bound only if on the same BO instance we have a fileName and fileSize property.
+				oDataContainer.setProperty(primaryPath + "/fileName", sFileName, this.getBindingContext());
+				oDataContainer.setProperty(primaryPath + "/fileSize", sFileSize, this.getBindingContext());
+				oDataContainer.checkUpdate(primaryPath + "/fileName.FormattedValue");
+
+				// oFilePath is empty in Windows
+				if (this.oFileUploader.oFilePath) {
+					this.oFileUploader.oFilePath.setValue(sFileName);
+				}
+
+				oDataContainer.setProperty('/Root/$System/EditMode', true);
+				oDataContainer.setProperty("/Root/$System/IsThingDirty", true);
+			}
+
+			// Handle the onFileSelected Event if exist
+			var oEventContext;
+
+			if (this.oFileUploader) {
+				oEventContext = new sap.client.evt.EventContext(this.oFileUploader);
+			}
+
+			var sEvent = this.oNode._a.onFileSelected;
+			if (sEvent) {
+				this.oController.getEventProcessor().handleEvent(sEvent, oEventContext);
+			}
+
+			this.oFileUploader.setTooltip(sFileName);*/
+		},
+
+		onFileUploadSuccess: function(fileUploadResult) {
+			var fileId = null;
+			var fileName = null;
+			var fileSize = null;
+			var response = unescape(decodeURI(fileUploadResult.response));
+			response = response.replace(/[\r]/g, "");
+			var items = response.split("\n");
+			if (items.length === 3) {
+				fileId = items[0].split("=")[1];
+				fileName = items[1].split("=")[1];
+				fileSize = items[2].split("=")[1];
+			}
+			this._closeUploadingDialog();
+			this.uploadComplete(fileId, fileName, fileSize);
+		},
+
+		onFileUploadFail: function(fileTransferError) {
+			this._closeUploadingDialog();
+			var message;
+			if (fileTransferError.exception) {
+				message = fileTransferError.exception;
+			} else {
+				message = fileTransferError.message;
+			}
+
+			this._resetUploader();
+
+			sap.m.MessageToast.show(sap.client.m.Util.getLocaleText("FileUploadFailMsg", "Unable to upload file. ") + " " + message);
+			jQuery.sap.log.info("onFileUploadFail exception " + message);
+		},
+
+		onTakePictureSuccess: function(sImagePath) {
+			if (this.oImageResizer) {
 				var fOnImageResized = function(sResizedImageDataUri) {
 					var sFileName;
 					if (sImagePath.startsWith("/")) {
@@ -172,11 +648,45 @@ sap.ui.define([
 				var success = this.onFileUploadSuccess.bind(this);
 				var fail = this.onFileUploadFail.bind(this);
 				ft.upload(filePath, url, success, fail, options);
-			}*/
+			}
 		},
 
 		onTakePictureFail: function(error) {
 			jQuery.sap.log.info("onTakePictureFail for error " + error);
+		},
+
+		onPictureButtonPress: function(oControlEvent) {
+			var destinationType = sap.ui.Device.camera.DestinationType.FILE_URI;
+			var quality = 45;
+			if (this._oApplication.isOfflineMode() && window.FilePicker) {
+				quality = 10;
+				destinationType = sap.ui.Device.camera.DestinationType.DATA_URL;
+			}
+
+			var options = {
+				quality: quality,
+				targetWidth: 1024,
+				targetHeight: 768,
+				saveToPhotoAlbum: false,
+				destinationType: destinationType
+			};
+			sap.ui.Device.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
+		},
+
+		_resetUploader: function() {
+/*			var primaryPath = sap.client.util.BindingUtil.getBindingInfo("Value", this.oNode, null, this.sParentBinding).path;
+			var oDataContainer = this.oController.getDataContainer();
+			oDataContainer.setProperty(primaryPath + "/content", null, this.getBindingContext());
+			oDataContainer.setProperty(primaryPath + "/fileName", null, this.getBindingContext());
+			oDataContainer.setProperty(primaryPath + "/fileSize", null, this.getBindingContext());
+
+			// oFilePath is empty in Windows
+			if (this.oFileUploader.oFilePath) {
+				this.oFileUploader.oFilePath.setValue("");
+			}
+
+			oDataContainer.setProperty('/Root/$System/EditMode', false);
+			oDataContainer.setProperty("/Root/$System/IsThingDirty", false);*/
 		}
 	});
 
