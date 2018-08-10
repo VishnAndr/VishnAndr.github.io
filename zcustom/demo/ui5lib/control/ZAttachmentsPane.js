@@ -59,7 +59,7 @@ sap.ui.define([
 			// >>> We're doing some standard stuff from FileUploaderWrapper.
 			// At the end of the day we will have oFileUploader and oPictureButton.
 			// They will not be rendered, but their events trigger when corresponding tiles pressed
-			
+			/*
 			var primaryPath = sap.client.util.BindingUtil.getBindingInfo("Value", this.oNode, null, this.sParentBinding).path;
 			var mControlBindings = null;
 			var oRuntimeEnviroment = this.oController.getRuntimeEnvironment();
@@ -135,9 +135,9 @@ sap.ui.define([
 					Enabled: "enabled"
 				};
 
-			} else {
+			} else {*/
 				this.oFileUploader = new FileUploader(this.getControlID(), {
-					shallPicturesBeOnlyTakenByCamera: oSettings.shallPicturesBeOnlyTakenByCamera(),
+					//shallPicturesBeOnlyTakenByCamera: oSettings.shallPicturesBeOnlyTakenByCamera(),
 					uploadOnChange: false, // we have to wait for the change event
 					sameFilenameAllowed: true,
 					buttonOnly: true,
@@ -235,7 +235,7 @@ sap.ui.define([
 				});
 
 				this.oFileUploader.setTooltip(sap.client.m.Util.getLocaleText("FileUploader_ToolTip", "No file chosen"));
-
+/*
 				mControlBindings = {
 					Visible: "visible",
 					Enabled: "enabled",
@@ -250,7 +250,7 @@ sap.ui.define([
 					this.oFileUploader.setIcon(sap.ui.core.IconPool.getIconURI('open-folder'));
 					this.oFileUploader.setIconOnly(true);
 				}
-			}
+			} */
 			
 			// Check if camera got to be hidden
 			var bHideCamera = false;
@@ -262,7 +262,8 @@ sap.ui.define([
 			
 			// check is this in a NOT iOS and there the cordova camera plugin
 			// and return a layout with the fileUploader and the 'Take Picture' Button
-			if (isContainer && !isIOS && sap.ui.Device.camera && !bHideCamera) {
+//			if (isContainer && !isIOS && sap.ui.Device.camera && !bHideCamera) {
+			if (sap.ui.Device.camera && !bHideCamera) {
 				// add extra button for the camera launch
 				var oPictureButton = new sap.m.Button(this.getControlID() + "-pictureButton", {
 					icon: sap.ui.core.IconPool.getIconURI('camera'),
