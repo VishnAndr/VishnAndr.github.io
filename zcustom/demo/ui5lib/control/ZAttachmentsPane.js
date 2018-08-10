@@ -275,29 +275,40 @@ sap.ui.define([
 			//
 
 			var oBrowseTile = new sap.m.GenericTile(this.getControlPrefixId() + "-browseTile", {
-				backgroundImage: sap.ui.core.IconPool.getIconURI("open-folder"),
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				press: function () {
 					// use oFileUploader
 					this.oFileUploader.press();
-				}.bind(this)
+				}.bind(this),
+				content: new sap.m.TileContent( {
+					footer: "Browse",
+					content: new sap.m.ImageContent({
+						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
+						src: "sap-icon://open-folder"
+					})
+				})
 			});
 			this.setBrowseTile(oBrowseTile);
 
 			var oCameraTile = new sap.m.GenericTile(this.getControlPrefixId() + "-cameraTile", {
-				backgroundImage: "sap-icon://add-photo",
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				press: function (evt) {
 					// use oPictureButton
 					if (this.oPictureButton) {
 						this.oPictureButton.press();
 					}
-				}.bind(this)
+				}.bind(this),
+				content: new sap.m.TileContent( {
+					footer: "Camera",
+					content: new sap.m.ImageContent({
+						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
+						src: "sap-icon://add-photo"
+					})
+				})				
 			});
 			this.setCameraTile(oCameraTile);
 
 			var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
-				backgroundImage: "sap-icon://pdf-attachment",
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				scope: GenericTileScope.Actions,
 				press: function (evt) {
@@ -306,9 +317,36 @@ sap.ui.define([
 					} else {
 						MessageToast.show("Attachment has been pressed.");
 					}
-				}.bind(this)
+				}.bind(this),
+				content: new sap.m.TileContent( {
+					footer: "File",
+					content: new sap.m.ImageContent({
+						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
+						src: "sap-icon://pdf-attachment"
+					})
+				})					
 			});
 			this.addAttachment(oAttachment);
+			
+			var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
+				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
+				scope: GenericTileScope.Actions,
+				press: function (evt) {
+					if (evt.getParameter("action") === "Remove") {
+						MessageToast.show("Remove action of attachment");
+					} else {
+						MessageToast.show("Attachment has been pressed.");
+					}
+				}.bind(this),
+				content: new sap.m.TileContent( {
+					footer: "File",
+					content: new sap.m.ImageContent({
+						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
+						src: "https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg"
+					})
+				})					
+			});
+			this.addAttachment(oAttachment2);			
 
 		},
 
