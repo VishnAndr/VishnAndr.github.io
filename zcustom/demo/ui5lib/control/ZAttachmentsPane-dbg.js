@@ -5,8 +5,10 @@ sap.ui.define([
 	"sap/m/GenericTile",
 	"sap/m/GenericTileScope",
 	"sap/ui/unified/FileUploader",
-	"sap/client/m/util/ImageResizer"	
-], function (CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope, FileUploader, ImageResizer) {
+	"sap/client/m/util/ImageResizer",
+	"sap/client/m/create/QuickCreateTile",
+	"sap.client.m.core.base.TileContainer"
+], function (CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile, TileContainer) {
 	"use strict";
 
 	// Provides control zcustom.sandbox.ui5lib.control.ZCustomEmptyPane
@@ -28,6 +30,10 @@ sap.ui.define([
 					type: "sap.m.GenericTile",
 					multiple: true,
 					singularName: "attachment"
+				},
+				"tileContainer": {
+					type: "sap.client.m.core.base.TileContainer",
+					multiple: false
 				}
 			},
 			events: {}
@@ -39,14 +45,15 @@ sap.ui.define([
 			oRM.addClass("zAttachments");
 			oRM.writeClasses();
 			oRM.write(">");
-
+			/*
 			oRM.renderControl(oControl.getBrowseTile());
 			oRM.renderControl(oControl.getCameraTile());
 
 			$.each(oControl.getAttachments(), function (key, value) {
 				oRM.renderControl(value);
 			});
-
+*/
+			oRM.renderControl(oControl.getTileContainer());
 			oRM.write("</div>");
 		},
 		
@@ -56,269 +63,31 @@ sap.ui.define([
 
 		initializePane: function () {
 			
-			// >>> We're doing some standard stuff from FileUploaderWrapper.
-			// At the end of the day we will have oFileUploader and oPictureButton.
-			// They will not be rendered, but their events trigger when corresponding tiles pressed
-			/*
-			var primaryPath = sap.client.util.BindingUtil.getBindingInfo("Value", this.oNode, null, this.sParentBinding).path;
-			var mControlBindings = null;
-			var oRuntimeEnviroment = this.oController.getRuntimeEnvironment();
-			var isContainer = oRuntimeEnviroment.isRunningInContainer();
-			var isIOS = sap.ui.Device.os.ios;
-			var imageSize;
-			var oSettings = this._oApplication.getSettings();
-			if (this._oApplication.isOfflineMode()) {
-				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOffline();
-			} else {
-				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOnline();
-			}
-			this._setupImageResize(imageSize);
+			var oTileContainer = new sap.client.m.core.base.TileContainer();
+			this.setTileContainer(oTileContainer);
 
-			var sEnableImageProcessor = this.oNode._a.enableImageProcessor;
-			if (sEnableImageProcessor === "Crop" && this.oController) {
-				var isRunningOnWindowsContainer = oRuntimeEnviroment.isRunningOnWindowsContainer();
-				if (!isRunningOnWindowsContainer) {
-					//Instantiating Image Processor
-					jQuery.sap.require("sap.client.basecontrols.core.ImageProcessor");
-					var oImageProcessor = new sap.client.basecontrols.core.ImageProcessor(this, primaryPath);
-					this.oController.setImageProcessor(oImageProcessor);
-				}
-			}
-
-			var bEnableImageResize = this._iCompressedWidthHeight && !this.oController.getImageProcessor();
-
-			if (bEnableImageResize) {
-				this.oImageResizer = new ImageResizer(this._iCompressedWidthHeight, this._iCompressedWidthHeight);
-			}
-			
-			if ((this.oImageResizer || this._oApplication.isOfflineMode()) && window.FilePicker) {
-				this.oFileUploader = new sap.m.Button(this.getControlID() + "-browseButton", {
-					icon: sap.ui.core.IconPool.getIconURI('open-folder'),
-					press: function() {
-						// use the file picker plugin
-						window.FilePicker.pickOne(function(oFile) {
-							var sDataUri = "data:" + oFile.mimeType + ";base64," + oFile.content;
-							if (this.isImageFile(oFile) && this.oImageResizer) {
-								this.oImageResizer.resizeImage(sDataUri).then(function(sResizedImageDataUri) {
-									this._onImageResized(null, sResizedImageDataUri, oFile.name);
-								}.bind(this), function(error) {
-									this._uploadFile(sDataUri, oFile.name);
-								}.bind(this));
-							} else {
-								if (this._oApplication.isOfflineMode()) {
-									var fileUploader = this._oApplication.getFileTransfer();
-									this._showUploadingDialog();
-
-									var options = {
-										fileKey: "file",
-										fileName: oFile.name,
-										mimeType: oFile.type,
-										content: oFile.content,
-										size: oFile.size
-									};
-
-									var success = this.onFileUploadSuccess.bind(this);
-									var fail = this.onFileUploadFail.bind(this);
-									fileUploader.upload(oFile.name, null, success, fail, options);
-								} else {
-									this._uploadFile(sDataUri, oFile.name);
-								}
-							}
-						}.bind(this));
-					}.bind(this)
-				});
-
-				this.oFileUploader.addStyleClass("sapClientMButtonFileUploader");
-
-				mControlBindings = {
-					Visible: "visible",
-					Enabled: "enabled"
-				};
-
-			} else {*/
-				this.oFileUploader = new FileUploader(this.getControlID(), {
-					//shallPicturesBeOnlyTakenByCamera: oSettings.shallPicturesBeOnlyTakenByCamera(),
-					uploadOnChange: false, // we have to wait for the change event
-					sameFilenameAllowed: true,
-					buttonOnly: true,
-					// sendXHR: bRunningOnWindows81,
-					sendXHR: true,
-					change: function(oControlEvent) {
-						var mParameters = oControlEvent.mParameters;
-						if (mParameters && !mParameters.newValue) {
-							// workaround for IE uploading duplicate files
-							return;
-						}
-
-						if (this.isImageFileUploader(oControlEvent.oSource) && this.oImageResizer) {
-							var oControlEventCopy = {
-								mParameters: oControlEvent.mParameters,
-								oSource: oControlEvent.oSource
-							};
-
-							var oFile = oControlEvent.mParameters.files[0];
-
-							this.oImageResizer.resizeImageFile(oFile)
-								.then(function(sResizedImageDataUri) {
-									this._onImageResized(oControlEventCopy, sResizedImageDataUri);
-								}.bind(this), function(oReason) {
-									this._onFileChange(oControlEventCopy);
-								}.bind(this));
-						} else {
-							this._onFileChange(oControlEvent);
-						}
-
-					}.bind(this),
-					uploadAborted: function() {
-						this._closeUploadingDialog();
-						// that.oController.setGlobalInteractionPending(false);
-					}.bind(this),
-					// uploadProgress: function(oControlEvent) {
-					// var odummy;
-					// },
-					uploadComplete: function(oControlEvent) {
-						// that.oController.setGlobalInteractionPending(false);
-						this._closeUploadingDialog();
-
-						var response = oControlEvent.mParameters.response || oControlEvent.mParameters.responseRaw;
-						if (!response) {
-							// Even cancel was uploading an empty file; so return if no response
-							return;
-						}
-
-						response = unescape(decodeURI(response));
-						response = response.replace(/[\r]/g, "");
-						var items = response.split("\n");
-						if (items.length === 3) {
-							var id = items[0].split("=")[1];
-							var fileName = items[1].split("=")[1];
-							var fileSize = items[2].split("=")[1];
-							var oDataContainer = this.oController.getDataContainer();
-							if (sap.ui.Device.os.ios) {
-								var sGUID = sap.client.util.Util.createGuid();
-								var aFileParts = fileName.split('.');
-								if (aFileParts.length < 2) { // not '.', not extension found
-									fileName = fileName + "-" + sGUID;
-								} else {
-									var sFileExt = aFileParts.pop(); //extension without the dot
-									var sFileName = aFileParts.pop(); //name without the dot
-									fileName = sFileName + "-" + sGUID + "." + sFileExt;
-								}
-							}
-							// TODO binding in list is not supported
-							oDataContainer.setProperty(primaryPath + "/content", "id=" + id, this.getBindingContext());
-
-							// The fileName and fileSize can be bound only if on the same BO instance we have a fileName and fileSize property.
-							oDataContainer.setProperty(primaryPath + "/fileName", fileName, this.getBindingContext());
-							oDataContainer.setProperty(primaryPath + "/fileSize", fileSize, this.getBindingContext());
-
-							oDataContainer.checkUpdate(primaryPath + "/fileName.FormattedValue");
-						}
-
-						// Handle the onFileSelected Event if exist
-						var oEventContext;
-
-						if (oControlEvent && oControlEvent.getSource) {
-							oEventContext = new sap.client.evt.EventContext(oControlEvent.getSource());
-						}
-
-						var sEvent = this.oNode._a.onFileSelected;
-						if (sEvent) {
-							this.oController.getEventProcessor().handleEvent(sEvent, oEventContext);
-						}
-
-					}.bind(this),
-
-					fileSizeExceed: function(oControlEvent) {
-						sap.m.MessageToast.show(sap.client.m.Util.getLocaleText("FileUploadExceedLimitMsg", "Exceeds maximum file size of 2MB"));
-					}
-				});
-
-				this.oFileUploader.setTooltip(sap.client.m.Util.getLocaleText("FileUploader_ToolTip", "No file chosen"));
-/*
-				mControlBindings = {
-					Visible: "visible",
-					Enabled: "enabled",
-					Text: "buttonText"
-				};
-
-				// running in container mode changes the buttons
-				// to be icons only to accommodate smaller screen sizes except for ios
-				// since the icon-only mode doesn't work with ios. Probably
-				// a bug in UI5 :(
-				if (isContainer && !isIOS) {
-					this.oFileUploader.setIcon(sap.ui.core.IconPool.getIconURI('open-folder'));
-					this.oFileUploader.setIconOnly(true);
-				}
-			} */
-			
-			// Check if camera got to be hidden
-			var bHideCamera = false;
-			/*// For some controller, don't show the camera
-			var sControllerId = this.oController.getControllerID();
-			if (sControllerId && sControllerId.indexOf("/BYD_COD/SalesOnDemand/Marketing/Content/COD_CONTENT_TI.TI.uicomponent") > 0) {
-				bHideCamera = true;
-			}*/
-			
-			// check is this in a NOT iOS and there the cordova camera plugin
-			// and return a layout with the fileUploader and the 'Take Picture' Button
-//			if (isContainer && !isIOS && sap.ui.Device.camera && !bHideCamera) {
-			if (sap.ui.Device.camera && !bHideCamera) {
-				// add extra button for the camera launch
-				var oPictureButton = new sap.m.Button(this.getControlID() + "-pictureButton", {
-					icon: sap.ui.core.IconPool.getIconURI('camera'),
-					press: [this.onPictureButtonPress, this]
-				});
-			}
-			
-			//
-			// <<< The end of standard FileUploaderWrapper
-			//
-			
-			var oImageBrowseTile = new sap.m.ImageContent({
-						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
-						src: "sap-icon://open-folder"
-					});
-			var oTileContentBrowseTile = new sap.m.TileContent( { footer: "Browse"} );
-			oTileContentBrowseTile.addContent(oImageBrowseTile);
-			
-			var oBrowseTile = new sap.m.GenericTile(this.getControlPrefixId() + "-browseTile", {
-				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
-				press: function () {
-					// use oFileUploader
-					this.oFileUploader.press();
-				}.bind(this)
+			var oBrowseTile = new sap.client.m.create.QuickCreateTile( this.getControlId() + "-browseTile", {
+				text : "Browse",
+				icon : "sap-icon://open-folder"
 			});
-			oBrowseTile.addContent(oTileContentBrowseTile);
 			this.setBrowseTile(oBrowseTile);
 
-			var oImageCameraTile = new sap.m.ImageContent({
-						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
-						src: "sap-icon://add-photo"
-					});
-			var oTileContentCameraTile = new sap.m.TileContent( { footer: "Camera"} );
-			oTileContentCameraTile.addContent(oImageCameraTile);
-			
-			var oCameraTile = new sap.m.GenericTile(this.getControlPrefixId() + "-cameraTile", {
-				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
-				press: function (evt) {
-					// use oPictureButton
-					if (this.oPictureButton) {
-						this.oPictureButton.press();
-					}
-				}.bind(this)			
+			var oCameraTile = new sap.client.m.create.QuickCreateTile( this.getControlId() + "-cameraTile", {
+				text : "Camer",
+				icon : "sap-icon://add-photo",
+				press : [this.onPictureButtonPress, this]
 			});
-			oCameraTile.addContent(oTileContentCameraTile);
 			this.setCameraTile(oCameraTile);
 
 			var oImageAttachmentTile = new sap.m.ImageContent({
 						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
 						src: "sap-icon://pdf-attachment"
 					});
-			var oTileContentAttachmentTile = new sap.m.TileContent( { footer: "File"} );
-			oTileContentAttachmentTile.addContent(oImageAttachmentTile);
+			var oTileContentAttachmentTile = new sap.m.TileContent();
+			oTileContentAttachmentTile.setContent(oImageAttachmentTile);
 			
 			var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
+				header: "File",
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				scope: GenericTileScope.Actions,
 				press: function (evt) {
@@ -329,17 +98,18 @@ sap.ui.define([
 					}
 				}.bind(this)				
 			});
-			oAttachment.addContent(oTileContentAttachmentTile);
+			oAttachment.addTileContent(oTileContentAttachmentTile);
 			this.addAttachment(oAttachment);
 			
 			var oImageAttachment2Tile = new sap.m.ImageContent({
 						class: "sapUiTinyMarginBeginEnd sapUiTinyMarginTopBottom",
 						src: "https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg"
 					});
-			var oTileContentAttachment2Tile = new sap.m.TileContent( { footer: "File"} );
-			oTileContentAttachment2Tile.addContent(oImageAttachment2Tile);
+			var oTileContentAttachment2Tile = new sap.m.TileContent();
+			oTileContentAttachment2Tile.setContent(oImageAttachment2Tile);
 			
 			var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
+				header: "File",
 				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				scope: GenericTileScope.Actions,
 				press: function (evt) {
@@ -350,8 +120,13 @@ sap.ui.define([
 					}
 				}.bind(this)				
 			});
-			this.addContent(oTileContentAttachment2Tile);
-			this.addAttachment(oAttachment2);			
+			oAttachment2.addTileContent(oTileContentAttachment2Tile);
+			this.addAttachment(oAttachment2);
+			
+			this.oTileContainer.addTiles(oBrowseTile);
+			this.oTileContainer.addTiles(oCameraTile);
+			this.oTileContainer.addTiles(oAttachment);
+			this.oTileContainer.addTiles(oAttachment2);
 
 		},
 
@@ -701,10 +476,10 @@ sap.ui.define([
 		onPictureButtonPress: function(oControlEvent) {
 			var destinationType = sap.ui.Device.camera.DestinationType.FILE_URI;
 			var quality = 45;
-			if (this._oApplication.isOfflineMode() && window.FilePicker) {
+/*			if (this._oApplication.isOfflineMode() && window.FilePicker) {
 				quality = 10;
 				destinationType = sap.ui.Device.camera.DestinationType.DATA_URL;
-			}
+			}*/
 
 			var options = {
 				quality: quality,
