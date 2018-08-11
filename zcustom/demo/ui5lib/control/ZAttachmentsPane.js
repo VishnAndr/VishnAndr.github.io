@@ -7,7 +7,7 @@ sap.ui.define([
 	"sap/ui/unified/FileUploader",
 	"sap/client/m/util/ImageResizer",
 	"sap/client/m/create/QuickCreateTile",
-	"sap.client.m.core.base.TileContainer"
+	"sap/client/m/core/base/TileContainer"
 ], function (CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile, TileContainer) {
 	"use strict";
 
