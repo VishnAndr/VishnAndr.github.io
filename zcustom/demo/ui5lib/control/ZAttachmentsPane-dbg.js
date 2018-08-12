@@ -7,8 +7,8 @@ sap.ui.define([
 	"sap/ui/unified/FileUploader",
 	"sap/client/m/util/ImageResizer",
 	"sap/client/m/create/QuickCreateTile",
-	"sap/client/m/core/base/TileContainer"
-], function (CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile, TileContainer) {
+	"sap/m/ScrollContainer"
+], function (CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile, ScrollContainer) {
 	"use strict";
 
 	// Provides control zcustom.sandbox.ui5lib.control.ZCustomEmptyPane
@@ -19,11 +19,11 @@ sap.ui.define([
 			properties: {},
 			aggregations: {
 				"browseTile": {
-					type: "sap.m.GenericTile",
+					type: "sap.client.m.create.QuickCreateTile",
 					multiple: false
 				},
 				"cameraTile": {
-					type: "sap.m.GenericTile",
+					type: "sap.client.m.create.QuickCreateTile",
 					multiple: false
 				},
 				"attachments": {
@@ -32,7 +32,7 @@ sap.ui.define([
 					singularName: "attachment"
 				},
 				"tileContainer": {
-					type: "sap.client.m.core.base.TileContainer",
+					type: "sap.m.ScrollContainer",
 					multiple: false
 				}
 			},
@@ -56,23 +56,21 @@ sap.ui.define([
 			oRM.renderControl(oControl.getTileContainer());
 			oRM.write("</div>");
 		},
-		
-		getControlID: function () {
-			return this.getControlPrefixId();
-		},
 
 		initializePane: function () {
 			
-			var oTileContainer = new sap.client.m.core.base.TileContainer();
+			var oTileContainer = new sap.m.ScrollContainerr({
+				class : "sapUiTinyMarginTop sapUiTinyMarginBegin"
+			});
 			this.setTileContainer(oTileContainer);
 
-			var oBrowseTile = new sap.client.m.create.QuickCreateTile( this.getControlId() + "-browseTile", {
+			var oBrowseTile = new sap.client.m.create.QuickCreateTile( this.getControlPrefixId() + "-browseTile", {
 				text : "Browse",
 				icon : "sap-icon://open-folder"
 			});
 			this.setBrowseTile(oBrowseTile);
 
-			var oCameraTile = new sap.client.m.create.QuickCreateTile( this.getControlId() + "-cameraTile", {
+			var oCameraTile = new sap.client.m.create.QuickCreateTile( this.getControlPrefixId() + "-cameraTile", {
 				text : "Camer",
 				icon : "sap-icon://add-photo",
 				press : [this.onPictureButtonPress, this]
