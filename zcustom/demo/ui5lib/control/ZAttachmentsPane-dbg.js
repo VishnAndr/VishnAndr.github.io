@@ -59,7 +59,7 @@ sap.ui.define([
 
 		initializePane: function () {
 			
-			var oTileContainer = new sap.m.ScrollContainerr({
+			var oTileContainer = new sap.m.ScrollContainer({
 				class : "sapUiTinyMarginTop sapUiTinyMarginBegin"
 			});
 			this.setTileContainer(oTileContainer);
@@ -121,10 +121,10 @@ sap.ui.define([
 			oAttachment2.addTileContent(oTileContentAttachment2Tile);
 			this.addAttachment(oAttachment2);
 			
-			this.oTileContainer.addTiles(oBrowseTile);
-			this.oTileContainer.addTiles(oCameraTile);
-			this.oTileContainer.addTiles(oAttachment);
-			this.oTileContainer.addTiles(oAttachment2);
+			this.oTileContainer.addContent(oBrowseTile);
+			this.oTileContainer.addContent(oCameraTile);
+			this.oTileContainer.addContent(oAttachment);
+			this.oTileContainer.addContent(oAttachment2);
 
 		},
 
