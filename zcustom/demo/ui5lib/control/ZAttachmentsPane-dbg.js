@@ -67,14 +67,14 @@ sap.ui.define([
 			var oBrowseTile = new sap.client.m.create.QuickCreateTile( this.getControlPrefixId() + "-browseTile", {
 				text : "Browse",
 				icon : "sap-icon://open-folder"
-			}).addStyleClass("sapClientMQCTile sapMGT OneByOne");
+			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile");
 			this.setBrowseTile(oBrowseTile);
 
 			var oCameraTile = new sap.client.m.create.QuickCreateTile( this.getControlPrefixId() + "-cameraTile", {
-				text : "Camer",
+				text : "Camera",
 				icon : "sap-icon://add-photo",
 				press : [this.onPictureButtonPress, this]
-			}).addStyleClass("sapClientMQCTile sapMGT OneByOne");
+			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile");
 			this.setCameraTile(oCameraTile);
 
 			var oImageAttachmentTile = new sap.m.ImageContent({
@@ -95,7 +95,7 @@ sap.ui.define([
 						MessageToast.show("Attachment has been pressed.");
 					}
 				}.bind(this)				
-			});
+			}).addStyleClass("sapUshellTile");
 			oAttachment.addTileContent(oTileContentAttachmentTile);
 			this.addAttachment(oAttachment);
 			
@@ -117,7 +117,7 @@ sap.ui.define([
 						MessageToast.show("Attachment has been pressed.");
 					}
 				}.bind(this)				
-			});
+			}).addStyleClass("sapUshellTile");
 			oAttachment2.addTileContent(oTileContentAttachment2Tile);
 			this.addAttachment(oAttachment2);
 			
@@ -472,6 +472,7 @@ sap.ui.define([
 		},
 
 		onPictureButtonPress: function(oControlEvent) {
+			MessageToast.show("onPictureButtonPress pressed");
 			var destinationType = sap.ui.Device.camera.DestinationType.FILE_URI;
 			var quality = 45;
 /*			if (this._oApplication.isOfflineMode() && window.FilePicker) {
@@ -486,6 +487,7 @@ sap.ui.define([
 				saveToPhotoAlbum: false,
 				destinationType: destinationType
 			};
+			MessageToast.show("Starting getting picture");
 			sap.ui.Device.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
 		},
 
