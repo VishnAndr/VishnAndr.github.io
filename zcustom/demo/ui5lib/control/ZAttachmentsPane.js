@@ -59,22 +59,22 @@ sap.ui.define([
 
 		initializePane: function () {
 			
-			var oTileContainer = new sap.m.ScrollContainer({
+			this.oTileContainer = new sap.m.ScrollContainer({
 				class : "sapUiTinyMarginTop sapUiTinyMarginBegin"
 			});
-			this.setTileContainer(oTileContainer);
+			this.setTileContainer(this.oTileContainer);
 
 			var oBrowseTile = new sap.client.m.create.QuickCreateTile( this.getControlPrefixId() + "-browseTile", {
 				text : "Browse",
 				icon : "sap-icon://open-folder"
-			});
+			}).addStyleClass("sapClientMQCTile sapMGT OneByOne");
 			this.setBrowseTile(oBrowseTile);
 
 			var oCameraTile = new sap.client.m.create.QuickCreateTile( this.getControlPrefixId() + "-cameraTile", {
 				text : "Camer",
 				icon : "sap-icon://add-photo",
 				press : [this.onPictureButtonPress, this]
-			});
+			}).addStyleClass("sapClientMQCTile sapMGT OneByOne");
 			this.setCameraTile(oCameraTile);
 
 			var oImageAttachmentTile = new sap.m.ImageContent({
