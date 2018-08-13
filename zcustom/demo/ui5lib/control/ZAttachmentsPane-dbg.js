@@ -59,26 +59,23 @@ sap.ui.define([
 
 		initializePane: function () {
 			
-			this.oTileContainer = new sap.m.ScrollContainer({
-				class : "sapUiTinyMarginTop sapUiTinyMarginBegin"
-			});
+			this.oTileContainer = new sap.m.ScrollContainer().addStyleClass("sapUiTinyMargin");
 			this.setTileContainer(this.oTileContainer);
 
 			var oBrowseTile = new sap.client.m.create.QuickCreateTile( this.getControlPrefixId() + "-browseTile", {
 				text : "Browse",
 				icon : "sap-icon://open-folder"
-			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile");
+			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
 			this.setBrowseTile(oBrowseTile);
 
 			var oCameraTile = new sap.client.m.create.QuickCreateTile( this.getControlPrefixId() + "-cameraTile", {
 				text : "Camera",
 				icon : "sap-icon://add-photo",
 				press : [this.onPictureButtonPress, this]
-			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile");
+			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
 			this.setCameraTile(oCameraTile);
 
 			var oImageAttachmentTile = new sap.m.ImageContent({
-						class: "sapUiMediumMarginBeginEnd sapUiMediumMarginTopBottom",
 						src: "sap-icon://pdf-attachment"
 					});
 			var oTileContentAttachmentTile = new sap.m.TileContent();
@@ -86,7 +83,6 @@ sap.ui.define([
 			
 			var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
 				header: "File",
-				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				scope: GenericTileScope.Actions,
 				press: function (evt) {
 					if (evt.getParameter("action") === "Remove") {
@@ -95,12 +91,11 @@ sap.ui.define([
 						MessageToast.show("Attachment has been pressed.");
 					}
 				}.bind(this)				
-			}).addStyleClass("sapUshellTile");
+			}).addStyleClass("sapUshellTile sapUiTinyMargin");
 			oAttachment.addTileContent(oTileContentAttachmentTile);
 			this.addAttachment(oAttachment);
 			
 			var oImageAttachment2Tile = new sap.m.ImageContent({
-						class: "sapUiTinyMarginBeginEnd sapUiTinyMarginTopBottom",
 						src: "https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg"
 					});
 			var oTileContentAttachment2Tile = new sap.m.TileContent();
@@ -108,7 +103,6 @@ sap.ui.define([
 			
 			var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
 				header: "File",
-				class: "sapUiTinyMarginBegin sapUiTinyMarginTop",
 				scope: GenericTileScope.Actions,
 				press: function (evt) {
 					if (evt.getParameter("action") === "Remove") {
@@ -117,7 +111,7 @@ sap.ui.define([
 						MessageToast.show("Attachment has been pressed.");
 					}
 				}.bind(this)				
-			}).addStyleClass("sapUshellTile");
+			}).addStyleClass("sapUshellTile sapUiTinyMargin");
 			oAttachment2.addTileContent(oTileContentAttachment2Tile);
 			this.addAttachment(oAttachment2);
 			
@@ -473,11 +467,11 @@ sap.ui.define([
 
 		onPictureButtonPress: function(oControlEvent) {
 			MessageToast.show("onPictureButtonPress pressed");
-			var destinationType = sap.ui.Device.camera.DestinationType.FILE_URI;
+			var destinationType = navigator.camera.DestinationType.FILE_URI;
 			var quality = 45;
 /*			if (this._oApplication.isOfflineMode() && window.FilePicker) {
 				quality = 10;
-				destinationType = sap.ui.Device.camera.DestinationType.DATA_URL;
+				destinationType = navigator.camera.DestinationType.DATA_URL;
 			}*/
 
 			var options = {
@@ -488,7 +482,7 @@ sap.ui.define([
 				destinationType: destinationType
 			};
 			MessageToast.show("Starting getting picture");
-			sap.ui.Device.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
+			navigator.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
 		},
 
 		_resetUploader: function() {
