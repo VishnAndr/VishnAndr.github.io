@@ -71,10 +71,12 @@ sap.ui.define([
 
 		initializePane: function () {
 			// Preparation
+			this.oController = this.getController();
+			
 			this._oApplication = this._oApplication ||
 				(this.oController && this.oController.getApplication && this.oController.getApplication()) ||
 				(sap.client.getCurrentApplication && sap.client.getCurrentApplication()); //the logic taken from sap.client.basecontrols.core.BaseControlWrapper
-
+			
 			this._oRuntimeEnviroment = (this.oController && this.oController.getRuntimeEnvironment && this.oController.getRuntimeEnvironment()) ||
 				(this._oApplication.getRuntimeEnvironment());
 			var isContainer = this._oRuntimeEnviroment.isRunningInContainer();
@@ -276,7 +278,6 @@ sap.ui.define([
 		},
 
 		_showUploadingDialog: function () {
-			MessageToast.show("e1");
 			if (!this._oDialog) {
 				this._oDialog = new sap.m.Dialog(this.getControlPrefixId() + "-dialog", {
 					title: sap.client.m.Util.getLocaleText("UploadInProgress", "Uploading..."),
@@ -285,11 +286,9 @@ sap.ui.define([
 						text: sap.client.m.Util.getLocaleText("FileUploadingMsg", "Uploading file to server, please wait ...")
 					})
 				});
-				MessageToast.show("e2");
 			}
-			MessageToast.show("e3");
+
 			this._oDialog.open();
-			MessageToast.show("e4");
 		},
 
 		_closeUploadingDialog: function () {
@@ -457,8 +456,10 @@ sap.ui.define([
 
 		getUploadURL: function () {
 			// first test to calculate the post action Url
+			MessageToast.show("e1");
 			var n;
 			var url = this._oApplication.getRepositoryUrl();
+			MessageToast.show("URL : " + url);
 			if (url) {
 				// insert the sessionID into the url
 				n = url.indexOf("/sap/") + 4;
