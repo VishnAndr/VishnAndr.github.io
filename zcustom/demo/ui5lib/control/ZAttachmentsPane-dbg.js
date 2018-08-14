@@ -230,7 +230,7 @@ sap.ui.define([
 					theImageTag.src = URL.createObjectURL(blob);
 
 					var sFinalFileName = "test";
-					that._uploadFile(blob, sFinalFileName);
+					that._uploadFile(blob, sFinalFileName).bind(that);
 				})
 				.catch(function (err) {
 					MessageToast.show('Error: ' + err)
