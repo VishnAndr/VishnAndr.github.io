@@ -158,15 +158,15 @@ sap.ui.define([
 			}
 
 			// Test!!!
-			this._oBtnGrabVideo = new sap.m.Button({
-				text: "Grab Video",
-				press: [this._grabVideo, this]
-			});
-
 			this._oBtnTakePhoto = new sap.m.Button({
 				text: "Take photo",
 				press: [this._takePhoto, this]
 			});
+		},
+
+		_isDebugMode: function () {
+			var sSapUiDebug = this.getUriParameter("sap-ui-debug");
+			return sap.client.getCurrentApplication().isDebugMode() || !!(sSapUiDebug && sSapUiDebug.toLowerCase() === "true")
 		},
 
 		_getUserMedia: function (options, successCallback, failureCallback) {
@@ -220,14 +220,16 @@ sap.ui.define([
 
 			var that = this;
 			theImageCapturer.takePhoto()
-				.then( function(blob) {
+				.then(function (blob) {
 					var theImageTag = document.getElementById("imageTag");
 					theImageTag.src = URL.createObjectURL(blob);
-					
+
 					var sFinalFileName = "test";
 					that._uploadFile(blob, sFinalFileName);
 				})
-				.catch( function(err) { MessageToast.show('Error: ' + err)});
+				.catch(function (err) {
+					MessageToast.show('Error: ' + err)
+				});
 		},
 
 		_tilePressed: function (evt) {
@@ -598,9 +600,10 @@ sap.ui.define([
 					destinationType: destinationType
 				};
 				navigator.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
-			} else {
+			} else if (this._isDebugMode()) {
 				//workaround for desktop for testing
 				this._showCameraDesktop = true;
+				this.invalidate();
 			}
 		},
 
