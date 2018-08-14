@@ -276,6 +276,7 @@ sap.ui.define([
 		},
 
 		_showUploadingDialog: function () {
+			MessageToast.show("e1");
 			if (!this._oDialog) {
 				this._oDialog = new sap.m.Dialog(this.getControlPrefixId() + "-dialog", {
 					title: sap.client.m.Util.getLocaleText("UploadInProgress", "Uploading..."),
@@ -284,10 +285,11 @@ sap.ui.define([
 						text: sap.client.m.Util.getLocaleText("FileUploadingMsg", "Uploading file to server, please wait ...")
 					})
 				});
+				MessageToast.show("e2");
 			}
-
+			MessageToast.show("e3");
 			this._oDialog.open();
-
+			MessageToast.show("e4");
 		},
 
 		_closeUploadingDialog: function () {
