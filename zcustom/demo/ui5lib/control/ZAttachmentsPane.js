@@ -55,14 +55,13 @@ sap.ui.define([
 			});
 */
 			oRM.renderControl(oControl.getTileContainer());
-
-			if (this._showCameraDesktop) {
+			if (oControl._showCameraDesktop) {
 				oRM.write("<p>");
-				oRM.renderControl(this._oBtnGrabVideo);
+				oRM.renderControl(oControl._oBtnGrabVideo);
 				oRM.write("</p>");
 				oRM.write("<p><video autoplay style='height: 180px; width: 240px;'></video></p>");
 				oRM.write("<p>");
-				oRM.renderControl(this._oBtnTakePhoto);
+				oRM.renderControl(oControl._oBtnTakePhoto);
 				oRM.write("</p>");
 				oRM.write("<p><img id='imageTag' width='240' height='180'></p>");
 			};
@@ -76,9 +75,9 @@ sap.ui.define([
 				(this.oController && this.oController.getApplication && this.oController.getApplication()) ||
 				(sap.client.getCurrentApplication && sap.client.getCurrentApplication()); //the logic taken from sap.client.basecontrols.core.BaseControlWrapper
 
-			var oRuntimeEnviroment = (this.oController && this.oController.getRuntimeEnvironment && this.oController.getRuntimeEnvironment()) ||
+			this._oRuntimeEnviroment = (this.oController && this.oController.getRuntimeEnvironment && this.oController.getRuntimeEnvironment()) ||
 				(this._oApplication.getRuntimeEnvironment());
-			var isContainer = oRuntimeEnviroment.isRunningInContainer();
+			var isContainer = this._oRuntimeEnviroment.isRunningInContainer();
 			var isIOS = sap.ui.Device.os.ios;
 			var imageSize;
 			var oSettings = this._oApplication.getSettings();
@@ -219,13 +218,14 @@ sap.ui.define([
 
 			var theImageCapturer = new ImageCapture(this._theStream.getVideoTracks()[0]);
 
+			var that = this;
 			theImageCapturer.takePhoto()
 				.then( function(blob) {
 					var theImageTag = document.getElementById("imageTag");
 					theImageTag.src = URL.createObjectURL(blob);
 					
 					var sFinalFileName = "test";
-					this._uploadFile(blob, sFinalFileName);
+					that._uploadFile(blob, sFinalFileName);
 				})
 				.catch( function(err) { MessageToast.show('Error: ' + err)});
 		},
@@ -251,7 +251,7 @@ sap.ui.define([
 		},
 
 		_setupImageResize: function (sImageUploadSize) {
-			if (sImageUploadSize && this.oController.getRuntimeEnvironment().isRunningInContainer()) {
+			if (sImageUploadSize && this._oRuntimeEnviroment.isRunningInContainer()) {
 				switch (sImageUploadSize) {
 				case "L":
 					this._iCompressedWidthHeight = this.LARGE_WIDTH_HEIGHT;
