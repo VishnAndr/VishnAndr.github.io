@@ -55,11 +55,44 @@ sap.ui.define([
 			});
 */
 			oRM.renderControl(oControl.getTileContainer());
+
+			if (this._showCameraDesktop) {
+				oRM.write("<p>");
+				oRM.renderControl(this._oBtnGrabVideo);
+				oRM.write("</p>");
+				oRM.write("<p><video autoplay style='height: 180px; width: 240px;'></video></p>");
+				oRM.write("<p>");
+				oRM.renderControl(this._oBtnTakePhoto);
+				oRM.write("</p>");
+				oRM.write("<p><img id='imageTag' width='240' height='180'></p>");
+			};
+
 			oRM.write("</div>");
 		},
 
 		initializePane: function () {
+			// Preparation
+			this._oApplication = this._oApplication ||
+				(this.oController && this.oController.getApplication && this.oController.getApplication()) ||
+				(sap.client.getCurrentApplication && sap.client.getCurrentApplication()); //the logic taken from sap.client.basecontrols.core.BaseControlWrapper
 
+			var oRuntimeEnviroment = (this.oController && this.oController.getRuntimeEnvironment && this.oController.getRuntimeEnvironment()) ||
+				(this._oApplication.getRuntimeEnvironment());
+			var isContainer = oRuntimeEnviroment.isRunningInContainer();
+			var isIOS = sap.ui.Device.os.ios;
+			var imageSize;
+			var oSettings = this._oApplication.getSettings();
+			if (this._oApplication.isOfflineMode()) {
+				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOffline();
+			} else {
+				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOnline();
+			}
+			this._setupImageResize(imageSize);
+
+			this._showCameraDesktop = false;
+			this._theStream = null;
+
+			// Browse tile
 			this.oTileContainer = new sap.m.ScrollContainer().addStyleClass("sapUiTinyMargin");
 			this.setTileContainer(this.oTileContainer);
 
@@ -68,14 +101,18 @@ sap.ui.define([
 				icon: "sap-icon://open-folder"
 			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
 			this.setBrowseTile(oBrowseTile);
+			this.oTileContainer.addContent(oBrowseTile);
 
+			// Camera tile
 			var oCameraTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-cameraTile", {
 				text: "Camera",
 				icon: "sap-icon://add-photo",
 				press: [this.onPictureButtonPress, this]
 			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
 			this.setCameraTile(oCameraTile);
+			this.oTileContainer.addContent(oCameraTile);
 
+			// File attachment tile
 			var oImageAttachmentTile = new sap.m.ImageContent({
 				src: "sap-icon://pdf-attachment"
 			});
@@ -95,26 +132,102 @@ sap.ui.define([
 			}).addStyleClass("sapUshellTile sapUiTinyMargin");
 			oAttachment.addTileContent(oTileContentAttachmentTile);
 			this.addAttachment(oAttachment);
+			this.oTileContainer.addContent(oAttachment);
 
+			// Image attachment tile
 			var oImageAttachment2Tile = new sap.m.Image({
-				width: "100%",
 				src: "https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg"
 			});
-			var oTileContentAttachment2Tile = new sap.m.TileContent();
-			oTileContentAttachment2Tile.setContent(oImageAttachment2Tile);
+			if (oImageAttachment2Tile.getHeight() != 0) {
+				// make it thumbnail
+				if (oImageAttachment2Tile.getHeight() < oImageAttachment2Tile.getWidth()) {
+					oImageAttachment2Tile.setWidth("100%");
+				} else {
+					oImageAttachment2Tile.setHeight("100%");
+				}
 
-			var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
-				scope: GenericTileScope.Actions,
-				press: [this._tilePressed, this]
-			}).addStyleClass("sapUshellTile sapUiTinyMargin");
-			oAttachment2.addTileContent(oTileContentAttachment2Tile);
-			this.addAttachment(oAttachment2);
+				var oTileContentAttachment2Tile = new sap.m.TileContent();
+				oTileContentAttachment2Tile.setContent(oImageAttachment2Tile);
 
-			this.oTileContainer.addContent(oBrowseTile);
-			this.oTileContainer.addContent(oCameraTile);
-			this.oTileContainer.addContent(oAttachment);
-			this.oTileContainer.addContent(oAttachment2);
+				var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
+					scope: GenericTileScope.Actions,
+					press: [this._tilePressed, this]
+				}).addStyleClass("sapUshellTile sapUiTinyMargin");
+				oAttachment2.addTileContent(oTileContentAttachment2Tile);
+				this.addAttachment(oAttachment2);
+				this.oTileContainer.addContent(oAttachment2);
+			}
 
+			// Test!!!
+			this._oBtnGrabVideo = new sap.m.Button({
+				text: "Grab Video",
+				press: [this._grabVideo, this]
+			});
+
+			this._oBtnTakePhoto = new sap.m.Button({
+				text: "Take photo",
+				press: [this._takePhoto, this]
+			});
+		},
+
+		_getUserMedia: function (options, successCallback, failureCallback) {
+			var api = navigator.getUserMedia || navigator.webkitGetUserMedia ||
+				navigator.mozGetUserMedia || navigator.msGetUserMedia;
+			if (api) {
+				return api.bind(navigator)(options, successCallback, failureCallback);
+			}
+		},
+
+		_grabVideo: function () {
+			if (!navigator.getUserMedia && !navigator.webkitGetUserMedia &&
+				!navigator.mozGetUserMedia && !navigator.msGetUserMedia) {
+				MessageToast.show("User Media API not supported.");
+				return;
+			}
+
+			var constraints = {
+				video: true
+			};
+
+			this._getUserMedia(constraints,
+				function (stream) {
+					var mediaControl = document.querySelector("video");
+					if ("srcObject" in mediaControl) {
+						mediaControl.srcObject = stream;
+						mediaControl.src = (window.URL || window.webkitURL).createObjectURL(stream);
+					} else if (navigator.mozGetUserMedia) {
+						mediaControl.mozSrcObject = stream;
+					}
+					this._theStream = stream;
+				}.bind(this),
+				function (err) {
+					MessageToast.show("Error: " + err);
+				}.bind(this)
+			).bind(this);
+		},
+
+		_takePhoto: function () {
+			if (!("ImageCapture" in window)) {
+				MessageToast.show("ImageCapture is not available");
+				return;
+			}
+
+			if (!this._theStream) {
+				MessageToast.show("Grab the video stream first!");
+				return;
+			}
+
+			var theImageCapturer = new ImageCapture(this._theStream.getVideoTracks()[0]);
+
+			theImageCapturer.takePhoto()
+				.then( function(blob) {
+					var theImageTag = document.getElementById("imageTag");
+					theImageTag.src = URL.createObjectURL(blob);
+					
+					var sFinalFileName = "test";
+					this._uploadFile(blob, sFinalFileName);
+				})
+				.catch( function(err) { MessageToast.show('Error: ' + err)});
 		},
 
 		_tilePressed: function (evt) {
@@ -469,23 +582,26 @@ sap.ui.define([
 		},
 
 		onPictureButtonPress: function (oControlEvent) {
-			MessageToast.show("onPictureButtonPress pressed");
-			var destinationType = navigator.camera.DestinationType.FILE_URI;
-			var quality = 45;
-			/*			if (this._oApplication.isOfflineMode() && window.FilePicker) {
-							quality = 10;
-							destinationType = navigator.camera.DestinationType.DATA_URL;
-						}*/
+			if (navigator.camera) {
+				var destinationType = navigator.camera.DestinationType.FILE_URI;
+				var quality = 45;
+				if (this._oApplication.isOfflineMode() && window.FilePicker) {
+					quality = 10;
+					destinationType = navigator.camera.DestinationType.DATA_URL;
+				}
 
-			var options = {
-				quality: quality,
-				targetWidth: 1024,
-				targetHeight: 768,
-				saveToPhotoAlbum: false,
-				destinationType: destinationType
-			};
-			MessageToast.show("Starting getting picture");
-			navigator.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
+				var options = {
+					quality: quality,
+					targetWidth: 1024,
+					targetHeight: 768,
+					saveToPhotoAlbum: false,
+					destinationType: destinationType
+				};
+				navigator.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
+			} else {
+				//workaround for desktop for testing
+				this._showCameraDesktop = true;
+			}
 		},
 
 		_resetUploader: function () {
