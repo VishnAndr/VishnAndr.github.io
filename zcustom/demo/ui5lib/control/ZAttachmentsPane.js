@@ -503,6 +503,7 @@ sap.ui.define([
 		},
 
 		onFileUploadSuccess: function (fileUploadResult) {
+			MessageToast.show("onFileUploadSuccess start");
 			var fileId = null;
 			var fileName = null;
 			var fileSize = null;
@@ -516,6 +517,7 @@ sap.ui.define([
 			}
 			this._closeUploadingDialog();
 			this.uploadComplete(fileId, fileName, fileSize);
+			MessageToast.show("onFileUploadSuccess finish");
 		},
 
 		onFileUploadFail: function (fileTransferError) {
@@ -535,6 +537,7 @@ sap.ui.define([
 		},
 
 		onTakePictureSuccess: function (sImagePath) {
+			MessageToast.show("onTakePictureSuccess start");
 			if (this.oImageResizer) {
 				var fOnImageResized = function (sResizedImageDataUri) {
 					var sFileName;
@@ -584,10 +587,12 @@ sap.ui.define([
 				var fail = this.onFileUploadFail.bind(this);
 				ft.upload(filePath, url, success, fail, options);
 			}
+			MessageToast.show("onTakePictureSuccess finish");
 		},
 
 		onTakePictureFail: function (error) {
 			jQuery.sap.log.info("onTakePictureFail for error " + error);
+			MessageToast.show("onTakePictureFail for error " + error);
 		},
 
 		onPictureButtonPress: function (oControlEvent) {
