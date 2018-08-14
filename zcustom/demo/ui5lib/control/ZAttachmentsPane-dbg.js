@@ -158,6 +158,11 @@ sap.ui.define([
 			}
 
 			// Test!!!
+			this._oBtnGrabVideo = new sap.m.Button({
+				text: "Grab Video",
+				press: [this._grabVideo, this]
+			});
+			
 			this._oBtnTakePhoto = new sap.m.Button({
 				text: "Take photo",
 				press: [this._takePhoto, this]
@@ -165,8 +170,8 @@ sap.ui.define([
 		},
 
 		_isDebugMode: function () {
-			var sSapUiDebug = this.getUriParameter("sap-ui-debug");
-			return sap.client.getCurrentApplication().isDebugMode() || !!(sSapUiDebug && sSapUiDebug.toLowerCase() === "true")
+			var sSapUiDebug = window["sap-ui-debug"];
+			return sap.client.getCurrentApplication().isDebugMode() || sSapUiDebug;
 		},
 
 		_getUserMedia: function (options, successCallback, failureCallback) {
