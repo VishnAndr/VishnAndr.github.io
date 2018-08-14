@@ -277,10 +277,10 @@ sap.ui.define([
 
 		_showUploadingDialog: function () {
 			if (!this._oDialog) {
-				this._oDialog = new sap.m.Dialog(this.getControlID() + "-dialog", {
+				this._oDialog = new sap.m.Dialog(this.getControlPrefixId() + "-dialog", {
 					title: sap.client.m.Util.getLocaleText("UploadInProgress", "Uploading..."),
 					// type: sap.m.DialogType.Message,
-					content: new sap.m.Text(this.getControlID() + "-text", {
+					content: new sap.m.Text(this.getControlPrefixId() + "-text", {
 						text: sap.client.m.Util.getLocaleText("FileUploadingMsg", "Uploading file to server, please wait ...")
 					})
 				});
