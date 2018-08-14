@@ -336,7 +336,7 @@ sap.ui.define([
 				oFileTransfer = this.getOfflineFileTransfer();
 			}
 
-			var oRuntimeEnviroment = this.oController.getRuntimeEnvironment();
+			var oRuntimeEnviroment = this._oRuntimeEnviroment;
 			var isContainer = oRuntimeEnviroment.isRunningInContainer();
 
 			var options = new window.FileUploadOptions();
@@ -521,6 +521,7 @@ sap.ui.define([
 		},
 
 		onFileUploadFail: function (fileTransferError) {
+			MessageToast.show("onFileUploadFail start");
 			this._closeUploadingDialog();
 			var message;
 			if (fileTransferError.exception) {
