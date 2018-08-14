@@ -468,6 +468,7 @@ sap.ui.define([
 		},
 
 		uploadComplete: function (sFileId, sFileName, sFileSize) {
+			MessageToast.show("Upload complete : " + sFileName);
 			/*			var primaryPath = sap.client.util.BindingUtil.getBindingInfo("Value", this.oNode, null, this.sParentBinding).path;
 						if (sFileId !== null && sFileName !== null && sFileSize !== null) {
 							var oDataContainer = this.oController.getDataContainer();
@@ -530,6 +531,7 @@ sap.ui.define([
 
 			sap.m.MessageToast.show(sap.client.m.Util.getLocaleText("FileUploadFailMsg", "Unable to upload file. ") + " " + message);
 			jQuery.sap.log.info("onFileUploadFail exception " + message);
+			MessageToast.show("onFileUploadFail exception " + message);
 		},
 
 		onTakePictureSuccess: function (sImagePath) {
