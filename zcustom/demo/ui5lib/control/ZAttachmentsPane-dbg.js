@@ -50,9 +50,9 @@ sap.ui.define([
 			if (oControl._isDebugMode() && oControl._stdFUoControl) {
 				oRM.renderControl(oControl._stdFUoControl);
 			}
-			
+
 			oRM.renderControl(oControl.getTileContainer());
-			
+
 			if (oControl._showCameraDesktop) {
 				oRM.write("<p>");
 				oRM.renderControl(oControl._oBtnGrabVideo);
@@ -80,6 +80,11 @@ sap.ui.define([
 			this._attach2EC = this.getParameter("attach2EC") ? this.getParameter("attach2EC") : "COD_Documentlist";
 			this._enableImageProcessor = this.getParameter("enableImageProcessor") ? this.getParameter("enableImageProcessor") : "None";
 			this._onFileSelected = this.getParameter("onFileSelected");
+
+			this._bHideBrowse = this.getParameter("hideBrowse") ? this.getParameter("hideBrowse") : false;
+			this._bHideCamera = this.getParameter("hideCamera") ? this.getParameter("hideCamera") : false;
+			this._bHideImages = this.getParameter("hideImages") ? this.getParameter("hideImages") : false;
+			this._bHideNonImages = this.getParameter("hideNonImages") ? this.getParameter("hideNonImages") : false;
 
 			this._attachedECController = this._getAttachedECController();
 
@@ -249,6 +254,7 @@ sap.ui.define([
 							oEventContext = new sap.client.evt.EventContext(oControlEvent.getSource());
 						}
 
+						this._onFileSelected = this.___checkAndCreateEH(this._onFileSelected);
 						var sEvent = this._onFileSelected;
 						if (sEvent) {
 							this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
@@ -282,7 +288,7 @@ sap.ui.define([
 			//this.createControlBindings(this.oFileUploader, mControlBindings); // << doesn't exist in the pane
 
 			this._stdFUoControl = this.oFileUploader;
-			
+
 			this._stdFUoControl.addStyleClass("sapClientMFileUpload");
 			// <<< finish standard logic from FileUploadWrapper
 
@@ -291,73 +297,81 @@ sap.ui.define([
 			this._theStream = null;
 
 			// Browse tile
-			this.oTileContainer = new sap.m.ScrollContainer().addStyleClass("sapUiTinyMargin");
-			this.setTileContainer(this.oTileContainer);
+			if (!this._bHideBrowse) {
+				this.oTileContainer = new sap.m.ScrollContainer().addStyleClass("sapUiTinyMargin");
+				this.setTileContainer(this.oTileContainer);
 
-			var oBrowseTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-browseTile", {
-				text: "Browse",
-				icon: "sap-icon://open-folder"
-			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
-			this.setBrowseTile(oBrowseTile);
-			this.oTileContainer.addContent(oBrowseTile);
+				var oBrowseTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-browseTile", {
+					text: "Browse",
+					icon: "sap-icon://open-folder"
+				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
+				this.setBrowseTile(oBrowseTile);
+				this.oTileContainer.addContent(oBrowseTile);
+			}
 
 			// Camera tile
-			var oCameraTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-cameraTile", {
-				text: "Camera",
-				icon: "sap-icon://add-photo",
-				press: [this.onPictureButtonPress, this]
-			}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
-			this.setCameraTile(oCameraTile);
-			this.oTileContainer.addContent(oCameraTile);
+			if (!this._bHideCamera) {
+				var oCameraTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-cameraTile", {
+					text: "Camera",
+					icon: "sap-icon://add-photo",
+					press: [this.onPictureButtonPress, this]
+				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
+				this.setCameraTile(oCameraTile);
+				this.oTileContainer.addContent(oCameraTile);
+			}
 
 			// File attachment tile
-			var oImageAttachmentTile = new sap.m.ImageContent({
-				src: "sap-icon://pdf-attachment"
-			});
-			var oTileContentAttachmentTile = new sap.m.TileContent();
-			oTileContentAttachmentTile.setContent(oImageAttachmentTile);
+			if (!this._bHideNonImages) {
+				var oImageAttachmentTile = new sap.m.ImageContent({
+					src: "sap-icon://pdf-attachment"
+				});
+				var oTileContentAttachmentTile = new sap.m.TileContent();
+				oTileContentAttachmentTile.setContent(oImageAttachmentTile);
 
-			var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
-				header: "File",
-				scope: GenericTileScope.Actions,
-				press: function (evt) {
-					if (evt.getParameter("action") === "Remove") {
-						MessageToast.show("Remove action of attachment");
-					} else {
-						MessageToast.show("Attachment has been pressed.");
-					}
-				}.bind(this)
-			}).addStyleClass("sapUshellTile sapUiTinyMargin");
-			oAttachment.addTileContent(oTileContentAttachmentTile);
-			this.addAttachment(oAttachment);
-			this.oTileContainer.addContent(oAttachment);
+				var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
+					header: "File",
+					scope: GenericTileScope.Actions,
+					press: function (evt) {
+						if (evt.getParameter("action") === "Remove") {
+							MessageToast.show("Remove action of attachment");
+						} else {
+							MessageToast.show("Attachment has been pressed.");
+						}
+					}.bind(this)
+				}).addStyleClass("sapUshellTile sapUiTinyMargin");
+				oAttachment.addTileContent(oTileContentAttachmentTile);
+				this.addAttachment(oAttachment);
+				this.oTileContainer.addContent(oAttachment);
+			}
 
 			// Image attachment tile
-			var PictureURL =
-				"https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
-			var ImgTmp = new Image();
-			ImgTmp.src = PictureURL;
-			var oImageAttachment2Tile = new sap.m.Image({
-				src: PictureURL
-			});
-			if (ImgTmp.height !== 0) {
-				// make it thumbnail
-				if (ImgTmp.height < ImgTmp.width) {
-					oImageAttachment2Tile.setWidth("100%");
-				} else {
-					oImageAttachment2Tile.setHeight("100%");
+			if (!this._bHideImages) {
+				var PictureURL =
+					"https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
+				var ImgTmp = new Image();
+				ImgTmp.src = PictureURL;
+				var oImageAttachment2Tile = new sap.m.Image({
+					src: PictureURL
+				});
+				if (ImgTmp.height !== 0) {
+					// make it thumbnail
+					if (ImgTmp.height < ImgTmp.width) {
+						oImageAttachment2Tile.setWidth("100%");
+					} else {
+						oImageAttachment2Tile.setHeight("100%");
+					}
+
+					var oTileContentAttachment2Tile = new sap.m.TileContent();
+					oTileContentAttachment2Tile.setContent(oImageAttachment2Tile);
+
+					var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
+						scope: GenericTileScope.Actions,
+						press: [this._tilePressed, this]
+					}).addStyleClass("sapUshellTile sapUiTinyMargin");
+					oAttachment2.addTileContent(oTileContentAttachment2Tile);
+					this.addAttachment(oAttachment2);
+					this.oTileContainer.addContent(oAttachment2);
 				}
-
-				var oTileContentAttachment2Tile = new sap.m.TileContent();
-				oTileContentAttachment2Tile.setContent(oImageAttachment2Tile);
-
-				var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
-					scope: GenericTileScope.Actions,
-					press: [this._tilePressed, this]
-				}).addStyleClass("sapUshellTile sapUiTinyMargin");
-				oAttachment2.addTileContent(oTileContentAttachment2Tile);
-				this.addAttachment(oAttachment2);
-				this.oTileContainer.addContent(oAttachment2);
 			}
 
 			// Test!!!
@@ -709,6 +723,7 @@ sap.ui.define([
 				oEventContext = new sap.client.evt.EventContext(this.oFileUploader);
 			}
 
+			this._onFileSelected = this.___checkAndCreateEH(this._onFileSelected);
 			var sEvent = this._onFileSelected;
 			if (sEvent) {
 				this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
@@ -849,6 +864,66 @@ sap.ui.define([
 
 			oDataContainer.setProperty('/Root/$System/EditMode', false);
 			oDataContainer.setProperty("/Root/$System/IsThingDirty", false);
+		},
+
+		___checkAndCreateEH: function (sEvent) {
+			// I solemnly swear that I am up to no good
+			//
+			// Here we're doing a very-very dirty thing:
+			// We're hooking up into Standard Component and creating Event Handler there on the fly
+			//
+			// The purpose is: standard event handler AddFileMDSubmit in COD_Documentlist tries to close a window as a second step
+			// once the attachment is created. It's fine in COD_Documentlist, because there is a separate ModalDialog with Add and
+			// Camera buttons. However, it's bad for this pane, because this "Close" window event tries to close actual QC or whatever
+			// we have this component embedded into.
+			//
+			// Approach: 
+			// 1. Find the corresponding requested standard event handler sEvent in the attached standard EC.
+			// 2. Take its operations and check if WindowAction-Close exists there
+			// 3. If such operation exists, create a copy of the event handler (prefixed with "ZCEH_" - stands for Z-Custom-Event-Handler)
+			// and remove this unwanted operation from its operations
+			// 4. If such opearion doesn't exst, use the standard requested event handler
+			//
+
+			var sPrefixEH = "ZCEH";
+			var sNewEvent = sEvent;
+
+			if (sEvent.length == 0 || sEvent.lastIndexOf(sPrefixEH, 0) == 0) {
+				// empty or already done (e.g. begins with sPrefixEH constant)
+				return sNewEvent;
+			}
+
+			if (!this._attachedECController) {
+				this._attachedECController = this._getAttachedECController();
+				if (!this._attachedECController) {
+					return sNewEvent;
+				}
+			}
+
+			this._attachedECController.getComponentModel().getEventHandlers(); // just in case event handlers have not been read yet (it will populate _mEventHandlers during this call)
+			var evtHandler = this._attachedECController.getComponentModel().getEventHandler(sEvent);
+			if (evtHandler) {
+				var indClose = evtHandler._c.findIndex(function (element) {
+					return element._n == "WindowAction" && element._a.action == "Close";
+				});
+
+				if (indClose == -1) {
+					// no WindowAction-Close opeartion in the standard event handler
+				} else {
+					// there is WindowAction-Close operation; let's dive
+
+					var evtHandlerNew = JSON.parse(JSON.stringify(evtHandler)); // making a copy
+
+					evtHandlerNew._a.id = evtHandler._a.id.substring(0, evtHandler._a.id.length - 4) + sPrefixEH; // "generate" new id
+					evtHandlerNew._c.splice(indClose, 1); //removing WindowAction-Close
+
+					// add new event handler
+					sNewEvent = sPrefixEH + "_" + sEvent;
+					this._attachedECController.getComponentModel()._mEventHandlers[sNewEvent] = evtHandlerNew;
+				}
+			}
+
+			return sNewEvent;
 		}
 	});
 
