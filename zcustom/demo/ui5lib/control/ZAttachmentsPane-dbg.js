@@ -46,15 +46,13 @@ sap.ui.define([
 			oRM.addClass("zAttachments");
 			oRM.writeClasses();
 			oRM.write(">");
-			/*
-			oRM.renderControl(oControl.getBrowseTile());
-			oRM.renderControl(oControl.getCameraTile());
 
-			$.each(oControl.getAttachments(), function (key, value) {
-				oRM.renderControl(value);
-			});
-*/
+			if (oControl._isDebugMode() && oControl._stdFUoControl) {
+				oRM.renderControl(oControl._stdFUoControl);
+			}
+			
 			oRM.renderControl(oControl.getTileContainer());
+			
 			if (oControl._showCameraDesktop) {
 				oRM.write("<p>");
 				oRM.renderControl(oControl._oBtnGrabVideo);
@@ -700,8 +698,8 @@ sap.ui.define([
 					this.oFileUploader.oFilePath.setValue(sFileName);
 				}
 
-				oDataContainer.setProperty('/Root/$System/EditMode', true);
-				oDataContainer.setProperty("/Root/$System/IsThingDirty", true);
+				//oDataContainer.setProperty('/Root/$System/EditMode', true);
+				//oDataContainer.setProperty("/Root/$System/IsThingDirty", true);
 			}
 
 			// Handle the onFileSelected Event if exist
