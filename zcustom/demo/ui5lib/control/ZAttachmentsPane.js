@@ -118,7 +118,7 @@ sap.ui.define([
 			}
 
 			if ((this.oImageResizer || this._oApplication.isOfflineMode()) && window.FilePicker) {
-				this.oFileUploader = new sap.m.Button(this.getControlID() + "-browseButton", {
+				this.oFileUploader = new sap.m.Button(this.getControlPrefixId() + "-browseButton", {
 					icon: sap.ui.core.IconPool.getIconURI("open-folder"),
 					press: function () {
 						// use the file picker plugin
@@ -162,7 +162,7 @@ sap.ui.define([
 				};
 
 			} else {
-				this.oFileUploader = new FileUploader(this.getControlID(), {
+				this.oFileUploader = new FileUploader(this.getControlPrefixId(), {
 					//shallPicturesBeOnlyTakenByCamera: oSettings.shallPicturesBeOnlyTakenByCamera(),
 					uploadOnChange: false, // we have to wait for the change event
 					sameFilenameAllowed: true,
