@@ -251,9 +251,9 @@ sap.ui.define([
 							oEventContext = new sap.client.evt.EventContext(oControlEvent.getSource());
 						}
 
-						var sEvent = this.oNode._a.onFileSelected;
+						var sEvent = this._onFileSelected;
 						if (sEvent) {
-							this.oController.getEventProcessor().handleEvent(sEvent, oEventContext);
+							this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
 						}
 
 					}.bind(this),
@@ -342,7 +342,7 @@ sap.ui.define([
 			var oImageAttachment2Tile = new sap.m.Image({
 				src: PictureURL
 			});
-			if (ImgTmp.height != 0) {
+			if (ImgTmp.height !== 0) {
 				// make it thumbnail
 				if (ImgTmp.height < ImgTmp.width) {
 					oImageAttachment2Tile.setWidth("100%");
@@ -713,7 +713,7 @@ sap.ui.define([
 
 			var sEvent = this._onFileSelected;
 			if (sEvent) {
-				this.oController.getEventProcessor().handleEvent(sEvent, oEventContext);
+				this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
 			}
 
 			this.oFileUploader.setTooltip(sFileName);
