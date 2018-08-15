@@ -162,7 +162,7 @@ sap.ui.define([
 				};
 
 			} else {
-				this.oFileUploader = new FileUploadWrapper.FileUploader(this.getControlID(), {
+				this.oFileUploader = new FileUploader(this.getControlID(), {
 					//shallPicturesBeOnlyTakenByCamera: oSettings.shallPicturesBeOnlyTakenByCamera(),
 					uploadOnChange: false, // we have to wait for the change event
 					sameFilenameAllowed: true,
