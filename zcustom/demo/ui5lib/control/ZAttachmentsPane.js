@@ -281,7 +281,7 @@ sap.ui.define([
 				}
 			}
 
-			this.createControlBindings(this.oFileUploader, mControlBindings);
+			//this.createControlBindings(this.oFileUploader, mControlBindings); // << doesn't exist in the pane
 
 			this._stdFUoControl = this.oFileUploader;
 			
