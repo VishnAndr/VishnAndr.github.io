@@ -7,9 +7,11 @@ sap.ui.define([
 	"sap/ui/unified/FileUploader",
 	"sap/client/m/util/ImageResizer",
 	"sap/client/m/create/QuickCreateTile",
-	"sap/m/ScrollContainer"
+	"sap/m/ScrollContainer",
+	"sap/m/LightBox",
+	"sap/m/LightBoxItem"
 ], function (CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile,
-	ScrollContainer) {
+	ScrollContainer, LightBox) {
 	"use strict";
 
 	// Provides control zcustom.sandbox.ui5lib.control.ZCustomEmptyPane
@@ -66,6 +68,18 @@ sap.ui.define([
 
 			oRM.write("</div>");
 		},
+		
+		_getCustomParameters: function () {
+			this._primaryPath = this.getParameter("primaryPath") ? this.getParameter("primaryPath") : "/Root/AttachmentFolder/AddParams";
+			this._attach2EC = this.getParameter("attach2EC") ? this.getParameter("attach2EC") : "COD_Documentlist";
+			this._enableImageProcessor = this.getParameter("enableImageProcessor") ? this.getParameter("enableImageProcessor") : "None";
+			this._onFileSelected = this.getParameter("onFileSelected");
+
+			this._bHideBrowse = ( this.getParameter("hideBrowse") == "true" );
+			this._bHideCamera = ( this.getParameter("hideCamera") == "true" );
+			this._bHideImages = ( this.getParameter("hideImages") == "true" );
+			this._bHideNonImages = ( this.getParameter("hideNonImages") == "true" );			
+		},
 
 		initializePane: function () {
 			// Preparation
@@ -73,18 +87,14 @@ sap.ui.define([
 			this._oApplication = this._oApplication ||
 				(this.oController && this.oController.getApplication && this.oController.getApplication()) ||
 				(sap.client.getCurrentApplication && sap.client.getCurrentApplication()); //the logic taken from sap.client.basecontrols.core.BaseControlWrapper
+			
+			// We're working only in NewUI (aka Fiori UI aka RUI)
+			if (!this._oApplication.isNewUI()) { return; }
+			
 			this._oRuntimeEnviroment = (this.oController && this.oController.getRuntimeEnvironment && this.oController.getRuntimeEnvironment()) ||
 				(this._oApplication.getRuntimeEnvironment());
 
-			this._primaryPath = this.getParameter("primaryPath") ? this.getParameter("primaryPath") : "/Root/AttachmentFolder/AddParams";
-			this._attach2EC = this.getParameter("attach2EC") ? this.getParameter("attach2EC") : "COD_Documentlist";
-			this._enableImageProcessor = this.getParameter("enableImageProcessor") ? this.getParameter("enableImageProcessor") : "None";
-			this._onFileSelected = this.getParameter("onFileSelected");
-
-			this._bHideBrowse = this.getParameter("hideBrowse") ? this.getParameter("hideBrowse") : false;
-			this._bHideCamera = this.getParameter("hideCamera") ? this.getParameter("hideCamera") : false;
-			this._bHideImages = this.getParameter("hideImages") ? this.getParameter("hideImages") : false;
-			this._bHideNonImages = this.getParameter("hideNonImages") ? this.getParameter("hideNonImages") : false;
+			this._getCustomParameters();
 
 			this._attachedECController = this._getAttachedECController();
 
@@ -296,15 +306,16 @@ sap.ui.define([
 			this._showCameraDesktop = false;
 			this._theStream = null;
 
+			// Tile container
+			this.oTileContainer = new sap.m.ScrollContainer().addStyleClass("sapUiTinyMargin");
+			this.setTileContainer(this.oTileContainer);
+
 			// Browse tile
 			if (!this._bHideBrowse) {
-				this.oTileContainer = new sap.m.ScrollContainer().addStyleClass("sapUiTinyMargin");
-				this.setTileContainer(this.oTileContainer);
-
 				var oBrowseTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-browseTile", {
 					text: "Browse",
 					icon: "sap-icon://open-folder"
-				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
+				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
 				this.setBrowseTile(oBrowseTile);
 				this.oTileContainer.addContent(oBrowseTile);
 			}
@@ -315,7 +326,7 @@ sap.ui.define([
 					text: "Camera",
 					icon: "sap-icon://add-photo",
 					press: [this.onPictureButtonPress, this]
-				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMargin");
+				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
 				this.setCameraTile(oCameraTile);
 				this.oTileContainer.addContent(oCameraTile);
 			}
@@ -338,7 +349,7 @@ sap.ui.define([
 							MessageToast.show("Attachment has been pressed.");
 						}
 					}.bind(this)
-				}).addStyleClass("sapUshellTile sapUiTinyMargin");
+				}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
 				oAttachment.addTileContent(oTileContentAttachmentTile);
 				this.addAttachment(oAttachment);
 				this.oTileContainer.addContent(oAttachment);
@@ -346,32 +357,35 @@ sap.ui.define([
 
 			// Image attachment tile
 			if (!this._bHideImages) {
-				var PictureURL =
-					"https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
-				var ImgTmp = new Image();
-				ImgTmp.src = PictureURL;
-				var oImageAttachment2Tile = new sap.m.Image({
-					src: PictureURL
+				
+				var sPictureURL = "https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
+				var sPictureFilename = "Image.jpg";
+				
+				var oLightBox = new sap.m.LightBox();
+				var oLightBoxItem = new sap.m.LightBoxItem({
+					imageSrc : sPictureURL,
+					title : sPictureFilename
 				});
-				if (ImgTmp.height !== 0) {
-					// make it thumbnail
-					if (ImgTmp.height < ImgTmp.width) {
-						oImageAttachment2Tile.setWidth("100%");
-					} else {
-						oImageAttachment2Tile.setHeight("100%");
-					}
+				oLightBox.addImageContent(oLightBoxItem);
+				
+				var oThumbnailImage = new sap.m.Image({
+					src : sPictureURL
+				});
+				oThumbnailImage.setDetailBox(oLightBox);
+				//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
 
-					var oTileContentAttachment2Tile = new sap.m.TileContent();
-					oTileContentAttachment2Tile.setContent(oImageAttachment2Tile);
+				var oTCAttachmentImageTile = new sap.m.TileContent();
+				oTCAttachmentImageTile.setContent(oThumbnailImage);
 
-					var oAttachment2 = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment2", {
-						scope: GenericTileScope.Actions,
-						press: [this._tilePressed, this]
-					}).addStyleClass("sapUshellTile sapUiTinyMargin");
-					oAttachment2.addTileContent(oTileContentAttachment2Tile);
-					this.addAttachment(oAttachment2);
-					this.oTileContainer.addContent(oAttachment2);
-				}
+				var oAttachmentImageTile = new sap.m.GenericTile(this.getControlPrefixId() + "-attachmentImage", {
+					scope: GenericTileScope.Actions,
+					header: sPictureFilename,
+					//backgroundImage: sPictureURL,
+					//press: [this._tilePressed, this]
+				}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+				oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
+				this.addAttachment(oAttachmentImageTile);
+				this.oTileContainer.addContent(oAttachmentImageTile);
 			}
 
 			// Test!!!
