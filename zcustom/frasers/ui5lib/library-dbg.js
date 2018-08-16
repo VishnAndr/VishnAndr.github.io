@@ -30,7 +30,8 @@ sap.ui.define([
 		interfaces: [],
 		controls: [
 			"zcustom.frasers.ui5lib.control.ZPoCCustomPane",
-			"zcustom.frasers.ui5lib.control.ZFeederEnhancementPane"
+			"zcustom.frasers.ui5lib.control.ZFeederEnhancementPane",
+			"zcustom.frasers.ui5lib.control.ZAttachmentsPane"
 		],
 		elements: [],
 		noLibraryCSS: true,
