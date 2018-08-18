@@ -111,11 +111,10 @@ sap.ui.define([
 			} else {
 				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOnline();
 			}
-			MessageToast.show("ImageSize from Settings :" + imageSize);
 			this._setupImageResize(imageSize);
 
 			var sEnableImageProcessor = this._enableImageProcessor;
-			if (sEnableImageProcessor === 'Crop' && this.oController) {
+			if (sEnableImageProcessor === "Crop" && this.oController) {
 				var isRunningOnWindowsContainer = oRuntimeEnviroment.isRunningOnWindowsContainer();
 				if (!isRunningOnWindowsContainer) {
 					//Instantiating Image Processor
@@ -318,7 +317,7 @@ sap.ui.define([
 					icon: "sap-icon://open-folder",
 					press: function () {
 						document.getElementById(this.getControlPrefixId() + "-fu").click()
-					}
+					}.bind(this)
 				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
 				this.setBrowseTile(oBrowseTile);
 				this.oTileContainer.addContent(oBrowseTile);
