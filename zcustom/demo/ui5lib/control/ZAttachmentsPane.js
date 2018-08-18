@@ -315,7 +315,10 @@ sap.ui.define([
 			if (!this._bHideBrowse) {
 				var oBrowseTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-browseTile", {
 					text: "Browse",
-					icon: "sap-icon://open-folder"
+					icon: "sap-icon://open-folder",
+					press: function () {
+						document.getElementById(this.getControlPrefixId() + "-fu").click()
+					}
 				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
 				this.setBrowseTile(oBrowseTile);
 				this.oTileContainer.addContent(oBrowseTile);
