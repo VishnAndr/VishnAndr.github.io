@@ -49,9 +49,9 @@ sap.ui.define([
 			oRM.writeClasses();
 			oRM.write(">");
 
-			if (oControl._isDebugMode() && oControl._stdFUoControl) {
-				oRM.renderControl(oControl._stdFUoControl);
-			}
+			oRM.write("<div style='display : none'>");
+			oRM.renderControl(oControl._stdFUoControl);
+			oRM.write("</div>");
 
 			oRM.renderControl(oControl.getTileContainer());
 
@@ -111,6 +111,7 @@ sap.ui.define([
 			} else {
 				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOnline();
 			}
+			MessageToast.show("ImageSize from Settings :" + imageSize);
 			this._setupImageResize(imageSize);
 
 			var sEnableImageProcessor = this._enableImageProcessor;
