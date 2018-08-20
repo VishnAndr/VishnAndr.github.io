@@ -1,6 +1,6 @@
 sap.ui.define([
 	"sap/client/basecontrols/core/CustomPane"
-], function(CustomPane) {
+], function (CustomPane) {
 	"use strict";
 
 	// Provides control zcustom.frasers.ui5lib.control.ZCustomEmptyPane
@@ -13,7 +13,7 @@ sap.ui.define([
 			events: {}
 		},
 
-		renderer: function(oRM, oControl) {
+		renderer: function (oRM, oControl) {
 			jQuery.sap.log.debug(">> renderer", "", "zCustomPane");
 
 			if (!oControl.getVisible()) {
@@ -27,14 +27,14 @@ sap.ui.define([
 			oRM.write("</div>");
 		},
 
-		initializePane: function() {
+		initializePane: function () {
 			jQuery.sap.log.debug(">> initializePane", "", "zCustomPane");
 
 			var that = this;
 
 			this._initializeControls();
 
-			this.getModel().attachDataContainerUpdateFinished(function() {
+			this.getModel().attachDataContainerUpdateFinished(function () {
 				that._onDataContainerUpdateFinished();
 			});
 		},
@@ -47,7 +47,7 @@ sap.ui.define([
 		sUserEmail: "",
 		oCurrentFeeder: null,
 
-		_getControls: function(iIndex) {
+		_getControls: function (iIndex) {
 			jQuery.sap.log.debug(">> _getControls", "", "zCustomPane");
 
 			var that = this;
@@ -59,7 +59,7 @@ sap.ui.define([
 					text: "Use user’s email as sender",
 					tooltip: "Use user’s email as sender",
 					checked: true,
-					change: function(oObjectChanged) {
+					change: function (oObjectChanged) {
 						that._onFromUserChange(oObjectChanged.mParameters.checked);
 					}
 				});
@@ -69,7 +69,7 @@ sap.ui.define([
 					text: "Use Account’s email as recipient",
 					tooltip: "Use Account’s email as recipient",
 					checked: false,
-					change: function(oObjectChanged) {
+					change: function (oObjectChanged) {
 						that._onToAccountChange(oObjectChanged.mParameters.checked);
 					}
 				});
@@ -79,7 +79,7 @@ sap.ui.define([
 					text: "Use Partner’s email as recipient",
 					tooltip: "Use Partner’s email as recipient",
 					checked: true,
-					change: function(oObjectChanged) {
+					change: function (oObjectChanged) {
 						that._onToVendorChange(oObjectChanged.mParameters.checked);
 					}
 				});
@@ -89,7 +89,7 @@ sap.ui.define([
 					text: "Use Agent’s email as recipient",
 					tooltip: "Use Agent’s email as recipient",
 					checked: false,
-					change: function(oObjectChanged) {
+					change: function (oObjectChanged) {
 						that._onToAgentChange(oObjectChanged.mParameters.checked);
 					}
 				});
@@ -106,7 +106,7 @@ sap.ui.define([
 			return this.aControls[iIndex];
 		},
 
-		_initializeControls: function() {
+		_initializeControls: function () {
 			jQuery.sap.log.debug(">> _initializeControls", "", "zCustomPane");
 
 			var that = this;
@@ -172,12 +172,12 @@ sap.ui.define([
 						});*/
 		},
 
-		onBeforeRendering: function() {
+		onBeforeRendering: function () {
 			jQuery.sap.log.debug(">> onBeforeRendering", "", "zCustomPane");
 
 		},
 
-		onAfterRendering: function() {
+		onAfterRendering: function () {
 			jQuery.sap.log.debug(">> onAfterRendering", "", "zCustomPane");
 
 			var that = this;
@@ -204,16 +204,16 @@ sap.ui.define([
 				var startI = 0;
 				if (this.oCurrentFeeder) {
 					try {
-						startI = parseInt(this.oCurrentFeeder.sId.replace("__feeder",""),10);
+						startI = parseInt(this.oCurrentFeeder.sId.replace("__feeder", ""), 10);
 					} catch (err) {
 						startI = 0;
 					}
 				} else {
 					startI = 0;
 				}
-				
+
 				var lvMax = Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : Number.MAX_VALUE;
-				
+
 				var tmpFeeder = null;
 				for (i = startI; i <= lvMax; i++) {
 					var sFeederId = "__feeder" + i;
@@ -236,7 +236,7 @@ sap.ui.define([
 				if (oFeeder && oFeeder.oReplyLayout) {
 					oFeeder.oReplyLayout.addContent(this._getNewLayout(iFeederId));
 					oFeeder.addEventDelegate({
-						onAfterRendering: function(oEvent) {
+						onAfterRendering: function (oEvent) {
 							that.oCurrentFeeder = oEvent.srcControl;
 						}
 					});
@@ -253,14 +253,14 @@ sap.ui.define([
 			if (this.oCurrentFeeder) {
 				var oThatFeeder = this.oCurrentFeeder;
 				var origcancelButtonPress = this.oCurrentFeeder.cancelButtonPress;
-				this.oCurrentFeeder.cancelButtonPress = function() {
+				this.oCurrentFeeder.cancelButtonPress = function () {
 					oThatFeeder.bIsReply = false; // right place to reset this bloody flag
 					origcancelButtonPress.apply(oThatFeeder);
 				};
 
 				if (oThatFeeder.oEmailSendButton) {
 					// and another right place to reset this bloody flag
-					oThatFeeder.oEmailSendButton.attachPress(function() {
+					oThatFeeder.oEmailSendButton.attachPress(function () {
 						oThatFeeder.bIsReply = false;
 					});
 				}
@@ -268,34 +268,38 @@ sap.ui.define([
 
 			var oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
 				"/Root/zFeederRelevant/ToList");
-			oDataObject.attachValueChanged(function() {
-				var sReplyEmail = that._getValue("Root/zFeederRelevant/ReplyEmail");
-				var sToList = that._getValue("/Root/zFeederRelevant/ToList");
-				if (sReplyEmail) {
-					if (sReplyEmail !== sToList) {
+			if (oDataObject) {
+				oDataObject.attachValueChanged(function () {
+					var sReplyEmail = that._getValue("Root/zFeederRelevant/ReplyEmail");
+					var sToList = that._getValue("/Root/zFeederRelevant/ToList");
+					if (sReplyEmail) {
+						if (sReplyEmail !== sToList) {
+							that._onRecipientChange();
+						}
+					} else if (sToList !== that.sTo) {
 						that._onRecipientChange();
 					}
-				} else if (sToList !== that.sTo) {
-					that._onRecipientChange();
-				}
-			});
+				});
+			}
 
 			oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
 				"/Root/zFeederRelevant/NewToEmail");
-			oDataObject.attachValueChanged(function() {
-				var sReplyEmail = that._getValue("Root/zFeederRelevant/ReplyEmail");
-				var sNewToEmail = that._getValue("/Root/zFeederRelevant/NewToEmail");
-				if (sReplyEmail) {
-					if (sReplyEmail !== sNewToEmail) {
+			if (oDataObject) {
+				oDataObject.attachValueChanged(function () {
+					var sReplyEmail = that._getValue("Root/zFeederRelevant/ReplyEmail");
+					var sNewToEmail = that._getValue("/Root/zFeederRelevant/NewToEmail");
+					if (sReplyEmail) {
+						if (sReplyEmail !== sNewToEmail) {
+							that._onRecipientChange();
+						}
+					} else if (sNewToEmail !== that.sTo) {
 						that._onRecipientChange();
 					}
-				} else if (sNewToEmail !== that.sTo) {
-					that._onRecipientChange();
-				}
-			});
+				});
+			}
 		},
 
-		_getNewLayout: function(iIndex) {
+		_getNewLayout: function (iIndex) {
 			jQuery.sap.log.debug(">> _getNewLayout", "", "zCustomPane");
 
 			var oControls = this._getControls(iIndex);
@@ -310,14 +314,14 @@ sap.ui.define([
 			return oLayout;
 		},
 
-		_onDataContainerUpdateFinished: function() {
+		_onDataContainerUpdateFinished: function () {
 			jQuery.sap.log.debug(">> _onDataContainerUpdateFinished", "", "zCustomPane");
 
 			this._onRecipientChange();
 			this._onFromUserChange(this.fFromUser);
 		},
 
-		_onFromUserChange: function(fNewValue) {
+		_onFromUserChange: function (fNewValue) {
 			jQuery.sap.log.debug(">> _onFromUserChange");
 
 			try {
@@ -344,7 +348,7 @@ sap.ui.define([
 			}
 		},
 
-		_onToAccountChange: function(fNewValue) {
+		_onToAccountChange: function (fNewValue) {
 			jQuery.sap.log.debug(">> _onToAccountChange", "", "zCustomPane");
 
 			if (this.fToAccount !== fNewValue) {
@@ -360,7 +364,7 @@ sap.ui.define([
 			}
 		},
 
-		_onToVendorChange: function(fNewValue) {
+		_onToVendorChange: function (fNewValue) {
 			jQuery.sap.log.debug(">> _onToVendorChange", "", "zCustomPane");
 
 			if (this.fToVendor !== fNewValue) {
@@ -376,7 +380,7 @@ sap.ui.define([
 			}
 		},
 
-		_onToAgentChange: function(fNewValue) {
+		_onToAgentChange: function (fNewValue) {
 			jQuery.sap.log.debug(">> _onToAgentChange", "", "zCustomPane");
 
 			if (this.fToAgent !== fNewValue) {
@@ -392,7 +396,7 @@ sap.ui.define([
 			}
 		},
 
-		_onRecipientChange: function() {
+		_onRecipientChange: function () {
 			jQuery.sap.log.debug(">> _onRecipientChange", "", "zCustomPane");
 
 			if (this.oCurrentFeeder) {
@@ -429,7 +433,7 @@ sap.ui.define([
 			}
 		},
 
-		_setFromField: function(sValue) {
+		_setFromField: function (sValue) {
 			jQuery.sap.log.debug(">> _setFromField", "", "zCustomPane");
 
 			try {
@@ -439,7 +443,7 @@ sap.ui.define([
 			}
 		},
 
-		_getUserEmail: function() {
+		_getUserEmail: function () {
 			jQuery.sap.log.debug(">> _getUserEmail", "", "zCustomPane");
 
 			var sEmail = "";
@@ -452,7 +456,7 @@ sap.ui.define([
 			return sEmail;
 		},
 
-		_setValue: function(sPath, sValue) {
+		_setValue: function (sPath, sValue) {
 			jQuery.sap.log.debug(">> _setValue", "", "zCustomPane");
 
 			var oController = this.getController();
@@ -467,7 +471,7 @@ sap.ui.define([
 
 		},
 
-		_getValue: function(sPath) {
+		_getValue: function (sPath) {
 			jQuery.sap.log.debug(">> _getValue", "", "zCustomPane");
 
 			var sValue = "";
