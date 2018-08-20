@@ -79,8 +79,8 @@ sap.ui.define([
 			this._bHideCamera = (this.getParameter("hideCamera") == "true");
 			this._bHideImages = (this.getParameter("hideImages") == "true");
 			this._bHideNonImages = (this.getParameter("hideNonImages") == "true");
-			
-			this._bMultipleFiles  = !(this.getParameter("singleFile") == "true");
+
+			this._bMultipleFiles = !(this.getParameter("singleFile") == "true");
 		},
 
 		initializePane: function () {
@@ -230,87 +230,8 @@ sap.ui.define([
 			this.oTileContainer = new sap.m.ScrollContainer().addStyleClass("sapUiTinyMargin");
 			this.setTileContainer(this.oTileContainer);
 
-			// Browse tile
-			if (!this._bHideBrowse) {
-				var oBrowseTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-browseTile", {
-					text: "Browse",
-					icon: "sap-icon://open-folder",
-					press: function () {
-						document.getElementById(this.getControlPrefixId() + "-fu").click()
-					}.bind(this)
-				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-				this.setBrowseTile(oBrowseTile);
-				this.oTileContainer.addContent(oBrowseTile);
-			}
-
-			// Camera tile
-			if (!this._bHideCamera) {
-				var oCameraTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-cameraTile", {
-					text: "Camera",
-					icon: "sap-icon://add-photo",
-					press: [this.onPictureButtonPress, this]
-				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-				this.setCameraTile(oCameraTile);
-				this.oTileContainer.addContent(oCameraTile);
-			}
-
-			// File attachment tile
-			if (!this._bHideNonImages) {
-				var oImageAttachmentTile = new sap.m.ImageContent({
-					src: "sap-icon://pdf-attachment"
-				});
-				var oTileContentAttachmentTile = new sap.m.TileContent();
-				oTileContentAttachmentTile.setContent(oImageAttachmentTile);
-
-				var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
-					header: "File",
-					scope: GenericTileScope.Actions,
-					press: function (evt) {
-						if (evt.getParameter("action") === "Remove") {
-							MessageToast.show("Remove action of attachment");
-						} else {
-							MessageToast.show("Attachment has been pressed.");
-						}
-					}.bind(this)
-				}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-				oAttachment.addTileContent(oTileContentAttachmentTile);
-				this.addAttachment(oAttachment);
-				this.oTileContainer.addContent(oAttachment);
-			}
-
-			// Image attachment tile
-			if (!this._bHideImages) {
-
-				var sPictureURL =
-					"https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
-				var sPictureFilename = "Image.jpg";
-
-				var oLightBox = new sap.m.LightBox();
-				var oLightBoxItem = new sap.m.LightBoxItem({
-					imageSrc: sPictureURL,
-					title: sPictureFilename
-				});
-				oLightBox.addImageContent(oLightBoxItem);
-
-				var oThumbnailImage = new sap.m.Image({
-					src: sPictureURL
-				});
-				oThumbnailImage.setDetailBox(oLightBox);
-				//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
-
-				var oTCAttachmentImageTile = new sap.m.TileContent();
-				oTCAttachmentImageTile.setContent(oThumbnailImage);
-
-				var oAttachmentImageTile = new sap.m.GenericTile(this.getControlPrefixId() + "-attachmentImage", {
-					scope: GenericTileScope.Actions,
-					header: sPictureFilename,
-					//backgroundImage: sPictureURL,
-					//press: [this._tilePressed, this]
-				}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-				oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
-				this.addAttachment(oAttachmentImageTile);
-				this.oTileContainer.addContent(oAttachmentImageTile);
-			}
+			// Build tiles
+			this._buildTiles();
 
 			// Test!!!
 			this._oBtnGrabVideo = new sap.m.Button({
@@ -353,7 +274,7 @@ sap.ui.define([
 
 		_fnFileUploader_UploadComplete: function (oControlEvent) {
 			var primaryPath = this._primaryPath;
-			
+
 			this._closeUploadingDialog();
 
 			if (!this._attachedECController) {
@@ -410,7 +331,6 @@ sap.ui.define([
 			this.fUpdateFinished = $.proxy(this._DataContainerUpdateFinished, this);
 			oDataContainer.attachDataContainerUpdateFinished(this.fUpdateFinished);
 
-
 			this._onFileSelected = this.___checkAndCreateEH(this._onFileSelected);
 			var sEvent = this._onFileSelected;
 			if (sEvent) {
@@ -424,19 +344,177 @@ sap.ui.define([
 				return this.oController.getParentController().getChildController(this._attach2EC);
 			}
 		},
-		
-		_DataContainerUpdateFinished : function () {
+
+		_DataContainerUpdateFinished: function () {
 			if (!this._attachedECController) {
 				this._attachedECController = this._getAttachedECController();
 				if (!this._attachedECController) {
 					return;
 				}
-			}			
+			}
 			var oDataContainer = this._attachedECController.getDataContainer();
 			if (this.fUpdateFinished) {
 				oDataContainer.detachDataContainerUpdateFinished(this.fUpdateFinished);
 				this.fUpdateFinished = null;
-			}			
+			}
+
+			this.Documents = [];
+			var oDocument = {};
+
+			// rebuild document list
+			var oDocumentList = oDataContainer.getDataObject("/Root/AttachmentFolder/DocumentList");
+			var iDocumentsCount = oDocumentList.getCount();
+
+			if (iDocumentsCount > 0) {
+				var i;
+				for (i = 0; i < iDocumentsCount; i++) {
+					var oRow = oDocumentList.getRow(i);
+					if (oRow) {
+						oDocument = {};
+						oDocument.FileName = oRow.getMember("FileName").getValue();
+						oDocument.MimeCode = oRow.getMember("MimeCode").getValue();
+						oDocument.FileContentURI = oRow.getMember("FileContentURI").getValue();
+						oDocument.ThumbnailURL = oRow.getMember("ThumbnailURL").getValue(); // currently gives 401 if trying to access; future proof
+						oDocument.CreatedOn = oRow.getMember("CreatedOn").getValue();
+						oDocument.ChangedOn = oRow.getMember("ChangedOn").getValue();
+
+						this.Documents.push(oDocument);
+					}
+				}
+
+				// sort descending by ChangedOn (e.g. the last added will go first)
+				this.Documents.sort(function (x, y) {
+					return y.ChangedOn - x.ChangedOn;
+				});
+			}
+
+			// rerender tiles (empty this.Documents[] will clear files tiles out)
+			this._buildTiles();
+		},
+
+		_buildTiles: function () {
+			if (!this.oTileContainer) {
+				return;
+			}
+			this.oTileContainer.removeAllContent();
+
+			// Browse tile
+			if (!this._bHideBrowse) {
+				var oBrowseTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-browseTile", {
+					text: "Browse",
+					icon: "sap-icon://open-folder",
+					press: function () {
+						document.getElementById(this.getControlPrefixId() + "-fu").click()
+					}.bind(this)
+				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+				this.setBrowseTile(oBrowseTile);
+				this.oTileContainer.addContent(oBrowseTile);
+			}
+
+			// Camera tile
+			if (!this._bHideCamera) {
+				var oCameraTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-cameraTile", {
+					text: "Camera",
+					icon: "sap-icon://add-photo",
+					press: [this.onPictureButtonPress, this]
+				}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+				this.setCameraTile(oCameraTile);
+				this.oTileContainer.addContent(oCameraTile);
+			}
+
+			/*
+						// File attachment tile
+						if (!this._bHideNonImages) {
+							var oImageAttachmentTile = new sap.m.ImageContent({
+								src: "sap-icon://pdf-attachment"
+							});
+							var oTileContentAttachmentTile = new sap.m.TileContent();
+							oTileContentAttachmentTile.setContent(oImageAttachmentTile);
+
+							var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-attachment1", {
+								header: "File",
+								scope: GenericTileScope.Actions,
+								press: function (evt) {
+									if (evt.getParameter("action") === "Remove") {
+										MessageToast.show("Remove action of attachment");
+									} else {
+										MessageToast.show("Attachment has been pressed.");
+									}
+								}.bind(this)
+							}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+							oAttachment.addTileContent(oTileContentAttachmentTile);
+							this.addAttachment(oAttachment);
+							this.oTileContainer.addContent(oAttachment);
+						}
+
+						// Image attachment tile
+						if (!this._bHideImages) {
+
+							var sPictureURL =
+								"https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
+							var sPictureFilename = "Image.jpg";
+
+							var oLightBox = new sap.m.LightBox();
+							var oLightBoxItem = new sap.m.LightBoxItem({
+								imageSrc: sPictureURL,
+								title: sPictureFilename
+							});
+							oLightBox.addImageContent(oLightBoxItem);
+
+							var oThumbnailImage = new sap.m.Image({
+								src: sPictureURL
+							});
+							oThumbnailImage.setDetailBox(oLightBox);
+							//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
+
+							var oTCAttachmentImageTile = new sap.m.TileContent();
+							oTCAttachmentImageTile.setContent(oThumbnailImage);
+
+							var oAttachmentImageTile = new sap.m.GenericTile(this.getControlPrefixId() + "-attachmentImage", {
+								scope: GenericTileScope.Actions,
+								header: sPictureFilename,
+								//backgroundImage: sPictureURL,
+								//press: [this._tilePressed, this]
+							}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+							oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
+							this.addAttachment(oAttachmentImageTile);
+							this.oTileContainer.addContent(oAttachmentImageTile);
+						}
+						*/
+
+			var iDocumentsCount = this.Documents.length;
+			for (var i = 0; i < iDocumentsCount; i++) {
+				var oDocument = this.Documents[i];
+
+			//	if (this.isImageMimeCode(oDocument.MimeCode)) {
+					// Create Image tile
+			//	} else {
+					// Create generic tile
+					var sIcon = this._getIconFromFilename(oDocument.FileName);
+					var oImageAttachmentTile = new sap.m.ImageContent({
+						src: sIcon
+					});
+					var oTileContentAttachmentTile = new sap.m.TileContent();
+					oTileContentAttachmentTile.setContent(oImageAttachmentTile);
+
+					var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-atta-" + i, {
+						header: oDocument.FileName,
+						scope: GenericTileScope.Actions,
+						press: function (evt) {
+							if (evt.getParameter("action") === "Remove") {
+								MessageToast.show("Remove action of attachment");
+							} else {
+								MessageToast.show("Attachment has been pressed.");
+							}
+						}.bind(this)
+					}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+					oAttachment.addTileContent(oTileContentAttachmentTile);
+					this.addAttachment(oAttachment);
+					this.oTileContainer.addContent(oAttachment);
+			//	}
+			}
+			
+			this.invalidate();
 		},
 
 		_isDebugMode: function () {
@@ -691,11 +769,63 @@ sap.ui.define([
 		},
 
 		isImageFile: function (oFile) {
-			if (oFile && oFile.type && oFile.type.match('image.*') ||
-				(oFile && oFile.mimeType && oFile.mimeType.match('image.*'))) {
+			if (oFile && oFile.type && oFile.type.match("image.*") ||
+				(oFile && oFile.mimeType && oFile.mimeType.match("image.*"))) {
 				return true;
 			}
 			return false;
+		},
+
+		isImageMimeCode: function (sMimeCode) {
+			if (sMimeCode.match("image.*")) {
+				return true;
+			}
+			return false;
+		},
+
+		_getIconFromFilename: function (sFilename) {
+			var sFileExtension = this._splitFilename(sFilename).extension;
+			if (jQuery.type(sFileExtension) === "string") {
+				sFileExtension = sFileExtension.toLowerCase();
+			}
+
+			switch (sFileExtension) {
+			case ".bmp":
+			case ".jpg":
+			case ".jpeg":
+			case ".png":
+				return "sap-icon://card"; // if no image is provided a standard placeholder camera is displayed
+			case ".csv":
+			case ".xls":
+			case ".xlsx":
+				return "sap-icon://excel-attachment";
+			case ".doc":
+			case ".docx":
+			case ".odt":
+				return "sap-icon://doc-attachment";
+			case ".pdf":
+				return "sap-icon://pdf-attachment";
+			case ".ppt":
+			case ".pptx":
+				return "sap-icon://ppt-attachment";
+			case ".txt":
+				return "sap-icon://document-text";
+			default:
+				return "sap-icon://document";
+			}
+		},
+
+		_splitFilename: function (filename) {
+			var oResult = {};
+			var aNameSplit = filename.split(".");
+			if (aNameSplit.length === 1) {
+				oResult.extension = "";
+				oResult.name = aNameSplit.pop();
+				return oResult;
+			}
+			oResult.extension = "." + aNameSplit.pop();
+			oResult.name = aNameSplit.join(".");
+			return oResult;
 		},
 
 		getOfflineFileTransfer: function () {
