@@ -247,6 +247,21 @@ sap.ui.define([
 			});
 		},
 
+		destroy: function () {
+			if (!this._attachedECController) {
+				this._attachedECController = this._getAttachedECController();
+				if (!this._attachedECController) {
+					return;
+				}
+			}
+
+			var oDataContainer = this._attachedECController.getDataContainer();			
+			if (this.fUpdateFinished) {
+				oDataContainer.detachDataContainerUpdateFinished(this.fUpdateFinished);
+				this.fUpdateFinished = null;
+			}
+		},
+
 		_fnFileUploader_Change: function (oControlEvent) {
 			var mParameters = oControlEvent.mParameters;
 			if (mParameters && !mParameters.newValue) {
@@ -329,10 +344,6 @@ sap.ui.define([
 				oEventContext = new sap.client.evt.EventContext(oControlEvent.getSource());
 			}
 
-			var oDataContainer = this._attachedECController.getDataContainer();
-			this.fUpdateFinished = $.proxy(this._DataContainerUpdateFinished, this);
-			oDataContainer.attachDataContainerUpdateFinished(this.fUpdateFinished);
-
 			this._onFileSelected = this.___checkAndCreateEH(this._onFileSelected);
 			var sEvent = this._onFileSelected;
 			if (sEvent) {
@@ -355,10 +366,6 @@ sap.ui.define([
 				}
 			}
 			var oDataContainer = this._attachedECController.getDataContainer();
-			if (this.fUpdateFinished) {
-				oDataContainer.detachDataContainerUpdateFinished(this.fUpdateFinished);
-				this.fUpdateFinished = null;
-			}
 
 			this.Documents = [];
 			var oDocument = {};
@@ -487,18 +494,13 @@ sap.ui.define([
 
 				var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-atta-" + oDocument.NodeID, {
 					header: oDocument.FileName,
-					scope: GenericTileScope.Actions,
-					press: function (evt) {
-						if (evt.getParameter("action") === "Remove") {
-							MessageToast.show("Remove action of attachment");
-						} else {
-							MessageToast.show("Attachment has been pressed.");
-						}
-					}.bind(this)
+					//scope: GenericTileScope.Actions,
+					press: [this._tilePressed, this]
 				}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+				oAttachment.showActionsView(true);
 				oAttachment.addTileContent(oTileContentAttachmentTile);
 				oAttachment.NodeID = oDocument.NodeID;
-				
+
 				this.addAttachment(oAttachment);
 				this.oTileContainer.addContent(oAttachment);
 				//	}
@@ -590,9 +592,16 @@ sap.ui.define([
 		},
 
 		onAfterRendering: function () {
+			if (!this._attachedECController) {
+				this._attachedECController = this._getAttachedECController();
+				if (!this._attachedECController) {
+					return;
+				}
+			}
 
-			//var that = this;	
-
+			var oDataContainer = this._attachedECController.getDataContainer();
+			this.fUpdateFinished = $.proxy(this._DataContainerUpdateFinished, this);
+			oDataContainer.attachDataContainerUpdateFinished(this.fUpdateFinished);
 		},
 
 		_setupImageResize: function (sImageUploadSize) {
