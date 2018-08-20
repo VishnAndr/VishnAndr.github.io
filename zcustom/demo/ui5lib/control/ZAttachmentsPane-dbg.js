@@ -68,17 +68,19 @@ sap.ui.define([
 
 			oRM.write("</div>");
 		},
-		
+
 		_getCustomParameters: function () {
 			this._primaryPath = this.getParameter("primaryPath") ? this.getParameter("primaryPath") : "/Root/AttachmentFolder/AddParams";
 			this._attach2EC = this.getParameter("attach2EC") ? this.getParameter("attach2EC") : "COD_Documentlist";
 			this._enableImageProcessor = this.getParameter("enableImageProcessor") ? this.getParameter("enableImageProcessor") : "None";
 			this._onFileSelected = this.getParameter("onFileSelected");
 
-			this._bHideBrowse = ( this.getParameter("hideBrowse") == "true" );
-			this._bHideCamera = ( this.getParameter("hideCamera") == "true" );
-			this._bHideImages = ( this.getParameter("hideImages") == "true" );
-			this._bHideNonImages = ( this.getParameter("hideNonImages") == "true" );			
+			this._bHideBrowse = (this.getParameter("hideBrowse") == "true");
+			this._bHideCamera = (this.getParameter("hideCamera") == "true");
+			this._bHideImages = (this.getParameter("hideImages") == "true");
+			this._bHideNonImages = (this.getParameter("hideNonImages") == "true");
+			
+			this._bMultipleFiles  = !(this.getParameter("singleFile") == "true");
 		},
 
 		initializePane: function () {
@@ -87,10 +89,12 @@ sap.ui.define([
 			this._oApplication = this._oApplication ||
 				(this.oController && this.oController.getApplication && this.oController.getApplication()) ||
 				(sap.client.getCurrentApplication && sap.client.getCurrentApplication()); //the logic taken from sap.client.basecontrols.core.BaseControlWrapper
-			
+
 			// We're working only in NewUI (aka Fiori UI aka RUI)
-			if (!this._oApplication.isNewUI()) { return; }
-			
+			if (!this._oApplication.isNewUI()) {
+				return;
+			}
+
 			this._oRuntimeEnviroment = (this.oController && this.oController.getRuntimeEnvironment && this.oController.getRuntimeEnvironment()) ||
 				(this._oApplication.getRuntimeEnvironment());
 
@@ -182,96 +186,12 @@ sap.ui.define([
 					buttonOnly: true,
 					// sendXHR: bRunningOnWindows81,
 					sendXHR: true,
-					change: function (oControlEvent) {
-						var mParameters = oControlEvent.mParameters;
-						if (mParameters && !mParameters.newValue) {
-							// workaround for IE uploading duplicate files
-							return;
-						}
-
-						if (this.isImageFileUploader(oControlEvent.oSource) && this.oImageResizer) {
-							var oControlEventCopy = {
-								mParameters: oControlEvent.mParameters,
-								oSource: oControlEvent.oSource
-							};
-
-							var oFile = oControlEvent.mParameters.files[0];
-
-							this.oImageResizer.resizeImageFile(oFile)
-								.then(function (sResizedImageDataUri) {
-									this._onImageResized(oControlEventCopy, sResizedImageDataUri);
-								}.bind(this), function (oReason) {
-									this._onFileChange(oControlEventCopy);
-								}.bind(this));
-						} else {
-							this._onFileChange(oControlEvent);
-						}
-
-					}.bind(this),
+					multiple: this._bMultipleFiles,
+					change: [this._fnFileUploader_Change, this],
 					uploadAborted: function () {
 						this._closeUploadingDialog();
 					}.bind(this),
-					uploadComplete: function (oControlEvent) {
-						this._closeUploadingDialog();
-
-						if (!this._attachedECController) {
-							this._attachedECController = this._getAttachedECController();
-							if (!this._attachedECController) {
-								return;
-							}
-						}
-
-						var response = oControlEvent.mParameters.response || oControlEvent.mParameters.responseRaw;
-						if (!response) {
-							// Even cancel was uploading an empty file; so return if no response
-							return;
-						}
-
-						response = unescape(decodeURI(response));
-						response = response.replace(/[\r]/g, "");
-						var items = response.split("\n");
-						if (items.length === 3) {
-							var id = items[0].split("=")[1];
-							var fileName = items[1].split("=")[1];
-							var fileSize = items[2].split("=")[1];
-
-							var oDataContainer = this._attachedECController.getDataContainer();
-							if (sap.ui.Device.os.ios) {
-								var sGUID = sap.client.util.Util.createGuid();
-								var aFileParts = fileName.split('.');
-								if (aFileParts.length < 2) { // not '.', not extension found
-									fileName = fileName + "-" + sGUID;
-								} else {
-									var sFileExt = aFileParts.pop(); //extension without the dot
-									var sFileName = aFileParts.pop(); //name without the dot
-									fileName = sFileName + "-" + sGUID + "." + sFileExt;
-								}
-							}
-							// TODO binding in list is not supported
-							oDataContainer.setProperty(primaryPath + "/content", "id=" + id, this.getBindingContext());
-
-							// The fileName and fileSize can be bound only if on the same BO instance we have a fileName and fileSize property.
-							oDataContainer.setProperty(primaryPath + "/fileName", fileName, this.getBindingContext());
-							oDataContainer.setProperty(primaryPath + "/fileSize", fileSize, this.getBindingContext());
-
-							oDataContainer.checkUpdate(primaryPath + "/fileName.FormattedValue");
-						}
-
-						// Handle the onFileSelected Event if exist
-						var oEventContext;
-
-						if (oControlEvent && oControlEvent.getSource) {
-							oEventContext = new sap.client.evt.EventContext(oControlEvent.getSource());
-						}
-
-						this._onFileSelected = this.___checkAndCreateEH(this._onFileSelected);
-						var sEvent = this._onFileSelected;
-						if (sEvent) {
-							this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
-						}
-
-					}.bind(this),
-
+					uploadComplete: [this._fnFileUploader_UploadComplete, this],
 					fileSizeExceed: function (oControlEvent) {
 						sap.m.MessageToast.show(sap.client.m.Util.getLocaleText("FileUploadExceedLimitMsg", "Exceeds maximum file size of 2MB"));
 					}
@@ -360,19 +280,20 @@ sap.ui.define([
 
 			// Image attachment tile
 			if (!this._bHideImages) {
-				
-				var sPictureURL = "https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
+
+				var sPictureURL =
+					"https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
 				var sPictureFilename = "Image.jpg";
-				
+
 				var oLightBox = new sap.m.LightBox();
 				var oLightBoxItem = new sap.m.LightBoxItem({
-					imageSrc : sPictureURL,
-					title : sPictureFilename
+					imageSrc: sPictureURL,
+					title: sPictureFilename
 				});
 				oLightBox.addImageContent(oLightBoxItem);
-				
+
 				var oThumbnailImage = new sap.m.Image({
-					src : sPictureURL
+					src: sPictureURL
 				});
 				oThumbnailImage.setDetailBox(oLightBox);
 				//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
@@ -401,6 +322,94 @@ sap.ui.define([
 				text: "Take photo",
 				press: [this._takePhoto, this]
 			});
+		},
+
+		_fnFileUploader_Change: function (oControlEvent) {
+			var mParameters = oControlEvent.mParameters;
+			if (mParameters && !mParameters.newValue) {
+				// workaround for IE uploading duplicate files
+				return;
+			}
+
+			if (this.isImageFileUploader(oControlEvent.oSource) && this.oImageResizer) {
+				var oControlEventCopy = {
+					mParameters: oControlEvent.mParameters,
+					oSource: oControlEvent.oSource
+				};
+
+				var oFile = oControlEvent.mParameters.files[0];
+
+				this.oImageResizer.resizeImageFile(oFile)
+					.then(function (sResizedImageDataUri) {
+						this._onImageResized(oControlEventCopy, sResizedImageDataUri);
+					}.bind(this), function (oReason) {
+						this._onFileChange(oControlEventCopy);
+					}.bind(this));
+			} else {
+				this._onFileChange(oControlEvent);
+			}
+
+		},
+
+		_fnFileUploader_UploadComplete: function (oControlEvent) {
+			this._closeUploadingDialog();
+
+			if (!this._attachedECController) {
+				this._attachedECController = this._getAttachedECController();
+				if (!this._attachedECController) {
+					return;
+				}
+			}
+
+			var response = oControlEvent.mParameters.response || oControlEvent.mParameters.responseRaw;
+			if (!response) {
+				// Even cancel was uploading an empty file; so return if no response
+				return;
+			}
+
+			response = unescape(decodeURI(response));
+			response = response.replace(/[\r]/g, "");
+			var items = response.split("\n");
+			if (items.length === 3) {
+				var id = items[0].split("=")[1];
+				var fileName = items[1].split("=")[1];
+				var fileSize = items[2].split("=")[1];
+
+				var oDataContainer = this._attachedECController.getDataContainer();
+				if (sap.ui.Device.os.ios) {
+					var sGUID = sap.client.util.Util.createGuid();
+					var aFileParts = fileName.split('.');
+					if (aFileParts.length < 2) { // not '.', not extension found
+						fileName = fileName + "-" + sGUID;
+					} else {
+						var sFileExt = aFileParts.pop(); //extension without the dot
+						var sFileName = aFileParts.pop(); //name without the dot
+						fileName = sFileName + "-" + sGUID + "." + sFileExt;
+					}
+				}
+				// TODO binding in list is not supported
+				oDataContainer.setProperty(primaryPath + "/content", "id=" + id, this.getBindingContext());
+
+				// The fileName and fileSize can be bound only if on the same BO instance we have a fileName and fileSize property.
+				oDataContainer.setProperty(primaryPath + "/fileName", fileName, this.getBindingContext());
+				oDataContainer.setProperty(primaryPath + "/fileSize", fileSize, this.getBindingContext());
+
+				oDataContainer.checkUpdate(primaryPath + "/fileName.FormattedValue");
+			}
+
+			// Handle the onFileSelected Event if exist
+			var oEventContext;
+
+			if (oControlEvent && oControlEvent.getSource) {
+				oEventContext = new sap.client.evt.EventContext(oControlEvent.getSource());
+			}
+
+			this._onFileSelected = this.___checkAndCreateEH(this._onFileSelected);
+			var sEvent = this._onFileSelected;
+			if (sEvent) {
+				this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
+			}
+
 		},
 
 		_getAttachedECController: function () {
