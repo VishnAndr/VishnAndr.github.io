@@ -352,6 +352,8 @@ sap.ui.define([
 		},
 
 		_fnFileUploader_UploadComplete: function (oControlEvent) {
+			var primaryPath = this._primaryPath;
+			
 			this._closeUploadingDialog();
 
 			if (!this._attachedECController) {
