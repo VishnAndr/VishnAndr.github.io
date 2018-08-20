@@ -73,7 +73,7 @@ sap.ui.define([
 			this._primaryPath = this.getParameter("primaryPath") ? this.getParameter("primaryPath") : "/Root/AttachmentFolder/AddParams";
 			this._attach2EC = this.getParameter("attach2EC") ? this.getParameter("attach2EC") : "COD_Documentlist";
 			this._enableImageProcessor = this.getParameter("enableImageProcessor") ? this.getParameter("enableImageProcessor") : "None";
-			this._onFileSelected = this.getParameter("onFileSelected");
+			this._onFileSelected = this.getParameter("onFileSelected"); // AddFileMDSubmit - for single file, AddFileSubmit_M - for multiple
 
 			this._bHideBrowse = (this.getParameter("hideBrowse") == "true");
 			this._bHideCamera = (this.getParameter("hideCamera") == "true");
@@ -406,6 +406,11 @@ sap.ui.define([
 				oEventContext = new sap.client.evt.EventContext(oControlEvent.getSource());
 			}
 
+			var oDataContainer = this._attachedECController.getDataContainer();
+			this.fUpdateFinished = $.proxy(this._DataContainerUpdateFinished, this);
+			oDataContainer.attachDataContainerUpdateFinished(this.fUpdateFinished);
+
+
 			this._onFileSelected = this.___checkAndCreateEH(this._onFileSelected);
 			var sEvent = this._onFileSelected;
 			if (sEvent) {
@@ -418,6 +423,20 @@ sap.ui.define([
 			if (this.oController && this.oController.getParentController() && this.oController.getParentController().getChildController(this._attach2EC)) {
 				return this.oController.getParentController().getChildController(this._attach2EC);
 			}
+		},
+		
+		_DataContainerUpdateFinished : function () {
+			if (!this._attachedECController) {
+				this._attachedECController = this._getAttachedECController();
+				if (!this._attachedECController) {
+					return;
+				}
+			}			
+			var oDataContainer = this._attachedECController.getDataContainer();
+			if (this.fUpdateFinished) {
+				oDataContainer.detachDataContainerUpdateFinished(this.fUpdateFinished);
+				this.fUpdateFinished = null;
+			}			
 		},
 
 		_isDebugMode: function () {
