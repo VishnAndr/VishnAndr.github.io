@@ -589,7 +589,7 @@ sap.ui.define([
 					return;
 				}
 
-				oEventContext = new sap.client.evt.EventContext();
+				var oEventContext = new sap.client.evt.EventContext(this);
 				if (oEventContext) {
 					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath;
 					if (sEvent) {
