@@ -1,9 +1,20 @@
 sap.ui.define([
 	"sap/m/library",
-	"jquery.sap.global"
-], function (library, jQuery) {
+	"jquery.sap.global",
+	"sap/m/GenericTileRenderer"
+], function (library, jQuery, GenericTileRenderer) {
 	"use strict";
 
+
+	// shortcut for sap.m.GenericTileMode
+	var GenericTileMode = library.GenericTileMode;
+
+	// shortcut for sap.m.GenericTileScope
+	var GenericTileScope = library.GenericTileScope;
+
+	// shortcut for sap.m.LoadState
+	var LoadState = library.LoadState;
+	
 	var ZThumbnailTileRenderer = GenericTileRenderer.extend("zcustom.demo.ui5lib.control.ZThumbnailTileRenderer", /** @lends zcustom.demo.ui5lib.control.ZThumbnailTile.prototype */ {
 		metadata: {
 			library: "zcustom.demo.ui5lib"
