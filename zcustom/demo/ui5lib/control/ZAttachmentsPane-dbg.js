@@ -592,7 +592,7 @@ sap.ui.define([
 			if (evt.oSource && evt.oSource._oDocument && evt.oSource._oDocument.DocumentListPath) {
 				var sAction = evt.getParameter("action");
 				var sEvent = (sAction === "Remove") ? "DeleteConfirmation" : "";
-				sEvent = (sAction === "Press") ? "OpenDocument" : "";
+				sEvent = (sAction === "Press") ? "OpenDocument" : sEvent;
 
 				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
 				if (oEventContext) {
