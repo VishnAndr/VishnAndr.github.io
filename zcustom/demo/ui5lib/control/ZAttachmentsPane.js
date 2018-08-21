@@ -248,14 +248,11 @@ sap.ui.define([
 		},
 
 		destroy: function () {
-			if (!this._attachedECController) {
-				this._attachedECController = this._getAttachedECController();
-				if (!this._attachedECController) {
-					return;
-				}
+			if (!this._getAttachedECController()) {
+				return;
 			}
 
-			var oDataContainer = this._attachedECController.getDataContainer();			
+			var oDataContainer = this._attachedECController.getDataContainer();
 			if (this.fUpdateFinished) {
 				oDataContainer.detachDataContainerUpdateFinished(this.fUpdateFinished);
 				this.fUpdateFinished = null;
@@ -294,11 +291,8 @@ sap.ui.define([
 
 			this._closeUploadingDialog();
 
-			if (!this._attachedECController) {
-				this._attachedECController = this._getAttachedECController();
-				if (!this._attachedECController) {
-					return;
-				}
+			if (!this._getAttachedECController()) {
+				return;
 			}
 
 			var response = oControlEvent.mParameters.response || oControlEvent.mParameters.responseRaw;
@@ -353,53 +347,59 @@ sap.ui.define([
 		},
 
 		_getAttachedECController: function () {
-			if (this.oController && this.oController.getParentController() && this.oController.getParentController().getChildController(this._attach2EC)) {
-				return this.oController.getParentController().getChildController(this._attach2EC);
+			if (!this._attachedECController) {
+				if (this.oController && this.oController.getParentController() && this.oController.getParentController().getChildController(this._attach2EC)) {
+					this._attachedECController = this.oController.getParentController().getChildController(this._attach2EC);
+				}
 			}
+
+			return this._attachedECController;
 		},
 
 		_DataContainerUpdateFinished: function () {
-			if (!this._attachedECController) {
-				this._attachedECController = this._getAttachedECController();
-				if (!this._attachedECController) {
-					return;
-				}
+			if (!this._getAttachedECController()) {
+				return;
 			}
 			var oDataContainer = this._attachedECController.getDataContainer();
 
-			this.Documents = [];
-			var oDocument = {};
-
-			// rebuild document list
 			var oDocumentList = oDataContainer.getDataObject("/Root/AttachmentFolder/DocumentList");
 			var iDocumentsCount = oDocumentList.getCount();
 
-			if (iDocumentsCount > 0) {
-				var i;
-				for (i = 0; i < iDocumentsCount; i++) {
-					var oRow = oDocumentList.getRow(i);
-					if (oRow) {
-						oDocument = {};
-						oDocument.NodeID = oRow.getMember("NodeID").getValue();
-						oDocument.FileName = oRow.getMember("FileName").getValue();
-						oDocument.MimeCode = oRow.getMember("MimeCode").getValue();
-						oDocument.FileContentURI = oRow.getMember("FileContentURI").getValue();
-						oDocument.ThumbnailURL = oRow.getMember("ThumbnailURL").getValue(); // currently gives 401 if trying to access; future proof
-						oDocument.CreatedOn = oRow.getMember("CreatedOn").getValue();
-						oDocument.ChangedOn = oRow.getMember("ChangedOn").getValue();
+			if (iDocumentsCount !== this.Documents.length) { // we're doing rebuild only if documents count changed
+				// rebuild document list
+				this.Documents = [];
+				var oDocument = {};
 
-						this.Documents.push(oDocument);
+				if (iDocumentsCount > 0) {
+					var i;
+					for (i = 0; i < iDocumentsCount; i++) {
+						var oRow = oDocumentList.getRow(i);
+						if (oRow) {
+							oDocument = {};
+							oDocument.RowIndex = oRow.getMember("@RowIndex").getValue();
+							oDocument.NodeID = oRow.getMember("NodeID").getValue();
+							oDocument.FileName = oRow.getMember("FileName").getValue();
+							oDocument.MimeCode = oRow.getMember("MimeCode").getValue();
+							oDocument.FileContentURI = oRow.getMember("FileContentURI").getValue();
+							oDocument.ThumbnailURL = oRow.getMember("ThumbnailURL").getValue(); // currently gives 401 if trying to access; future proof
+							oDocument.CreatedOn = oRow.getMember("CreatedOn").getValue();
+							oDocument.ChangedOn = oRow.getMember("ChangedOn").getValue();
+
+							oDocument.DocumentListPath = "/Root/AttachmentFolder/DocumentList/" + oDocument.RowIndex; // used in press event of the tile
+
+							this.Documents.push(oDocument);
+						}
 					}
+
+					// sort descending by ChangedOn (e.g. the last added will go first)
+					this.Documents.sort(function (x, y) {
+						return y.ChangedOn - x.ChangedOn;
+					});
 				}
 
-				// sort descending by ChangedOn (e.g. the last added will go first)
-				this.Documents.sort(function (x, y) {
-					return y.ChangedOn - x.ChangedOn;
-				});
+				// rerender tiles (empty this.Documents[] will clear files tiles out)
+				this._buildTiles();
 			}
-
-			// rerender tiles (empty this.Documents[] will clear files tiles out)
-			this._buildTiles();
 		},
 
 		_buildTiles: function () {
@@ -494,12 +494,11 @@ sap.ui.define([
 
 				var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-atta-" + oDocument.NodeID, {
 					header: oDocument.FileName,
-					//scope: GenericTileScope.Actions,
+					scope: GenericTileScope.Actions,
 					press: [this._tilePressed, this]
 				}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-				oAttachment.showActionsView(true);
 				oAttachment.addTileContent(oTileContentAttachmentTile);
-				oAttachment.NodeID = oDocument.NodeID;
+				oAttachment._oDocument = oDocument;
 
 				this.addAttachment(oAttachment);
 				this.oTileContainer.addContent(oAttachment);
@@ -578,10 +577,26 @@ sap.ui.define([
 		},
 
 		_tilePressed: function (evt) {
-			if (evt.getParameter("action") === "Remove") {
-				MessageToast.show("Remove action of attachment");
-			} else {
-				MessageToast.show("Attachment has been pressed.");
+			if (evt.oSource && evt.oSource._oDocument && evt.oSource._oDocument.DocumentListPath) {
+				var sAction = evt.getParameter("action");
+				var sEvent = "";
+				if (sAction === "Remove") {
+					sEvent = "DeleteConfirmation";
+				} else if (sAction === "Press") {
+					sEvent = "OpenDocument";
+				} else {
+					MessageToast.show("Not supported action: " + sAction);
+					return;
+				}
+
+				oEventContext = new sap.client.evt.EventContext();
+				if (oEventContext) {
+					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath;
+					if (sEvent) {
+						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
+					}
+				}
+
 			}
 		},
 
@@ -592,11 +607,8 @@ sap.ui.define([
 		},
 
 		onAfterRendering: function () {
-			if (!this._attachedECController) {
-				this._attachedECController = this._getAttachedECController();
-				if (!this._attachedECController) {
-					return;
-				}
+			if (!this._getAttachedECController()) {
+				return;
 			}
 
 			var oDataContainer = this._attachedECController.getDataContainer();
@@ -867,11 +879,8 @@ sap.ui.define([
 
 		uploadComplete: function (sFileId, sFileName, sFileSize) {
 			//MessageToast.show("Upload complete : " + sFileName);
-			if (!this._attachedECController) {
-				this._attachedECController = this._getAttachedECController();
-				if (!this._attachedECController) {
-					return;
-				}
+			if (!this._getAttachedECController()) {
+				return;
 			}
 
 			var primaryPath = this._primaryPath;
@@ -1020,11 +1029,8 @@ sap.ui.define([
 		},
 
 		_resetUploader: function () {
-			if (!this._attachedECController) {
-				this._attachedECController = this._getAttachedECController();
-				if (!this._attachedECController) {
-					return;
-				}
+			if (!this._getAttachedECController()) {
+				return;
 			}
 
 			var primaryPath = this._primaryPath;
@@ -1069,11 +1075,8 @@ sap.ui.define([
 				return sNewEvent;
 			}
 
-			if (!this._attachedECController) {
-				this._attachedECController = this._getAttachedECController();
-				if (!this._attachedECController) {
-					return sNewEvent;
-				}
+			if (!this._getAttachedECController()) {
+				return sNewEvent;
 			}
 
 			this._attachedECController.getComponentModel().getEventHandlers(); // just in case event handlers have not been read yet (it will populate _mEventHandlers during this call)
