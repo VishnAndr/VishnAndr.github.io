@@ -9,7 +9,7 @@ sap.ui.define([
 	"sap/m/ScrollContainer",
 	"sap/m/LightBox",
 	"sap/m/LightBoxItem",
-	"zcustom.demo.ui5lib.control.ZThumbnailTile"
+	"zcustom/demo/ui5lib/control/ZThumbnailTile"
 ], function (CustomPane, MessageToast, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile,
 	ScrollContainer, LightBox, LightBoxItem, ZThumbnailTile) {
 	"use strict";
