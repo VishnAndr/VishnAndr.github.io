@@ -1,7 +1,6 @@
 sap.ui.define([
 	"sap/client/basecontrols/core/CustomPane",
 	"sap/m/MessageToast",
-	"sap/m/MessageBox",
 	"sap/m/GenericTile",
 	"sap/m/GenericTileScope",
 	"sap/ui/unified/FileUploader",
@@ -9,13 +8,14 @@ sap.ui.define([
 	"sap/client/m/create/QuickCreateTile",
 	"sap/m/ScrollContainer",
 	"sap/m/LightBox",
-	"sap/m/LightBoxItem"
-], function (CustomPane, MessageToast, MessageBox, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile,
-	ScrollContainer, LightBox) {
+	"sap/m/LightBoxItem",
+	"zcustom.demo.ui5lib.control.ZThumbnailTile"
+], function (CustomPane, MessageToast, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile,
+	ScrollContainer, LightBox, LightBoxItem, ZThumbnailTile) {
 	"use strict";
 
-	// Provides control zcustom.sandbox.ui5lib.control.ZCustomEmptyPane
-	var ZAttachmentsPane = CustomPane.extend("zcustom.sandbox.ui5lib.control.ZAttachmentsPane", /** @lends zcustom.sandbox.ui5lib.control.ZCustomEmptyPane.prototype */ {
+	// Provides custom pane zcustom.demo.ui5lib.control.ZAttachmentsPane
+	var ZAttachmentsPane = CustomPane.extend("zcustom.demo.ui5lib.control.ZAttachmentsPane", /** @lends zcustom.demo.ui5lib.control.ZAttachmentsPane.prototype */ {
 		metadata: {
 
 			library: "zcustom.demo.ui5lib",
@@ -55,17 +55,6 @@ sap.ui.define([
 
 			oRM.renderControl(oControl.getTileContainer());
 
-			if (oControl._showCameraDesktop) {
-				oRM.write("<p>");
-				oRM.renderControl(oControl._oBtnGrabVideo);
-				oRM.write("</p>");
-				oRM.write("<p><video autoplay style='height: 180px; width: 240px;'></video></p>");
-				oRM.write("<p>");
-				oRM.renderControl(oControl._oBtnTakePhoto);
-				oRM.write("</p>");
-				oRM.write("<p><img id='imageTag' width='240' height='180'></p>");
-			};
-
 			oRM.write("</div>");
 		},
 
@@ -75,12 +64,12 @@ sap.ui.define([
 			this._enableImageProcessor = this.getParameter("enableImageProcessor") ? this.getParameter("enableImageProcessor") : "None";
 			this._onFileSelected = this.getParameter("onFileSelected"); // AddFileMDSubmit - for single file, AddFileSubmit_M - for multiple
 
-			this._bHideBrowse = (this.getParameter("hideBrowse") == "true");
-			this._bHideCamera = (this.getParameter("hideCamera") == "true");
-			this._bHideImages = (this.getParameter("hideImages") == "true");
-			this._bHideNonImages = (this.getParameter("hideNonImages") == "true");
+			this._bHideBrowse = (this.getParameter("hideBrowse") === "true");
+			this._bHideCamera = (this.getParameter("hideCamera") === "true");
+			this._bHideImages = (this.getParameter("hideImages") === "true");
+			this._bHideNonImages = (this.getParameter("hideNonImages") === "true");
 
-			this._bMultipleFiles = !(this.getParameter("singleFile") == "true");
+			this._bMultipleFiles = !(this.getParameter("singleFile") === "true");
 		},
 
 		initializePane: function () {
@@ -102,7 +91,7 @@ sap.ui.define([
 
 			this._attachedECController = this._getAttachedECController();
 			// listen to event ChildControllerAdded to really attach to DataContainer changes there
-			this.oController.getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this)
+			this.oController.getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this);
 
 			this.Documents = [];
 
@@ -139,6 +128,7 @@ sap.ui.define([
 			}
 
 			if ((this.oImageResizer || this._oApplication.isOfflineMode()) && window.FilePicker) {
+				MessageToast.show("new sap.m.Button");
 				this.oFileUploader = new sap.m.Button(this.getControlPrefixId() + "-browseButton", {
 					icon: sap.ui.core.IconPool.getIconURI("open-folder"),
 					press: function () {
@@ -183,6 +173,7 @@ sap.ui.define([
 				};
 
 			} else {
+				MessageToast.show("new FileUploader");
 				this.oFileUploader = new FileUploader(this.getControlPrefixId(), {
 					//shallPicturesBeOnlyTakenByCamera: oSettings.shallPicturesBeOnlyTakenByCamera(),
 					uploadOnChange: false, // we have to wait for the change event
@@ -214,7 +205,7 @@ sap.ui.define([
 				// since the icon-only mode doesn't work with ios. Probably
 				// a bug in UI5 :(
 				if (isContainer && !isIOS) {
-					this.oFileUploader.setIcon(sap.ui.core.IconPool.getIconURI('open-folder'));
+					this.oFileUploader.setIcon(sap.ui.core.IconPool.getIconURI("open-folder"));
 					this.oFileUploader.setIconOnly(true);
 				}
 			}
@@ -226,10 +217,6 @@ sap.ui.define([
 			this._stdFUoControl.addStyleClass("sapClientMFileUpload");
 			// <<< finish standard logic from FileUploadWrapper
 
-			// for testing
-			this._showCameraDesktop = false;
-			this._theStream = null;
-
 			// Tile container
 			this.oTileContainer = new sap.m.ScrollContainer().addStyleClass("sapUiTinyMargin");
 			this.setTileContainer(this.oTileContainer);
@@ -237,16 +224,6 @@ sap.ui.define([
 			// Build tiles
 			this._buildTiles();
 
-			// Test!!!
-			this._oBtnGrabVideo = new sap.m.Button({
-				text: "Grab Video",
-				press: [this._grabVideo, this]
-			});
-
-			this._oBtnTakePhoto = new sap.m.Button({
-				text: "Take photo",
-				press: [this._takePhoto, this]
-			});
 		},
 
 		_onChildControllerAdded: function (oEvent) {
@@ -449,75 +426,72 @@ sap.ui.define([
 					this.oTileContainer.addContent(oCameraTile);
 				}
 			} else {
-				this.oTileContainer.addContent(thsi.getCameraTile());
+				this.oTileContainer.addContent(this.getCameraTile());
 			}
-
-			/*
-
-						// Image attachment tile
-						if (!this._bHideImages) {
-
-							var sPictureURL =
-								"https://www.frasersproperty.com.au/-/media/frasers-property/retail/landing-site/our-difference/retail_our-difference-1_frasers-property--optimized.jpg";
-							var sPictureFilename = "Image.jpg";
-
-							var oLightBox = new sap.m.LightBox();
-							var oLightBoxItem = new sap.m.LightBoxItem({
-								imageSrc: sPictureURL,
-								title: sPictureFilename
-							});
-							oLightBox.addImageContent(oLightBoxItem);
-
-							var oThumbnailImage = new sap.m.Image({
-								src: sPictureURL
-							});
-							oThumbnailImage.setDetailBox(oLightBox);
-							//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
-
-							var oTCAttachmentImageTile = new sap.m.TileContent();
-							oTCAttachmentImageTile.setContent(oThumbnailImage);
-
-							var oAttachmentImageTile = new sap.m.GenericTile(this.getControlPrefixId() + "-attachmentImage", {
-								scope: GenericTileScope.Actions,
-								header: sPictureFilename,
-								//backgroundImage: sPictureURL,
-								//press: [this._tilePressed, this]
-							}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-							oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
-							this.addAttachment(oAttachmentImageTile);
-							this.oTileContainer.addContent(oAttachmentImageTile);
-						}
-						*/
 
 			var iDocumentsCount = this.Documents.length;
 			for (var i = 0; i < iDocumentsCount; i++) {
 				var oDocument = this.Documents[i];
 
-				//	if (this.isImageMimeCode(oDocument.MimeCode)) {
-				// Create Image tile
-				//	} else {
-				// Create generic tile
-				var sIcon = this._getIconFromFilename(oDocument.FileName);
-				var oImageAttachmentTile = new sap.m.ImageContent({
-					src: sIcon
-				});
-				var oTileContentAttachmentTile = new sap.m.TileContent();
-				oTileContentAttachmentTile.setContent(oImageAttachmentTile);
+				if (this.isImageMimeCode(oDocument.MimeCode)) {
+					// Create Image tile
+					if (!this._bHideImages) {
+						var oLightBox = new sap.m.LightBox();
+						var oLightBoxItem = new sap.m.LightBoxItem({
+							imageSrc: oDocument.FileContentURI,
+							title: oDocument.FileName
+						});
+						oLightBox.addImageContent(oLightBoxItem);
 
-				var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-atta-" + oDocument.NodeID, {
-					header: oDocument.FileName,
-					scope: GenericTileScope.Actions,
-					press: [this._tilePressed, this]
-				}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-				oAttachment.addTileContent(oTileContentAttachmentTile);
-				oAttachment._oDocument = oDocument;
+						var oThumbnailImage = new sap.m.Image({
+							densityAware: false,
+							src: oDocument.FileContentURI,
+							load: [this._imageOnLoad, this]
+						});
+						oThumbnailImage.setDetailBox(oLightBox);
+						//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
 
-				this.addAttachment(oAttachment);
-				this.oTileContainer.addContent(oAttachment);
-				//	}
+						var oTCAttachmentImageTile = new sap.m.TileContent();
+						oTCAttachmentImageTile.setContent(oThumbnailImage);
+
+						var oAttachmentImageTile = new ZThumbnailTile(this.getControlPrefixId() + "-attaimg-" + oDocument.NodeID, {
+							scope: GenericTileScope.Actions,
+							press: [this._tilePressed, this]
+						}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+						oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
+						oAttachmentImageTile._oDocument = oDocument;
+						
+						this.addAttachment(oAttachmentImageTile);
+						this.oTileContainer.addContent(oAttachmentImageTile);
+					}
+				} else {
+					if (!this._bHideNonImages) {
+						// Create generic tile
+						var sIcon = this._getIconFromFilename(oDocument.FileName);
+						var oImageAttachmentTile = new sap.m.ImageContent({
+							src: sIcon
+						});
+						var oTileContentAttachmentTile = new sap.m.TileContent();
+						oTileContentAttachmentTile.setContent(oImageAttachmentTile);
+
+						var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-atta-" + oDocument.NodeID, {
+							header: oDocument.FileName,
+							scope: GenericTileScope.Actions,
+							press: [this._tilePressed, this]
+						}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+						oAttachment.addTileContent(oTileContentAttachmentTile);
+						oAttachment._oDocument = oDocument;
+
+						this.addAttachment(oAttachment);
+						this.oTileContainer.addContent(oAttachment);
+					}
+				}
 			}
 
-			this.invalidate();
+		},
+		
+		_imageOnLoad: function (oControlEvent) {
+			
 		},
 
 		_isDebugMode: function () {
@@ -591,8 +565,8 @@ sap.ui.define([
 		_tilePressed: function (evt) {
 			if (evt.oSource && evt.oSource._oDocument && evt.oSource._oDocument.DocumentListPath) {
 				var sAction = evt.getParameter("action");
-				var sEvent = (sAction === "Remove") ? "DeleteConfirmation" : "";
-				sEvent = (sAction === "Press") ? "OpenDocument" : sEvent;
+				var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
+				sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
 
 				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
 				if (oEventContext) {

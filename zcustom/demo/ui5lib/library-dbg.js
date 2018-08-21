@@ -30,7 +30,9 @@ sap.ui.define([
 		interfaces: [],
 		controls: [
 			"zcustom.demo.ui5lib.control.ZEstablishmentLookup",
-			"zcustom.demo.ui5lib.control.ZAttachmentsPane"
+			"zcustom.demo.ui5lib.control.ZAttachmentsPane",
+			"zcustom.demo.ui5lib.control.ZThumbnailTile",
+			"zcustom.demo.ui5lib.control.ZThumbnailTileRenderer"
 		],
 		elements: [],
 		version: "0.1.0"
