@@ -450,15 +450,16 @@ sap.ui.define([
 						});
 						oThumbnailImage.setDetailBox(oLightBox);
 						//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
-
+						
+						/*
 						var oTCAttachmentImageTile = new sap.m.TileContent();
 						oTCAttachmentImageTile.setContent(oThumbnailImage);
-
+						*/
 						var oAttachmentImageTile = new ZThumbnailTile(this.getControlPrefixId() + "-attaimg-" + oDocument.NodeID, {
 							scope: GenericTileScope.Actions,
-							press: [this._tilePressed, this]
+							press: [this._imagePressed, this]
 						}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-						oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
+						oAttachmentImageTile.addTileContent(oThumbnailImage);
 						oAttachmentImageTile._oDocument = oDocument;
 						
 						this.addAttachment(oAttachmentImageTile);
@@ -573,13 +574,29 @@ sap.ui.define([
 					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath; // faking EventContext
 					if (sEvent) {
 						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
-					} else {
-						MessageToast.show("Not supported action: " + sAction);
 					}
 				}
 
 			}
 		},
+		
+		_imagePressed: function (evt) {
+			if (evt.oSource && evt.oSource._oDocument && evt.oSource._oDocument.DocumentListPath) {
+				var sAction = evt.getParameter("action");
+				var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
+				// for images "open" -> via LightBox
+				//sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
+				
+				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
+				if (oEventContext) {
+					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath; // faking EventContext
+					if (sEvent) {
+						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
+					}
+				}
+
+			}
+		},		
 
 		onBeforeRendering: function () {
 

@@ -92,7 +92,9 @@ sap.ui.define([
 		var aTileContent = oControl.getTileContent();
 		var iLength = aTileContent.length;
 		for (var i = 0; i < iLength; i++) {
-			oControl._checkFooter(aTileContent[i], oControl);
+			if (typeof aTileContent[i] === "sap.m.TileContent") { // chg: fotter is only for TileContent
+				oControl._checkFooter(aTileContent[i], oControl);
+			}
 			oRm.renderControl(aTileContent[i]);
 		}
 		oRm.write("</div>");
@@ -107,9 +109,16 @@ sap.ui.define([
 		}
 
 		if (sScope === GenericTileScope.Actions) {
-			this._super._renderActionsScope(oRm, oControl);
+			this._renderActionsScope(oRm, oControl); // chg: use own _renderActionsScope
 		}
 		oRm.write("</div>");
+	};
+
+	ZThumbnailTileRenderer._renderActionsScope = function (oRm, oControl) {
+		if (oControl.getState() !== LoadState.Disabled) {
+			oRm.renderControl(oControl._oRemoveButton);
+			//oRm.renderControl(oControl._oMoreIcon); // chg: we don't need 3 dots
+		}
 	};
 
 	return ZThumbnailTileRenderer;
