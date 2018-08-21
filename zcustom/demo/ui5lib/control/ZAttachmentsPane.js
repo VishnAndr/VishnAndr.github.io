@@ -101,6 +101,8 @@ sap.ui.define([
 			this._getCustomParameters();
 
 			this._attachedECController = this._getAttachedECController();
+			// listen to event ChildControllerAdded to really attach to DataContainer changes there
+			this.oController.getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this)
 
 			this.Documents = [];
 
@@ -245,6 +247,16 @@ sap.ui.define([
 				text: "Take photo",
 				press: [this._takePhoto, this]
 			});
+		},
+
+		_onChildControllerAdded: function (oEvent) {
+			if (!this._getAttachedECController()) {
+				return;
+			}
+
+			var oDataContainer = this._attachedECController.getDataContainer();
+			this.fUpdateFinished = $.proxy(this._DataContainerUpdateFinished, this);
+			oDataContainer.attachDataContainerUpdateFinished(this.fUpdateFinished);
 		},
 
 		destroy: function () {
@@ -579,21 +591,16 @@ sap.ui.define([
 		_tilePressed: function (evt) {
 			if (evt.oSource && evt.oSource._oDocument && evt.oSource._oDocument.DocumentListPath) {
 				var sAction = evt.getParameter("action");
-				var sEvent = "";
-				if (sAction === "Remove") {
-					sEvent = "DeleteConfirmation";
-				} else if (sAction === "Press") {
-					sEvent = "OpenDocument";
-				} else {
-					MessageToast.show("Not supported action: " + sAction);
-					return;
-				}
+				var sEvent = (sAction === "Remove") ? "DeleteConfirmation" : "";
+				sEvent = (sAction === "Press") ? "OpenDocument" : "";
 
-				var oEventContext = new sap.client.evt.EventContext(this);
+				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
 				if (oEventContext) {
-					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath;
+					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath; // faking EventContext
 					if (sEvent) {
 						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
+					} else {
+						MessageToast.show("Not supported action: " + sAction);
 					}
 				}
 
@@ -602,18 +609,10 @@ sap.ui.define([
 
 		onBeforeRendering: function () {
 
-			//var that = this;	
-
 		},
 
 		onAfterRendering: function () {
-			if (!this._getAttachedECController()) {
-				return;
-			}
 
-			var oDataContainer = this._attachedECController.getDataContainer();
-			this.fUpdateFinished = $.proxy(this._DataContainerUpdateFinished, this);
-			oDataContainer.attachDataContainerUpdateFinished(this.fUpdateFinished);
 		},
 
 		_setupImageResize: function (sImageUploadSize) {
