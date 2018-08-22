@@ -1,7 +1,7 @@
 sap.ui.define([
 	"sap/m/TileContent",
 	"zcustom/demo/ui5lib/ext/ZThumbnailTileContentRenderer"
-], function (GenericTile, ZThumbnailTileContentRenderer) {
+], function (TileContent, ZThumbnailTileContentRenderer) {
 	"use strict";
 
 	var ZThumbnailTileContent = TileContent.extend("zcustom.demo.ui5lib.ext.ZThumbnailTileContent", /** @lends zcustom.demo.ui5lib.ext.ZThumbnailTileContent.prototype */ {
