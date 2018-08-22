@@ -1,0 +1,33 @@
+.zthumbnail {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  overflow: hidden;
+}
+.zthumbnail img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 100%;
+  width: auto;
+  -webkit-transform: translate(-50%,-50%);
+      -ms-transform: translate(-50%,-50%);
+          transform: translate(-50%,-50%);
+}
+.zthumbnail img.portrait {
+  width: 100%;
+  height: auto;
+}
+.ZsapMGTContent {
+    /* height: 6.375rem; */ /* chg : to let a content take a complete height */ 
+    display: inline-block;
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+ }
+ .ZsapMTileCnt {
+    display: inline-block;
+    box-sizing: border-box;
+    position: relative;
+    /* height: 6.375rem; */ /* chg : to let a content take a complete height */
+ }

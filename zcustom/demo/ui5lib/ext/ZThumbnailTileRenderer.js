@@ -85,7 +85,11 @@ sap.ui.define([
 		} // end chg
 
 		oRm.write("<div");
-		oRm.addClass("sapMGTContent");
+		if (oControl.getHeader()) { // chg: if there is no header - let the content take the full height
+			oRm.addClass("sapMGTContent");
+		} else {
+			oRm.addClass("ZsapMGTContent");
+		}
 		oRm.writeClasses();
 		oRm.writeAttribute("id", oControl.getId() + "-content");
 		oRm.write(">");

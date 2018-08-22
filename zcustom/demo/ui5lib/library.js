@@ -36,7 +36,8 @@ sap.ui.define([
 			"zcustom.demo.ui5lib.ext.ZThumbnailTile",
 			"zcustom.demo.ui5lib.ext.ZThumbnailTileRenderer",
 			"zcustom.demo.ui5lib.ext.ZThumbnailTileContent",
-			"zcustom.demo.ui5lib.ext.ZThumbnailTileContentRenderer"
+			"zcustom.demo.ui5lib.ext.ZThumbnailTileContentRenderer",
+			"zcustom.demo.ui5lib.ext.ZImage"
 		],
 		elements: [],
 		version: "0.1.0"

@@ -19,7 +19,7 @@ sap.ui.define([
 
 		oRm.write("<div");
 		oRm.writeControlData(oControl);
-		oRm.addClass("sapMTileCnt");
+		oRm.addClass("ZsapMTileCnt");
 		oRm.addClass(sContentTypeClass);
 		oRm.addClass(sFrameTypeClass);
 		if (sTooltip.trim()) { // trim check needed since IE11 renders white spaces

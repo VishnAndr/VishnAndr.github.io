@@ -10,9 +10,10 @@ sap.ui.define([
 	"sap/m/LightBox",
 	"sap/m/LightBoxItem",
 	"zcustom/demo/ui5lib/ext/ZThumbnailTile",
-	"zcustom/demo/ui5lib/ext/ZThumbnailTileContent"
+	"zcustom/demo/ui5lib/ext/ZThumbnailTileContent",
+	"zcustom/demo/ui5lib/ext/ZImage"
 ], function (CustomPane, MessageToast, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile,
-	ScrollContainer, LightBox, LightBoxItem, ZThumbnailTile, ZThumbnailTileContent) {
+	ScrollContainer, LightBox, LightBoxItem, ZThumbnailTile, ZThumbnailTileContent, ZImage) {
 	"use strict";
 
 	// Provides custom pane zcustom.demo.ui5lib.control.ZAttachmentsPane
@@ -405,7 +406,7 @@ sap.ui.define([
 						text: "Browse",
 						icon: "sap-icon://open-folder",
 						press: function () {
-							document.getElementById(this.getControlPrefixId() + "-fu").click()
+							document.getElementById(this.getControlPrefixId() + "-fu").click();
 						}.bind(this)
 					}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
 					this.setBrowseTile(oBrowseTile);
@@ -444,25 +445,24 @@ sap.ui.define([
 						});
 						oLightBox.addImageContent(oLightBoxItem);
 
-						var oThumbnailImage = new sap.m.Image({
+						var oThumbnailImage = new ZImage({
 							densityAware: false,
 							src: oDocument.FileContentURI,
 							load: [this._imageOnLoad, this]
 						});
 						oThumbnailImage.setDetailBox(oLightBox);
 						//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
-						
-						
+
 						var oTCAttachmentImageTile = new ZThumbnailTileContent();
 						oTCAttachmentImageTile.setContent(oThumbnailImage);
-						
+
 						var oAttachmentImageTile = new ZThumbnailTile(this.getControlPrefixId() + "-attaimg-" + oDocument.NodeID, {
 							scope: GenericTileScope.Actions,
 							press: [this._imagePressed, this]
 						}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
 						oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
 						oAttachmentImageTile._oDocument = oDocument;
-						
+
 						this.addAttachment(oAttachmentImageTile);
 						this.oTileContainer.addContent(oAttachmentImageTile);
 					}
@@ -491,9 +491,83 @@ sap.ui.define([
 			}
 
 		},
-		
+
 		_imageOnLoad: function (oControlEvent) {
+			var oImg = oControlEvent.oSource.getDomRef().children[1];
 			
+			// to do - calculate maxWidth and maxHeight from 11 rem
+			maxWidth = 176;
+			maxHeight = 176;
+
+			// make it centered rectangular of maxWidth*maxHeight
+			// step 1 - Resize - to make the smallest side as maxHeight or maxWidth
+			// step 2 - Crop - to make the centered rectangular of the required size
+			width = oImg.naturalWidth;
+			height = oImg.naturalHeight;
+
+			var shouldResize = (width > maxWidth) || (height > maxHeight);
+
+			var imgTemp = {};
+			imgTemp = oImg;
+
+			if (shouldResize) {
+
+				var canvasResize = document.createElement('canvas');
+				canvasResize.id = "canvasResize";
+				canvasResize.width = width;
+				canvasResize.height = height;
+
+				if (width > height) {
+					// landscape
+					newWidth = width * (maxHeight / height);
+					newHeight = maxHeight;
+				} else {
+					// portrait
+					newWidth = maxWidth;
+					newHeight = height * (maxWidth / width);
+				}
+
+				canvasResize.width = newWidth;
+				canvasResize.height = newHeight;
+
+				var context = canvasResize.getContext('2d');
+				context.drawImage(imgTemp, 0, 0, canvasResize.width, canvasResize.height); // resized (now we have smallest side as maxHeight or maxWidth and biggest one > max...
+
+				width = newWidth;
+				height = newHeight;
+				imgTemp = canvasResize;
+
+				dataURL = canvasResize.toDataURL("image/jpg", 0.5);
+			}
+
+			var shouldCrop = (width !== maxWidth) || (height !== maxHeight);
+			if (shouldCrop) {
+
+				var canvasCrop = document.createElement('canvas');
+				canvasCrop.width = width;
+				canvasCrop.height = height;
+				var sx, sy;
+
+				if (width > height) {
+					sx = (width - maxWidth) / 2;
+					sy = 0;
+				} else {
+					sx = 0;
+					sy = (height - maxHeight) / 2;
+				}
+
+				canvasCrop.width = maxWidth;
+				canvasCrop.height = maxHeight;
+
+				var context = canvasResize.getContext('2d');
+				context.drawImage(imgTemp, sx, sy, maxWidth, maxHeight, 0, 0, maxWidth, maxHeight); // cropped to rectangular maxWidth*maxHeight 
+
+				dataURL = canvasResize.toDataURL("image/jpg", 0.5);
+			}
+
+			if (dataURL !== oImg.src) {
+				oImg.src = dataURL;
+			}
 		},
 
 		_isDebugMode: function () {
@@ -560,7 +634,7 @@ sap.ui.define([
 					that._uploadFile(blob, sFinalFileName).bind(that);
 				})
 				.catch(function (err) {
-					MessageToast.show('Error: ' + err)
+					MessageToast.show('Error: ' + err);
 				});
 		},
 
@@ -580,14 +654,14 @@ sap.ui.define([
 
 			}
 		},
-		
+
 		_imagePressed: function (evt) {
 			if (evt.oSource && evt.oSource._oDocument && evt.oSource._oDocument.DocumentListPath) {
 				var sAction = evt.getParameter("action");
 				var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
 				// for images "open" -> via LightBox
 				//sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
-				
+
 				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
 				if (oEventContext) {
 					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath; // faking EventContext
@@ -597,7 +671,7 @@ sap.ui.define([
 				}
 
 			}
-		},		
+		},
 
 		onBeforeRendering: function () {
 
