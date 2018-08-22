@@ -1,14 +1,22 @@
 // This extension is required due to a bug in standard sap.m.Image
 // when the load event not working if LightBox is attached
 sap.ui.define([
-	"sap/m/Image"
-], function (Image) {
+	"sap/m/library",
+	"sap/m/Image",
+	"sap/m/ImageRenderer"
+], function (stdLibrary, Image, ImageRenderer) {
 	"use strict";
+	
+	// shortcut for sap.m.ImageMode
+	var ImageMode = stdLibrary.ImageMode;	
 
 	var ZImage = Image.extend("zcustom.demo.ui5lib.ext.ZImage", /** @lends zcustom.demo.ui5lib.ext.ZImage.prototype */ {
 		metadata: {
 			library: "zcustom.demo.ui5lib"
-		}
+		},
+		renderer: function (oRm, oControl) {
+			ImageRenderer.render(oRm, oControl);
+		}		
 	});
 
 	ZImage.prototype.onAfterRendering = function() {
