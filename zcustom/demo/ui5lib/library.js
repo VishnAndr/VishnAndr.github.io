@@ -29,10 +29,14 @@ sap.ui.define([
 		types: [],
 		interfaces: [],
 		controls: [
+			// own custom controls and panes:
 			"zcustom.demo.ui5lib.control.ZEstablishmentLookup",
 			"zcustom.demo.ui5lib.control.ZAttachmentsPane",
-			"zcustom.demo.ui5lib.control.ZThumbnailTile",
-			"zcustom.demo.ui5lib.control.ZThumbnailTileRenderer"
+			// extensions of standard controls:
+			"zcustom.demo.ui5lib.ext.ZThumbnailTile",
+			"zcustom.demo.ui5lib.ext.ZThumbnailTileRenderer",
+			"zcustom.demo.ui5lib.ext.ZThumbnailTileContent",
+			"zcustom.demo.ui5lib.ext.ZThumbnailTileContentRenderer"
 		],
 		elements: [],
 		version: "0.1.0"

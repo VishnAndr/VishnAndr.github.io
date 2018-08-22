@@ -63,7 +63,7 @@ sap.ui.define([
 		oRm.writeClasses();
 		oRm.write(">");
 
-		if (oControl.getHeader()) { // chg: rendering header if it's given only
+		if (oControl.getHeader()) { // chg: rendering header if it has been given only
 			oRm.write("<div");
 			oRm.addClass("sapMGTHdrContent");
 			oRm.addClass(oControl.getFrameType());
@@ -92,9 +92,7 @@ sap.ui.define([
 		var aTileContent = oControl.getTileContent();
 		var iLength = aTileContent.length;
 		for (var i = 0; i < iLength; i++) {
-			if (typeof aTileContent[i] === "sap.m.TileContent") { // chg: fotter is only for TileContent
-				oControl._checkFooter(aTileContent[i], oControl);
-			}
+			oControl._checkFooter(aTileContent[i], oControl);
 			oRm.renderControl(aTileContent[i]);
 		}
 		oRm.write("</div>");

@@ -9,9 +9,10 @@ sap.ui.define([
 	"sap/m/ScrollContainer",
 	"sap/m/LightBox",
 	"sap/m/LightBoxItem",
-	"zcustom/demo/ui5lib/control/ZThumbnailTile"
+	"zcustom/demo/ui5lib/ext/ZThumbnailTile",
+	"zcustom/demo/ui5lib/ext/ZThumbnailTileContent"
 ], function (CustomPane, MessageToast, GenericTile, GenericTileScope, FileUploader, ImageResizer, QuickCreateTile,
-	ScrollContainer, LightBox, LightBoxItem, ZThumbnailTile) {
+	ScrollContainer, LightBox, LightBoxItem, ZThumbnailTile, ZThumbnailTileContent) {
 	"use strict";
 
 	// Provides custom pane zcustom.demo.ui5lib.control.ZAttachmentsPane
@@ -451,15 +452,15 @@ sap.ui.define([
 						oThumbnailImage.setDetailBox(oLightBox);
 						//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
 						
-						/*
-						var oTCAttachmentImageTile = new sap.m.TileContent();
+						
+						var oTCAttachmentImageTile = new ZThumbnailTileContent();
 						oTCAttachmentImageTile.setContent(oThumbnailImage);
-						*/
+						
 						var oAttachmentImageTile = new ZThumbnailTile(this.getControlPrefixId() + "-attaimg-" + oDocument.NodeID, {
 							scope: GenericTileScope.Actions,
 							press: [this._imagePressed, this]
 						}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-						oAttachmentImageTile.addTileContent(oThumbnailImage);
+						oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
 						oAttachmentImageTile._oDocument = oDocument;
 						
 						this.addAttachment(oAttachmentImageTile);
