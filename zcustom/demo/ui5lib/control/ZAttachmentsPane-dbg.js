@@ -191,7 +191,6 @@ sap.ui.define([
 				};
 
 			} else {
-				MessageToast.show("new FileUploader");
 				this.oFileUploader = new FileUploader(this.getControlPrefixId(), {
 					//shallPicturesBeOnlyTakenByCamera: oSettings.shallPicturesBeOnlyTakenByCamera(),
 					uploadOnChange: false, // we have to wait for the change event
@@ -709,7 +708,10 @@ sap.ui.define([
 		},
 
 		onAfterRendering: function () {
-
+			var tstWidth = getComputedStyle(document.getElementById(this.getControlPrefixId() + "-browseTile")).width;
+			var tstHeight = getComputedStyle(document.getElementById(this.getControlPrefixId() + "-browseTile")).height;
+			
+			MessageToast.show("Size of OneByOne tile: " + tstWidth + " x " + tstHeight);
 		},
 
 		_setupImageResize: function (sImageUploadSize) {
