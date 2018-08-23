@@ -131,7 +131,7 @@ sap.ui.define([
 
 			// Now here we're doing pretty much the same as in standard FileUploadWrapper
 			var primaryPath = this._primaryPath;
-			var mControlBindings = null; 
+			var mControlBindings = null;
 			var oRuntimeEnviroment = this._oRuntimeEnviroment;
 			var isContainer = oRuntimeEnviroment.isRunningInContainer();
 			var isIOS = sap.ui.Device.os.ios;
@@ -391,11 +391,11 @@ sap.ui.define([
 				// rebuild document list
 				this.Documents = [];
 				var oDocument = {};
-				
+
 				var DocumentListPathMap = [];
 				var j;
-				for (j = 0;  j < iDocumentsCount; j++) {
-					DocumentListPathMap[oDocumentList.getDataListBindingContext(i).sRowPath] = j;
+				for (j = 0; j < iDocumentsCount; j++) {
+					DocumentListPathMap[oDocumentList.getDataListBindingContext(j).sRowPath] = "/Root/AttachmentFolder/DocumentList/" + j;
 				}
 
 				var i;
@@ -413,7 +413,7 @@ sap.ui.define([
 						oDocument.ChangedOn = oRow.getMember("ChangedOn").getValue();
 						oDocument._sNodeId = oRow.getNodeId();
 						oDocument._sPath = oRow.getPath();
-						
+
 						oDocument.DocumentListPath = DocumentListPathMap[oDocument._sPath]; // used in press event of the tile
 
 						this.Documents.push(oDocument);
@@ -704,14 +704,19 @@ sap.ui.define([
 		},
 
 		_tilePressed: function (evt) {
-			if (evt.oSource && evt.oSource._oDocument && evt.oSource._oDocument.DocumentListPath) {
+			if (evt.getSource() && evt.getSource()._oDocument && evt.getSource()._oDocument.DocumentListPath) {
 				var sAction = evt.getParameter("action");
 				var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
 				sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
 
+				var oDocument = evt.getSource()._oDocument;
 				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
 				if (oEventContext) {
-					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath; // faking EventContext
+					// faking EventContext
+					oEventContext._sImplicitLeadSelectionPath = oDocument.DocumentListPath;
+					oEventContext.addParam(sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER.PATH, "/Root/AttachmentFolder/DocumentList");
+					oEventContext._oEventArguments[sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER] = oDocument._sNodeId;
+
 					if (sEvent) {
 						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
 					}
@@ -726,15 +731,15 @@ sap.ui.define([
 				var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
 				// for images "open" -> via LightBox
 				//sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
-				
-				var oDocument = evt.oSource._oDocument;
+
+				var oDocument = evt.getSource()._oDocument;
 				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
 				if (oEventContext) {
 					// faking EventContext
-					oEventContext._sImplicitLeadSelectionPath = oDocument.DocumentListPath; 
+					oEventContext._sImplicitLeadSelectionPath = oDocument.DocumentListPath;
 					oEventContext.addParam(sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER.PATH, "/Root/AttachmentFolder/DocumentList");
 					oEventContext._oEventArguments[sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER] = oDocument._sNodeId;
-					
+
 					if (sEvent) {
 						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
 					}
