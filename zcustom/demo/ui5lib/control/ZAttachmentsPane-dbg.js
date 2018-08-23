@@ -71,7 +71,10 @@ sap.ui.define([
 			this._bHideImages = (this.getParameter("hideImages") === "true");
 			this._bHideNonImages = (this.getParameter("hideNonImages") === "true");
 
-			this._bMultipleFiles = !(this.getParameter("singleFile") === "true");
+			this._bMultipleFiles = !(this.getParameter("singleFile") === "true"); // under construction so... >>
+			this._bMultipleFiles = false;
+			
+			this._bAlwaysResize = (this.getParameter("alwaysResize") === "true"); // resize to the standard mobile settings event on desktop
 		},
 
 		initializePane: function () {
@@ -95,7 +98,8 @@ sap.ui.define([
 			// listen to event ChildControllerAdded to really attach to DataContainer changes there
 			this.oController.getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this);
 
-			this.Documents = [];
+			this.Documents = []; // current attachments
+			this.Thumbnails = []; // thumbnails mapping
 
 			// Now here we're doing pretty much the same as in standard FileUploadWrapper
 			var primaryPath = this._primaryPath;
@@ -417,18 +421,20 @@ sap.ui.define([
 			}
 
 			// Camera tile
-			if (!this.getCameraTile()) {
-				if (!this._bHideCamera) {
-					var oCameraTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-cameraTile", {
-						text: "Camera",
-						icon: "sap-icon://add-photo",
-						press: [this.onPictureButtonPress, this]
-					}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
-					this.setCameraTile(oCameraTile);
-					this.oTileContainer.addContent(oCameraTile);
+			if (navigator.camera) { // we're showing camera button only for the one who have it
+				if (!this.getCameraTile()) {
+					if (!this._bHideCamera) {
+						var oCameraTile = new sap.client.m.create.QuickCreateTile(this.getControlPrefixId() + "-cameraTile", {
+							text: "Camera",
+							icon: "sap-icon://add-photo",
+							press: [this.onPictureButtonPress, this]
+						}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+						this.setCameraTile(oCameraTile);
+						this.oTileContainer.addContent(oCameraTile);
+					}
+				} else {
+					this.oTileContainer.addContent(this.getCameraTile());
 				}
-			} else {
-				this.oTileContainer.addContent(this.getCameraTile());
 			}
 
 			var iDocumentsCount = this.Documents.length;
@@ -445,13 +451,21 @@ sap.ui.define([
 						});
 						oLightBox.addImageContent(oLightBoxItem);
 
+						var thumbnailURL = (!!this.Thumbnails[oDocument.NodeID])
+						var srcURL = thumbnailURL ? thumbnailURL : oDocument.FileContentURI;
 						var oThumbnailImage = new ZImage({
 							densityAware: false,
-							src: oDocument.FileContentURI,
-							load: [this._imageOnLoad, this]
+							src: srcURL
 						});
 						oThumbnailImage.setDetailBox(oLightBox);
-						//oThumbnailImage.addStyleClass("sapMGT OneByOne sapUiTinyMarginBottom sapUiTinyMarginEnd");
+						oThumbnailImage.addCustomData(new sap.ui.core.CustomData({
+							key: "_Document",
+							value: oDocument
+						}))
+						if (!thumbnailURL) {
+							// if not thumbnail exists, make one
+							oThumbnailImage.attachLoad(this._imageOnLoad, this);
+						}
 
 						var oTCAttachmentImageTile = new ZThumbnailTileContent();
 						oTCAttachmentImageTile.setContent(oThumbnailImage);
@@ -493,17 +507,19 @@ sap.ui.define([
 		},
 
 		_imageOnLoad: function (oControlEvent) {
-			var oImg = oControlEvent.oSource.getDomRef().children[1];
-			
+			var oImg = oControlEvent.getSource().getDomRef().children[1];
+
 			// to do - calculate maxWidth and maxHeight from 11 rem
-			maxWidth = 176;
-			maxHeight = 176;
+			var maxWidth = 176;
+			var maxHeight = 176;
 
 			// make it centered rectangular of maxWidth*maxHeight
 			// step 1 - Resize - to make the smallest side as maxHeight or maxWidth
 			// step 2 - Crop - to make the centered rectangular of the required size
-			width = oImg.naturalWidth;
-			height = oImg.naturalHeight;
+			var width = oImg.naturalWidth;
+			var height = oImg.naturalHeight;
+			var newWidth, newHeight;
+			var dataURL;
 
 			var shouldResize = (width > maxWidth) || (height > maxHeight);
 
@@ -530,8 +546,8 @@ sap.ui.define([
 				canvasResize.width = newWidth;
 				canvasResize.height = newHeight;
 
-				var context = canvasResize.getContext('2d');
-				context.drawImage(imgTemp, 0, 0, canvasResize.width, canvasResize.height); // resized (now we have smallest side as maxHeight or maxWidth and biggest one > max...
+				var contextResize = canvasResize.getContext('2d');
+				contextResize.drawImage(imgTemp, 0, 0, canvasResize.width, canvasResize.height); // resized (now we have smallest side as maxHeight or maxWidth and biggest one > max...
 
 				width = newWidth;
 				height = newHeight;
@@ -544,6 +560,7 @@ sap.ui.define([
 			if (shouldCrop) {
 
 				var canvasCrop = document.createElement('canvas');
+				canvasResize.id = "canvasCrop";
 				canvasCrop.width = width;
 				canvasCrop.height = height;
 				var sx, sy;
@@ -559,14 +576,16 @@ sap.ui.define([
 				canvasCrop.width = maxWidth;
 				canvasCrop.height = maxHeight;
 
-				var context = canvasResize.getContext('2d');
-				context.drawImage(imgTemp, sx, sy, maxWidth, maxHeight, 0, 0, maxWidth, maxHeight); // cropped to rectangular maxWidth*maxHeight 
+				var contextCrop = canvasCrop.getContext('2d');
+				contextCrop.drawImage(imgTemp, sx, sy, maxWidth, maxHeight, 0, 0, maxWidth, maxHeight); // cropped to rectangular maxWidth*maxHeight 
 
-				dataURL = canvasResize.toDataURL("image/jpg", 0.5);
+				dataURL = canvasCrop.toDataURL("image/jpg", 0.5);
 			}
 
 			if (dataURL !== oImg.src) {
 				oImg.src = dataURL;
+				this.Thumbnails[oControlEvent.getSource().data("_Document").NodeID] = dataURL;
+
 			}
 		},
 
@@ -682,7 +701,7 @@ sap.ui.define([
 		},
 
 		_setupImageResize: function (sImageUploadSize) {
-			if (sImageUploadSize && this._oRuntimeEnviroment.isRunningInContainer()) {
+			if (sImageUploadSize && ( this._oRuntimeEnviroment.isRunningInContainer() || this._bAlwaysResize)) {
 				switch (sImageUploadSize) {
 				case "L":
 					this._iCompressedWidthHeight = this.LARGE_WIDTH_HEIGHT;
@@ -1086,10 +1105,6 @@ sap.ui.define([
 					destinationType: destinationType
 				};
 				navigator.camera.getPicture(this.onTakePictureSuccess.bind(this), this.onTakePictureFail.bind(this), options);
-			} else if (this._isDebugMode()) {
-				//workaround for desktop for testing
-				this._showCameraDesktop = true;
-				this.invalidate();
 			}
 		},
 

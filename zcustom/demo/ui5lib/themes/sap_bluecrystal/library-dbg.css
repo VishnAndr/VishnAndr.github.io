@@ -1,4 +1,23 @@
-.zthumbnail {
+.ZsapMGTContent {
+    /* height: 6.375rem; */ /* chg : to let a content take a complete height */ 
+    display: inline-block;
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+ }
+ .ZsapMTileCnt {
+    display: inline-block;
+    box-sizing: border-box;
+    position: relative;
+    /* height: 6.375rem; */ /* chg : to let a content take a complete height */
+ }
+ 
+ /* Would be amazing to use this CSS class,
+ however we can't: lightbox wrops <img> into <span>. And to go with CSS approach,
+ we need to enhance lightbox, lightbox item etc. Too much for now.
+ Source: https://jonathannicol.com/blog/2014/06/16/centre-crop-thumbnails-with-css/
+ 
+ .zthumbnail {
   position: relative;
   width: 200px;
   height: 200px;
@@ -18,16 +37,4 @@
   width: 100%;
   height: auto;
 }
-.ZsapMGTContent {
-    /* height: 6.375rem; */ /* chg : to let a content take a complete height */ 
-    display: inline-block;
-    white-space: nowrap;
-    width: 100%;
-    overflow: hidden;
- }
- .ZsapMTileCnt {
-    display: inline-block;
-    box-sizing: border-box;
-    position: relative;
-    /* height: 6.375rem; */ /* chg : to let a content take a complete height */
- }
+*/
