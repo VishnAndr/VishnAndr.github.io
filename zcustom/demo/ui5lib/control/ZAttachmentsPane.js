@@ -89,17 +89,19 @@ sap.ui.define([
 				oElement = $("#" + sId).get(0);
 			}
 
-			if (!oElement) {
+			if (!oElement && (!this._maxThumbnailHeight || !this._maxThumbnailHeight)) {
 				oElement = $("#" + this.getControlPrefixId() + "-browseTile").get(0);
 				if (!oElement) {
 					oElement = $("#" + this.getControlPrefixId() + "-cameraTile").get(0);
 				}
 			}
 
-			var oComputedStyleOneByOne = getComputedStyle(oElement);
-			if (oComputedStyleOneByOne) {
-				this._maxThumbnailWidth = parseFloat(oComputedStyleOneByOne.width);
-				this._maxThumbnailHeight = parseFloat(oComputedStyleOneByOne.height);
+			if (oElement) {
+				var oComputedStyleOneByOne = getComputedStyle(oElement);
+				if (oComputedStyleOneByOne) {
+					this._maxThumbnailWidth = parseFloat(oComputedStyleOneByOne.width);
+					this._maxThumbnailHeight = parseFloat(oComputedStyleOneByOne.height);
+				}
 			}
 		},
 
