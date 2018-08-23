@@ -131,7 +131,7 @@ sap.ui.define([
 
 			// Now here we're doing pretty much the same as in standard FileUploadWrapper
 			var primaryPath = this._primaryPath;
-			var mControlBindings = null;
+			var mControlBindings = null; 
 			var oRuntimeEnviroment = this._oRuntimeEnviroment;
 			var isContainer = oRuntimeEnviroment.isRunningInContainer();
 			var isIOS = sap.ui.Device.os.ios;
@@ -391,33 +391,39 @@ sap.ui.define([
 				// rebuild document list
 				this.Documents = [];
 				var oDocument = {};
-
-				if (iDocumentsCount > 0) {
-					var i;
-					for (i = 0; i < iDocumentsCount; i++) {
-						var oRow = oDocumentList.getRow(i);
-						if (oRow) {
-							oDocument = {};
-							oDocument.RowIndex = oRow.getMember("@RowIndex").getValue();
-							oDocument.NodeID = oRow.getMember("NodeID").getValue();
-							oDocument.FileName = oRow.getMember("FileName").getValue();
-							oDocument.MimeCode = oRow.getMember("MimeCode").getValue();
-							oDocument.FileContentURI = oRow.getMember("FileContentURI").getValue();
-							oDocument.ThumbnailURL = oRow.getMember("ThumbnailURL").getValue(); // currently gives 401 if trying to access; future proof
-							oDocument.CreatedOn = oRow.getMember("CreatedOn").getValue();
-							oDocument.ChangedOn = oRow.getMember("ChangedOn").getValue();
-
-							oDocument.DocumentListPath = "/Root/AttachmentFolder/DocumentList/" + oDocument.RowIndex; // used in press event of the tile
-
-							this.Documents.push(oDocument);
-						}
-					}
-
-					// sort descending by ChangedOn (e.g. the last added will go first)
-					this.Documents.sort(function (x, y) {
-						return y.ChangedOn - x.ChangedOn;
-					});
+				
+				var DocumentListPathMap = [];
+				var j;
+				for (j = 0;  j < iDocumentsCount; j++) {
+					DocumentListPathMap[oDocumentList.getDataListBindingContext(i).sRowPath] = j;
 				}
+
+				var i;
+				for (i = 0; i < iDocumentsCount; i++) {
+					var oRow = oDocumentList.getRow(i);
+					if (oRow) {
+						oDocument = {};
+						oDocument.RowIndex = oRow.getMember("@RowIndex").getValue();
+						oDocument.NodeID = oRow.getMember("NodeID").getValue();
+						oDocument.FileName = oRow.getMember("FileName").getValue();
+						oDocument.MimeCode = oRow.getMember("MimeCode").getValue();
+						oDocument.FileContentURI = oRow.getMember("FileContentURI").getValue();
+						oDocument.ThumbnailURL = oRow.getMember("ThumbnailURL").getValue(); // currently gives 401 if trying to access; future proof
+						oDocument.CreatedOn = oRow.getMember("CreatedOn").getValue();
+						oDocument.ChangedOn = oRow.getMember("ChangedOn").getValue();
+						oDocument._sNodeId = oRow.getNodeId();
+						oDocument._sPath = oRow.getPath();
+						
+						oDocument.DocumentListPath = DocumentListPathMap[oDocument._sPath]; // used in press event of the tile
+
+						this.Documents.push(oDocument);
+					}
+				}
+
+				// sort descending by ChangedOn (e.g. the last added will go first)
+				this.Documents.sort(function (x, y) {
+					return y.ChangedOn - x.ChangedOn;
+				});
 
 				// rerender tiles (empty this.Documents[] will clear files tiles out)
 				this._buildTiles();
@@ -715,15 +721,20 @@ sap.ui.define([
 		},
 
 		_imagePressed: function (evt) {
-			if (evt.oSource && evt.oSource._oDocument && evt.oSource._oDocument.DocumentListPath) {
+			if (evt.getSource() && evt.getSource()._oDocument && evt.getSource()._oDocument.DocumentListPath) {
 				var sAction = evt.getParameter("action");
 				var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
 				// for images "open" -> via LightBox
 				//sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
-
+				
+				var oDocument = evt.oSource._oDocument;
 				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
 				if (oEventContext) {
-					oEventContext._sImplicitLeadSelectionPath = evt.oSource._oDocument.DocumentListPath; // faking EventContext
+					// faking EventContext
+					oEventContext._sImplicitLeadSelectionPath = oDocument.DocumentListPath; 
+					oEventContext.addParam(sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER.PATH, "/Root/AttachmentFolder/DocumentList");
+					oEventContext._oEventArguments[sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER] = oDocument._sNodeId;
+					
 					if (sEvent) {
 						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
 					}
