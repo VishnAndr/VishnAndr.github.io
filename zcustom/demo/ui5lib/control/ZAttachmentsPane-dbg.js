@@ -44,6 +44,10 @@ sap.ui.define([
 			events: {}
 		},
 
+		SMALL_WIDTH_HEIGHT: 400,
+		MEDIUM_WIDTH_HEIGHT: 600,
+		LARGE_WIDTH_HEIGHT: 800,		
+
 		renderer: function (oRM, oControl) {
 			oRM.write("<div");
 			oRM.writeControlData(oControl);
@@ -113,9 +117,6 @@ sap.ui.define([
 				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOffline();
 			} else {
 				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOnline();
-			}
-			if (!imageSize && this._bAlwaysResize) {
-				imageSize = "L"; //in desktop always resize to the imageSize L
 			}
 			this._setupImageResize(imageSize);
 
