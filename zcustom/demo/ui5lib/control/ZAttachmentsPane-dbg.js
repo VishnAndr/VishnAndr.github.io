@@ -46,7 +46,7 @@ sap.ui.define([
 
 		SMALL_WIDTH_HEIGHT: 400,
 		MEDIUM_WIDTH_HEIGHT: 600,
-		LARGE_WIDTH_HEIGHT: 800,		
+		LARGE_WIDTH_HEIGHT: 800,
 
 		renderer: function (oRM, oControl) {
 			oRM.write("<div");
@@ -77,8 +77,15 @@ sap.ui.define([
 
 			this._bMultipleFiles = !(this.getParameter("singleFile") === "true"); // under construction so... >>
 			this._bMultipleFiles = false;
-			
+
 			this._bAlwaysResize = (this.getParameter("alwaysResize") === "true"); // resize to the standard mobile settings event on desktop
+			// it's not working, we need to somehow change the file content before sending through FileUploader.upload, so.... >>
+			this._bAlwaysResize = false;
+		},
+
+		_setupThumbnailSize: function () {
+			this._maxThumbnailWidth = this._convertRemToPixels(11);
+			this._maxThumbnailHeight = this._convertRemToPixels(11);
 		},
 
 		initializePane: function () {
@@ -97,6 +104,7 @@ sap.ui.define([
 				(this._oApplication.getRuntimeEnvironment());
 
 			this._getCustomParameters();
+			this._setupThumbnailSize();
 
 			this._attachedECController = this._getAttachedECController();
 			// listen to event ChildControllerAdded to really attach to DataContainer changes there
@@ -455,7 +463,7 @@ sap.ui.define([
 						});
 						oLightBox.addImageContent(oLightBoxItem);
 
-						var thumbnailURL = (!!this.Thumbnails[oDocument.NodeID])
+						var thumbnailURL = this.Thumbnails[oDocument.NodeID];
 						var srcURL = thumbnailURL ? thumbnailURL : oDocument.FileContentURI;
 						var oThumbnailImage = new ZImage({
 							densityAware: false,
@@ -465,7 +473,7 @@ sap.ui.define([
 						oThumbnailImage.addCustomData(new sap.ui.core.CustomData({
 							key: "_Document",
 							value: oDocument
-						}))
+						}));
 						if (!thumbnailURL) {
 							// if not thumbnail exists, make one
 							oThumbnailImage.attachLoad(this._imageOnLoad, this);
@@ -510,22 +518,22 @@ sap.ui.define([
 
 		},
 
+		_convertRemToPixels: function (iRem) {
+			return iRem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+		},
+
 		_imageOnLoad: function (oControlEvent) {
 			var oImg = oControlEvent.getSource().getDomRef().children[1];
 
-			// to do - calculate maxWidth and maxHeight from 11 rem
-			var maxWidth = 176;
-			var maxHeight = 176;
-
-			// make it centered rectangular of maxWidth*maxHeight
-			// step 1 - Resize - to make the smallest side as maxHeight or maxWidth
+			// make it centered rectangular of _maxThumbnailWidth*_maxThumbnailHeight
+			// step 1 - Resize - to make the smallest side as _maxThumbnailHeight or _maxThumbnailWidth
 			// step 2 - Crop - to make the centered rectangular of the required size
 			var width = oImg.naturalWidth;
 			var height = oImg.naturalHeight;
 			var newWidth, newHeight;
 			var dataURL;
 
-			var shouldResize = (width > maxWidth) || (height > maxHeight);
+			var shouldResize = (width > this._maxThumbnailWidth) || (height > this._maxThumbnailHeight);
 
 			var imgTemp = {};
 			imgTemp = oImg;
@@ -539,19 +547,19 @@ sap.ui.define([
 
 				if (width > height) {
 					// landscape
-					newWidth = width * (maxHeight / height);
-					newHeight = maxHeight;
+					newWidth = width * (this._maxThumbnailHeight / height);
+					newHeight = this._maxThumbnailHeight;
 				} else {
 					// portrait
-					newWidth = maxWidth;
-					newHeight = height * (maxWidth / width);
+					newWidth = this._maxThumbnailWidth;
+					newHeight = height * (this._maxThumbnailWidth / width);
 				}
 
 				canvasResize.width = newWidth;
 				canvasResize.height = newHeight;
 
 				var contextResize = canvasResize.getContext('2d');
-				contextResize.drawImage(imgTemp, 0, 0, canvasResize.width, canvasResize.height); // resized (now we have smallest side as maxHeight or maxWidth and biggest one > max...
+				contextResize.drawImage(imgTemp, 0, 0, canvasResize.width, canvasResize.height); // resized (now we have smallest side as _maxThumbnailHeight or _maxThumbnailWidth and biggest one > max...
 
 				width = newWidth;
 				height = newHeight;
@@ -560,7 +568,7 @@ sap.ui.define([
 				dataURL = canvasResize.toDataURL("image/jpg", 0.5);
 			}
 
-			var shouldCrop = (width !== maxWidth) || (height !== maxHeight);
+			var shouldCrop = (width !== this._maxThumbnailWidth) || (height !== this._maxThumbnailHeight);
 			if (shouldCrop) {
 
 				var canvasCrop = document.createElement('canvas');
@@ -570,18 +578,18 @@ sap.ui.define([
 				var sx, sy;
 
 				if (width > height) {
-					sx = (width - maxWidth) / 2;
+					sx = (width - this._maxThumbnailWidth) / 2;
 					sy = 0;
 				} else {
 					sx = 0;
-					sy = (height - maxHeight) / 2;
+					sy = (height - this._maxThumbnailHeight) / 2;
 				}
 
-				canvasCrop.width = maxWidth;
-				canvasCrop.height = maxHeight;
+				canvasCrop.width = this._maxThumbnailWidth;
+				canvasCrop.height = this._maxThumbnailHeight;
 
 				var contextCrop = canvasCrop.getContext('2d');
-				contextCrop.drawImage(imgTemp, sx, sy, maxWidth, maxHeight, 0, 0, maxWidth, maxHeight); // cropped to rectangular maxWidth*maxHeight 
+				contextCrop.drawImage(imgTemp, sx, sy, this._maxThumbnailWidth, this._maxThumbnailHeight, 0, 0, this._maxThumbnailWidth, this._maxThumbnailHeight); // cropped to rectangular _maxThumbnailWidth*_maxThumbnailHeight 
 
 				dataURL = canvasCrop.toDataURL("image/jpg", 0.5);
 			}
@@ -705,7 +713,7 @@ sap.ui.define([
 		},
 
 		_setupImageResize: function (sImageUploadSize) {
-			if (sImageUploadSize && ( this._oRuntimeEnviroment.isRunningInContainer() || this._bAlwaysResize)) {
+			if (sImageUploadSize && (this._oRuntimeEnviroment.isRunningInContainer() || this._bAlwaysResize)) {
 				switch (sImageUploadSize) {
 				case "L":
 					this._iCompressedWidthHeight = this.LARGE_WIDTH_HEIGHT;
