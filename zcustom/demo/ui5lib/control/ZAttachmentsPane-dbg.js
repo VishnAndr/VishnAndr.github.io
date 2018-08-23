@@ -83,9 +83,24 @@ sap.ui.define([
 			this._bAlwaysResize = false;
 		},
 
-		_setupThumbnailSize: function () {
-			this._maxThumbnailWidth = this._convertRemToPixels(11);
-			this._maxThumbnailHeight = this._convertRemToPixels(11);
+		_setupThumbnailSize: function (sId) {
+			var oElement;
+			if (sId) {
+				oElement = $("#" + sId).get(0);
+			}
+
+			if (!oElement) {
+				oElement = $("#" + this.getControlPrefixId() + "-browseTile").get(0);
+				if (!oElement) {
+					oElement = $("#" + this.getControlPrefixId() + "-cameraTile").get(0);
+				}
+			}
+
+			var oComputedStyleOneByOne = getComputedStyle(oElement);
+			if (oComputedStyleOneByOne) {
+				this._maxThumbnailWidth = parseFloat(oComputedStyleOneByOne.width);
+				this._maxThumbnailHeight = parseFloat(oComputedStyleOneByOne.height);
+			}
 		},
 
 		initializePane: function () {
@@ -104,7 +119,6 @@ sap.ui.define([
 				(this._oApplication.getRuntimeEnvironment());
 
 			this._getCustomParameters();
-			this._setupThumbnailSize();
 
 			this._attachedECController = this._getAttachedECController();
 			// listen to event ChildControllerAdded to really attach to DataContainer changes there
@@ -522,7 +536,20 @@ sap.ui.define([
 		},
 
 		_imageOnLoad: function (oControlEvent) {
-			var oImg = oControlEvent.getSource().getDomRef().children[1];
+			var oImg;
+			try {
+				oImg = oControlEvent.getSource().getDomRef().children[1];
+
+				if (!this._maxThumbnailHeight || !this._maxThumbnailWidth) {
+					this._setupThumbnailSize(oImg.getSource().getParent().getParent().getId()); // if neither camer nor browse tiles are visible, try to determine again for the current tile
+
+					if (!this._maxThumbnailHeight || !this._maxThumbnailWidth) {
+						return;
+					}
+				}
+			} catch (err) {
+				return;
+			}
 
 			// make it centered rectangular of _maxThumbnailWidth*_maxThumbnailHeight
 			// step 1 - Resize - to make the smallest side as _maxThumbnailHeight or _maxThumbnailWidth
@@ -708,10 +735,7 @@ sap.ui.define([
 		},
 
 		onAfterRendering: function () {
-			var tstWidth = getComputedStyle(document.getElementById(this.getControlPrefixId() + "-browseTile")).width;
-			var tstHeight = getComputedStyle(document.getElementById(this.getControlPrefixId() + "-browseTile")).height;
-			
-			MessageToast.show("Size of OneByOne tile: " + tstWidth + " x " + tstHeight);
+			this._setupThumbnailSize();
 		},
 
 		_setupImageResize: function (sImageUploadSize) {
