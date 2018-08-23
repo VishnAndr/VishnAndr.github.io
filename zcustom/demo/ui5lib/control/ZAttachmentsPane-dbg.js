@@ -114,6 +114,9 @@ sap.ui.define([
 			} else {
 				imageSize = oSettings.getDefaultImageUploadResolutionClassificationForOnline();
 			}
+			if (!imageSize && this._bAlwaysResize) {
+				imageSize = "L"; //in desktop always resize to the imageSize L
+			}
 			this._setupImageResize(imageSize);
 
 			var sEnableImageProcessor = this._enableImageProcessor;
@@ -582,7 +585,7 @@ sap.ui.define([
 				dataURL = canvasCrop.toDataURL("image/jpg", 0.5);
 			}
 
-			if (dataURL !== oImg.src) {
+			if (dataURL && dataURL !== oImg.src) {
 				oImg.src = dataURL;
 				this.Thumbnails[oControlEvent.getSource().data("_Document").NodeID] = dataURL;
 
