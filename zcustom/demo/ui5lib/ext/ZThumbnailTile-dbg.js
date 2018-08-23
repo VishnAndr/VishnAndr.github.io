@@ -1,7 +1,8 @@
 sap.ui.define([
 	"sap/m/GenericTile",
-	"zcustom/demo/ui5lib/ext/ZThumbnailTileRenderer"
-], function (GenericTile, ZThumbnailTileRenderer) {
+	"zcustom/demo/ui5lib/ext/ZThumbnailTileRenderer",
+	"sap/m/library"
+], function (GenericTile, ZThumbnailTileRenderer, stdLibrary) {
 	"use strict";
 
 	var ZThumbnailTile = GenericTile.extend("zcustom.demo.ui5lib.ext.ZThumbnailTile", /** @lends zcustom.demo.ui5lib.ext.ZThumbnailTile.prototype */ {
@@ -16,7 +17,7 @@ sap.ui.define([
 	// just fixing title text doesn't exist
 	ZThumbnailTile.prototype._isHeaderTextTruncated = function () {
 		var oDom, iMaxHeight, $Header, iWidth;
-		if (this.getMode() === library.GenericTileMode.LineMode) {
+		if (this.getMode() === stdLibrary.GenericTileMode.LineMode) {
 			$Header = this.$("hdr-text");
 			if ($Header.length > 0) {
 				iWidth = Math.ceil($Header[0].getBoundingClientRect().width);
