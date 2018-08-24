@@ -123,8 +123,13 @@ sap.ui.define([
 			this._getCustomParameters();
 
 			this._attachedECController = this._getAttachedECController();
-			// listen to event ChildControllerAdded to really attach to DataContainer changes there
-			this.oController.getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this);
+			if (this._attachedECController) {
+				// standard EC already available
+				this._onChildControllerAdded();
+			} else {
+				// listen to event ChildControllerAdded to really attach to DataContainer changes there
+				this.oController.getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this);
+			}
 
 			this.Documents = []; // current attachments
 			this.Thumbnails = []; // thumbnails mapping
@@ -581,12 +586,12 @@ sap.ui.define([
 
 				if (width > height) {
 					// landscape
-					newWidth = width * (this._maxThumbnailHeight / height);
+					newWidth = Math.round(width * (this._maxThumbnailHeight / height));
 					newHeight = this._maxThumbnailHeight;
 				} else {
 					// portrait
 					newWidth = this._maxThumbnailWidth;
-					newHeight = height * (this._maxThumbnailWidth / width);
+					newHeight = Math.round(height * (this._maxThumbnailWidth / width));
 				}
 
 				canvasResize.width = newWidth;
@@ -602,7 +607,8 @@ sap.ui.define([
 				dataURL = canvasResize.toDataURL("image/jpg", 0.5);
 			}
 
-			var shouldCrop = (width !== this._maxThumbnailWidth) || (height !== this._maxThumbnailHeight);
+			var shouldCrop = (width > this._maxThumbnailWidth && height === this._maxThumbnailHeight) || (height > this._maxThumbnailHeight &&
+				width === this._maxThumbnailWidth);
 			if (shouldCrop) {
 
 				var canvasCrop = document.createElement('canvas');
@@ -612,11 +618,11 @@ sap.ui.define([
 				var sx, sy;
 
 				if (width > height) {
-					sx = (width - this._maxThumbnailWidth) / 2;
+					sx = Math.round((width - this._maxThumbnailWidth) / 2);
 					sy = 0;
 				} else {
 					sx = 0;
-					sy = (height - this._maxThumbnailHeight) / 2;
+					sy = Math.round((height - this._maxThumbnailHeight) / 2);
 				}
 
 				canvasCrop.width = this._maxThumbnailWidth;
