@@ -97,10 +97,19 @@ sap.ui.define([
 			}
 
 			if (oElement) {
-				var oComputedStyleOneByOne = getComputedStyle(oElement);
-				if (oComputedStyleOneByOne) {
-					this._maxThumbnailWidth = parseFloat(oComputedStyleOneByOne.width);
-					this._maxThumbnailHeight = parseFloat(oComputedStyleOneByOne.height);
+
+				if (oElement.clientWidth && oElement.clientHeight) {
+					// in IE compoundStyle seems to receive wrong height
+					// so we're taking client's one; or if there is no such a thing:
+					// fall back to computedStyle
+					this._maxThumbnailWidth = Math.round(oElement.clientWidth);
+					this._maxThumbnailHeight = Math.round(oElement.clientHeight);
+				} else {
+					var oComputedStyleOneByOne = getComputedStyle(oElement);
+					if (oComputedStyleOneByOne) {
+						this._maxThumbnailWidth = Math.round(parseFloat(oComputedStyleOneByOne.width));
+						this._maxThumbnailHeight = Math.round(parseFloat(oComputedStyleOneByOne.height));
+					}
 				}
 			}
 		},
@@ -510,7 +519,7 @@ sap.ui.define([
 
 						var oAttachmentImageTile = new ZThumbnailTile(this.getControlPrefixId() + "-attaimg-" + oDocument.NodeID, {
 							scope: GenericTileScope.Actions,
-							press: [this._imagePressed, this]
+							press: [this._tilePressed, this]
 						}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
 						oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
 						oAttachmentImageTile._oDocument = oDocument;
@@ -712,45 +721,24 @@ sap.ui.define([
 		_tilePressed: function (evt) {
 			if (evt.getSource() && evt.getSource()._oDocument && evt.getSource()._oDocument.DocumentListPath) {
 				var sAction = evt.getParameter("action");
-				var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
-				sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
-
 				var oDocument = evt.getSource()._oDocument;
-				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
-				if (oEventContext) {
-					// faking EventContext
-					oEventContext._sImplicitLeadSelectionPath = oDocument.DocumentListPath;
-					oEventContext.addParam(sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER.PATH, "/Root/AttachmentFolder/DocumentList");
-					oEventContext._oEventArguments[sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER] = oDocument._sNodeId;
+				if (oDocument) {
+					var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
 
-					if (sEvent) {
+					if (!this.isImageMimeCode(oDocument.MimeCode)) { // if this is not an image
+						sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
+					}
+
+					var oEventContext = new sap.client.evt.EventContext(evt.oSource);
+					if (oEventContext && sEvent) {
+						// faking EventContext
+						oEventContext._sImplicitLeadSelectionPath = oDocument.DocumentListPath;
+						oEventContext.addParam(sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER.PATH, "/Root/AttachmentFolder/DocumentList");
+						oEventContext._oEventArguments[sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER] = oDocument._sNodeId;
+
 						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
 					}
 				}
-
-			}
-		},
-
-		_imagePressed: function (evt) {
-			if (evt.getSource() && evt.getSource()._oDocument && evt.getSource()._oDocument.DocumentListPath) {
-				var sAction = evt.getParameter("action");
-				var sEvent = (sAction === GenericTile._Action.Remove) ? "DeleteConfirmation" : "";
-				// for images "open" -> via LightBox
-				//sEvent = (sAction === GenericTile._Action.Press) ? "OpenDocument" : sEvent;
-
-				var oDocument = evt.getSource()._oDocument;
-				var oEventContext = new sap.client.evt.EventContext(evt.oSource);
-				if (oEventContext) {
-					// faking EventContext
-					oEventContext._sImplicitLeadSelectionPath = oDocument.DocumentListPath;
-					oEventContext.addParam(sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER.PATH, "/Root/AttachmentFolder/DocumentList");
-					oEventContext._oEventArguments[sap.client.evt.EventContext.PARAMETERS.ROW_IDENTIFIER] = oDocument._sNodeId;
-
-					if (sEvent) {
-						this._attachedECController.getEventProcessor().handleEvent(sEvent, oEventContext);
-					}
-				}
-
 			}
 		},
 
