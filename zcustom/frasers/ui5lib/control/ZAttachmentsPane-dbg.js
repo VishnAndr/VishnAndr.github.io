@@ -459,7 +459,7 @@ sap.ui.define([
 						press: function () {
 							document.getElementById(this.getControlPrefixId() + "-fu").click();
 						}.bind(this)
-					}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+					}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile");
 					this.setBrowseTile(oBrowseTile);
 					this.oTileContainer.addContent(oBrowseTile);
 				}
@@ -475,7 +475,7 @@ sap.ui.define([
 							text: "Camera",
 							icon: "sap-icon://add-photo",
 							press: [this.onPictureButtonPress, this]
-						}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+						}).addStyleClass("sapClientMQCTile sapMGT OneByOne sapUshellTile");
 						this.setCameraTile(oCameraTile);
 						this.oTileContainer.addContent(oCameraTile);
 					}
@@ -520,7 +520,7 @@ sap.ui.define([
 						var oAttachmentImageTile = new ZThumbnailTile(this.getControlPrefixId() + "-attaimg-" + oDocument.NodeID, {
 							scope: GenericTileScope.Actions,
 							press: [this._tilePressed, this]
-						}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+						}).addStyleClass("sapUshellTile");
 						oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
 						oAttachmentImageTile._oDocument = oDocument;
 
@@ -541,7 +541,7 @@ sap.ui.define([
 							header: oDocument.FileName,
 							scope: GenericTileScope.Actions,
 							press: [this._tilePressed, this]
-						}).addStyleClass("sapUshellTile sapUiTinyMarginBottom sapUiTinyMarginEnd");
+						}).addStyleClass("sapUshellTile");
 						oAttachment.addTileContent(oTileContentAttachmentTile);
 						oAttachment._oDocument = oDocument;
 
