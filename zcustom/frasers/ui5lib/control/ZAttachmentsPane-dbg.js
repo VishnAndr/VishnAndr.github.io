@@ -175,7 +175,8 @@ sap.ui.define([
 				this.oImageResizer = new ImageResizer(this._iCompressedWidthHeight, this._iCompressedWidthHeight);
 			}
 
-			if ((this.oImageResizer || this._oApplication.isOfflineMode()) && window.FilePicker) {
+			if (false && (this.oImageResizer || this._oApplication.isOfflineMode()) && window.FilePicker) {
+				// switching off plugin option for time being; was only spotted in Windows app, standard FileUploader works there as well
 				MessageToast.show("new sap.m.Button");
 				this.oFileUploader = new sap.m.Button(this.getControlPrefixId() + "-browseButton", {
 					icon: sap.ui.core.IconPool.getIconURI("open-folder"),
