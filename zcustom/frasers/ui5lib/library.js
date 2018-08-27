@@ -31,6 +31,7 @@ sap.ui.define([
 		controls: [
 			"zcustom.frasers.ui5lib.control.ZPoCCustomPane",
 			"zcustom.frasers.ui5lib.control.ZFeederEnhancementPane",
+			"zcustom.frasers.ui5lib.control.ZFeederEnhancementPaneV2",
 			"zcustom.frasers.ui5lib.control.ZAttachmentsPane",
 			// extensions of standard controls:
 			"zcustom.frasers.ui5lib.ext.ZThumbnailTile",
