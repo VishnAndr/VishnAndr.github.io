@@ -54,6 +54,10 @@ sap.ui.define([
 		_onChildControllerAdded: function (oEvent) {
 			this._fetchFeederECController();
 		},
+		
+		_onECInterActionFinished: function (oEvent) {
+			
+		},
 
 		_fetchFeederECController: function () {
 			try {
@@ -61,6 +65,11 @@ sap.ui.define([
 
 				if (!this._feederECController && !this._feederECName2) {
 					this._feederECController = this.getController().getParentController().getChildController(this._feederECName2);
+				}
+				
+				if (this._feederECController) {
+					this._feederECController.attachEvent("ECInterActionFinished", this, this._onECInterActionFinished, this);
+				
 				}
 			} catch (ex) {
 				this._feederECController = undefined;
@@ -520,6 +529,6 @@ sap.ui.define([
 
 	});
 
-	return ZFeederEnhancementPane;
+	return ZFeederEnhancementPaneV2;
 
 }, true);
