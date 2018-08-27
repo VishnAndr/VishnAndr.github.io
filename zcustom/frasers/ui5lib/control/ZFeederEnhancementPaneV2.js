@@ -61,7 +61,7 @@ sap.ui.define([
 		_onECInterActionFinished: function (oEvent) {
 			if (sap.client.getCurrentApplication().isNewUI()) {
 				try {
-					var oInlineResponse = _feederECController.getBaseControl().getContent()[0].getContent();
+					var oInlineResponse = this._feederECController.getBaseControl().getContent()[0].getContent();
 
 					if (oInlineResponse._sTypeName === "sap.client.cod.seod.RUIResponse.InlineResponse") {
 						// this is the required InlineResponse to add custom checkboxes to
@@ -74,7 +74,8 @@ sap.ui.define([
 						}
 
 						oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
-
+						
+						oInlineResponse.invalidate(); // trigger rerendering
 					}
 				} catch (ex) {
 
@@ -175,42 +176,46 @@ sap.ui.define([
 				oControls.oFromUser = new sap.m.CheckBox({
 					text: "Use user’s email as sender",
 					tooltip: "Use user’s email as sender",
-					checked: true,
-					change: function (oObjectChanged) {
-						this._onFromUserChange(oObjectChanged.mParameters.checked);
+					selected: true,
+					select: function (oControlEvent) {
+						this._onFromUserChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
 				});
-				oControls.oFromUser.addStyleClass("outlookBox");
+				
+				oControls.oFromUser = new sap.m.Switch({
+					customTextOn: sap.client.m.Util.getLocaleText("FormSwitch_Yes", "yes").toUpperCase(),
+					customTextOff: sap.client.m.Util.getLocaleText("FormSwitch_No", "no").toUpperCase(),
+					change: function (oControlEvent) {
+						this._onFromUserChange(oControlEvent.getParameter("state"));
+					}.bind(this)
+				});				
 
 				oControls.oToAccount = new sap.m.CheckBox({
 					text: "Use Account’s email as recipient",
 					tooltip: "Use Account’s email as recipient",
-					checked: false,
-					change: function (oObjectChanged) {
-						this._onToAccountChange(oObjectChanged.mParameters.checked);
+					selected: false,
+					select: function (oControlEvent) {
+						this._onToAccountChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
 				});
-				oControls.oToAccount.addStyleClass("outlookBox");
 
 				oControls.oToVendor = new sap.m.CheckBox({
 					text: "Use Partner’s email as recipient",
 					tooltip: "Use Partner’s email as recipient",
-					checked: true,
-					change: function (oObjectChanged) {
-						this._onToVendorChange(oObjectChanged.mParameters.checked);
+					selected: true,
+					select: function (oControlEvent) {
+						this._onToVendorChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
 				});
-				oControls.oToVendor.addStyleClass("outlookBox");
 
 				oControls.oToAgent = new sap.m.CheckBox({
 					text: "Use Agent’s email as recipient",
 					tooltip: "Use Agent’s email as recipient",
-					checked: false,
-					change: function (oObjectChanged) {
-						this._onToAgentChange(oObjectChanged.mParameters.checked);
+					selected: false,
+					select: function (oControlEvent) {
+						this._onToAgentChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
 				});
-				oControls.oToAgent.addStyleClass("outlookBox");
 
 				oControls.oRecipientLayout = new sap.ui.layout.VerticalLayout({
 					width: "100%",
@@ -437,7 +442,7 @@ sap.ui.define([
 			if (!this._oLayout) {
 				this._oControls = this._getControlsRUI();
 				if (this._oControls) {
-					this._oLayout = new new sap.ui.layout.VerticalLayout({
+					this._oLayout = new sap.ui.layout.VerticalLayout({
 						width: "100%",
 						content: [this._oControls.oFromUser, this._oControls.oRecipientLayout]
 					});
