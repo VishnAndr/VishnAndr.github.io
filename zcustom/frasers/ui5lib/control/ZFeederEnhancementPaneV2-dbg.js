@@ -31,7 +31,7 @@ sap.ui.define([
 			jQuery.sap.log.debug(">> initializePane", "", "zCustomPane");
 
 			var that = this;
-			
+
 			this._oLayout = null;
 			this._oControls = null;
 
@@ -74,7 +74,7 @@ sap.ui.define([
 						}
 
 						oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
-						
+
 						oInlineResponse.invalidate(); // trigger rerendering
 					}
 				} catch (ex) {
@@ -181,14 +181,6 @@ sap.ui.define([
 						this._onFromUserChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
 				});
-				
-				oControls.oFromUser = new sap.m.Switch({
-					customTextOn: sap.client.m.Util.getLocaleText("FormSwitch_Yes", "yes").toUpperCase(),
-					customTextOff: sap.client.m.Util.getLocaleText("FormSwitch_No", "no").toUpperCase(),
-					change: function (oControlEvent) {
-						this._onFromUserChange(oControlEvent.getParameter("state"));
-					}.bind(this)
-				});				
 
 				oControls.oToAccount = new sap.m.CheckBox({
 					text: "Use Account’s email as recipient",
@@ -227,7 +219,7 @@ sap.ui.define([
 
 			return this._oControls;
 		},
-		
+
 		_initializeControls: function () {
 			jQuery.sap.log.debug(">> _initializeControls", "", "zCustomPane");
 
