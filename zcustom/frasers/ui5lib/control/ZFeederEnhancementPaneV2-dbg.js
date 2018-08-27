@@ -31,6 +31,9 @@ sap.ui.define([
 			jQuery.sap.log.debug(">> initializePane", "", "zCustomPane");
 
 			var that = this;
+			
+			this._oLayout = null;
+			this._oControls = null;
 
 			this._feederECName = (sap.client.getCurrentApplication().isNewUI()) ? "COD_Interactions_EC" : "COD_AWS_Conversation";
 			this._feederECName2 = (sap.client.getCurrentApplication().isNewUI()) ? "" : "COD_AWS_Conversation1";
@@ -54,9 +57,29 @@ sap.ui.define([
 		_onChildControllerAdded: function (oEvent) {
 			this._fetchFeederECController();
 		},
-		
+
 		_onECInterActionFinished: function (oEvent) {
-			
+			if (sap.client.getCurrentApplication().isNewUI()) {
+				try {
+					var oInlineResponse = _feederECController.getBaseControl().getContent()[0].getContent();
+
+					if (oInlineResponse._sTypeName === "sap.client.cod.seod.RUIResponse.InlineResponse") {
+						// this is the required InlineResponse to add custom checkboxes to
+
+						if (!oInlineResponse._inlineResponseLayout) {
+							// if Layout is not there yet - create it (it means inlineResponse is not scoped)
+							// (if it's scoped => it's visible)
+							oInlineResponse._inlineResponseLayout = new sap.ui.layout.VerticalLayout();
+							oInlineResponse._inlineResponseLayout.addStyleClass("ruiResponseInlineResponseLayout");
+						}
+
+						oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
+
+					}
+				} catch (ex) {
+
+				}
+			}
 		},
 
 		_fetchFeederECController: function () {
@@ -66,10 +89,9 @@ sap.ui.define([
 				if (!this._feederECController && !this._feederECName2) {
 					this._feederECController = this.getController().getParentController().getChildController(this._feederECName2);
 				}
-				
+
 				if (this._feederECController) {
 					this._feederECController.attachEvent("ECInterActionFinished", this, this._onECInterActionFinished, this);
-				
 				}
 			} catch (ex) {
 				this._feederECController = undefined;
@@ -144,6 +166,63 @@ sap.ui.define([
 			return this.aControls[iIndex];
 		},
 
+		_getControlsRUI: function () {
+			jQuery.sap.log.debug(">> _getControlsRUI", "", "zCustomPane");
+
+			if (!this._oControls) {
+				var oControls = {};
+
+				oControls.oFromUser = new sap.m.CheckBox({
+					text: "Use user’s email as sender",
+					tooltip: "Use user’s email as sender",
+					checked: true,
+					change: function (oObjectChanged) {
+						this._onFromUserChange(oObjectChanged.mParameters.checked);
+					}.bind(this)
+				});
+				oControls.oFromUser.addStyleClass("outlookBox");
+
+				oControls.oToAccount = new sap.m.CheckBox({
+					text: "Use Account’s email as recipient",
+					tooltip: "Use Account’s email as recipient",
+					checked: false,
+					change: function (oObjectChanged) {
+						this._onToAccountChange(oObjectChanged.mParameters.checked);
+					}.bind(this)
+				});
+				oControls.oToAccount.addStyleClass("outlookBox");
+
+				oControls.oToVendor = new sap.m.CheckBox({
+					text: "Use Partner’s email as recipient",
+					tooltip: "Use Partner’s email as recipient",
+					checked: true,
+					change: function (oObjectChanged) {
+						this._onToVendorChange(oObjectChanged.mParameters.checked);
+					}.bind(this)
+				});
+				oControls.oToVendor.addStyleClass("outlookBox");
+
+				oControls.oToAgent = new sap.m.CheckBox({
+					text: "Use Agent’s email as recipient",
+					tooltip: "Use Agent’s email as recipient",
+					checked: false,
+					change: function (oObjectChanged) {
+						this._onToAgentChange(oObjectChanged.mParameters.checked);
+					}.bind(this)
+				});
+				oControls.oToAgent.addStyleClass("outlookBox");
+
+				oControls.oRecipientLayout = new sap.ui.layout.VerticalLayout({
+					width: "100%",
+					content: [oControls.oToAccount, oControls.oToVendor, oControls.oToAgent]
+				});
+
+				this._oControls = oControls;
+			}
+
+			return this._oControls;
+		},
+		
 		_initializeControls: function () {
 			jQuery.sap.log.debug(">> _initializeControls", "", "zCustomPane");
 
@@ -350,6 +429,22 @@ sap.ui.define([
 			}
 
 			return oLayout;
+		},
+
+		_getNewLayoutRUI: function () {
+			jQuery.sap.log.debug(">> _getNewLayoutRUI", "", "zCustomPane");
+
+			if (!this._oLayout) {
+				this._oControls = this._getControlsRUI();
+				if (this._oControls) {
+					this._oLayout = new new sap.ui.layout.VerticalLayout({
+						width: "100%",
+						content: [this._oControls.oFromUser, this._oControls.oRecipientLayout]
+					});
+				}
+			}
+
+			return this._oLayout;
 		},
 
 		_onDataContainerUpdateFinished: function () {
