@@ -35,8 +35,7 @@ sap.ui.define([
 			this._oLayout = null;
 			this._oControls = null;
 
-			this._feederECName = (sap.client.getCurrentApplication().isNewUI()) ? "COD_Interactions_EC" : "COD_AWS_Conversation";
-			this._feederECName2 = (sap.client.getCurrentApplication().isNewUI()) ? "" : "COD_AWS_Conversation1";
+			this._initParameters();
 
 			this._feederECController = this._fetchFeederECController();
 			if (this._feederECController) {
@@ -52,6 +51,30 @@ sap.ui.define([
 			this.getModel().attachDataContainerUpdateFinished(function () {
 				that._onDataContainerUpdateFinished();
 			});
+		},
+
+		_initParameters: function () {
+			this._feederECName = "";
+			this._feederECName2 = "";
+			this._sToPath = "";
+			this._sToPathOutlook = "";
+			this._sFromPath = "";
+
+			if (sap.client.getCurrentApplication().isNewUI()) {
+				this._feederECName = "COD_Interactions_EC";
+
+				this._sToPath = "/Root/Feeder/Email/ToList";
+				this._sToPathOutlook = "";
+				this._sFromPath = "/Root/Feeder/Email/From";
+
+			} else {
+				this._feederECName = "COD_AWS_Conversation";
+				this._feederECName2 = "COD_AWS_Conversation1";
+
+				this._sToPath = "/Root/zFeederRelevant/ToList";
+				this._sToPathOutlook = "/Root/zFeederRelevant/NewToEmail";
+				this._sFromPath = "/Root/zFeederRelevant/SelectedSMAPEmail";
+			}
 		},
 
 		_onChildControllerAdded: function (oEvent) {
@@ -76,9 +99,11 @@ sap.ui.define([
 						oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
 
 						oInlineResponse.invalidate(); // trigger rerendering
+						
+						this.onAfterRendering(); //TODO: move it nicely
 					}
 				} catch (ex) {
-
+					jQuery.sap.log.debug("Error in _onECInterActionFinished: " + ex.message); // eslint-disable-line no-console
 				}
 			}
 		},
@@ -209,7 +234,7 @@ sap.ui.define([
 					}.bind(this)
 				});
 
-				oControls.oRecipientLayout = new sap.ui.layout.VerticalLayout({
+				oControls.oRecipientLayout = new sap.ui.layout.HorizontalLayout({
 					width: "100%",
 					content: [oControls.oToAccount, oControls.oToVendor, oControls.oToAgent]
 				});
@@ -381,35 +406,37 @@ sap.ui.define([
 			}
 
 			var oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
-				"/Root/zFeederRelevant/ToList");
+				this._sToPath);
 			if (oDataObject) {
 				oDataObject.attachValueChanged(function () {
-					var sReplyEmail = that._getValue("Root/zFeederRelevant/ReplyEmail");
-					var sToList = that._getValue("/Root/zFeederRelevant/ToList");
+					var sReplyEmail = this._getValue("Root/zFeederRelevant/ReplyEmail");
+					var sToList = this._getValue(this._sToPath);
 					if (sReplyEmail) {
 						if (sReplyEmail !== sToList) {
-							that._onRecipientChange();
+							this._onRecipientChange();
 						}
-					} else if (sToList !== that.sTo) {
-						that._onRecipientChange();
+					} else if (sToList !== this.sTo) {
+						this._onRecipientChange();
 					}
-				});
+				}.bind(this));
 			}
 
-			oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
-				"/Root/zFeederRelevant/NewToEmail");
-			if (oDataObject) {
-				oDataObject.attachValueChanged(function () {
-					var sReplyEmail = that._getValue("Root/zFeederRelevant/ReplyEmail");
-					var sNewToEmail = that._getValue("/Root/zFeederRelevant/NewToEmail");
-					if (sReplyEmail) {
-						if (sReplyEmail !== sNewToEmail) {
-							that._onRecipientChange();
+			if (this._sToPathOutlook) {
+				oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
+					this._sToPathOutlook);
+				if (oDataObject) {
+					oDataObject.attachValueChanged(function () {
+						var sReplyEmail = this._getValue("Root/zFeederRelevant/ReplyEmail");
+						var sNewToEmail = this._getValue(this._sToPathOutlook);
+						if (sReplyEmail) {
+							if (sReplyEmail !== sNewToEmail) {
+								this._onRecipientChange();
+							}
+						} else if (sNewToEmail !== this.sTo) {
+							this._onRecipientChange();
 						}
-					} else if (sNewToEmail !== that.sTo) {
-						that._onRecipientChange();
-					}
-				});
+					}.bind(this));
+				}
 			}
 		},
 
@@ -541,7 +568,7 @@ sap.ui.define([
 				var sVendorEmail = this._getValue("/Root/ZVendorEmail");
 				var sAgentEmail = this._getValue("/Root/ZAgentEmail");
 
-				this.sTo = this._getValue("/Root/zFeederRelevant/ToList");
+				this.sTo = this._getValue(this._sToPath);
 				this.sTo = "";
 
 				if (this.fToAccount && sAccountEmail) {
@@ -556,8 +583,10 @@ sap.ui.define([
 					this.sTo = this.sTo.concat(sAgentEmail).concat(cEMailAddressDelimiter);
 				}
 
-				this._setValue("/Root/zFeederRelevant/ToList", this.sTo);
-				this._setValue("/Root/zFeederRelevant/NewToEmail", this.sTo);
+				this._setValue(this._sToPath, this.sTo);
+				if (this._sToPathOutlook) {
+					this._setValue(this._sToPathOutlook, this.sTo);
+				}
 			} catch (err) {
 				jQuery.sap.log.debug("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
 			}
@@ -567,7 +596,7 @@ sap.ui.define([
 			jQuery.sap.log.debug(">> _setFromField", "", "zCustomPane");
 
 			try {
-				this._setValue("/Root/zFeederRelevant/SelectedSMAPEmail", sValue);
+				this._setValue(this._sFromPath, sValue);
 			} catch (err) {
 				jQuery.sap.log.debug("Error in _setFromField: " + err.message); // eslint-disable-line no-console	
 			}
