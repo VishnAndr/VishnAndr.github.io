@@ -84,23 +84,26 @@ sap.ui.define([
 		_onECInterActionFinished: function (oEvent) {
 			if (sap.client.getCurrentApplication().isNewUI()) {
 				try {
-					var oInlineResponse = this._feederECController.getBaseControl().getContent()[0].getContent();
+					if (!this._oInlineResponse) {
+						this._oInlineResponse = this._feederECController.getBaseControl().getContent()[0].getContent();
 
-					if (oInlineResponse._sTypeName === "sap.client.cod.seod.RUIResponse.InlineResponse") {
-						// this is the required InlineResponse to add custom checkboxes to
+						if (this._oInlineResponse._sTypeName === "sap.client.cod.seod.RUIResponse.InlineResponse") {
+							// this is the required InlineResponse to add custom checkboxes to
 
-						if (!oInlineResponse._inlineResponseLayout) {
-							// if Layout is not there yet - create it (it means inlineResponse is not scoped)
-							// (if it's scoped => it's visible)
-							oInlineResponse._inlineResponseLayout = new sap.ui.layout.VerticalLayout();
-							oInlineResponse._inlineResponseLayout.addStyleClass("ruiResponseInlineResponseLayout");
+							if (!this._oInlineResponse._inlineResponseLayout) {
+								// if Layout is not there yet - create it (it means inlineResponse is not scoped)
+								// (if it's scoped => it's visible)
+								this._oInlineResponse._inlineResponseLayout = new sap.ui.layout.VerticalLayout();
+								this._oInlineResponse._inlineResponseLayout.addStyleClass("ruiResponseInlineResponseLayout");
+							}
+
+							this._oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
+
+							this._oInlineResponse.invalidate(); // trigger rerendering
+							
+							this._initializeControls();
+							this.onAfterRendering(); //TODO: move it nicely
 						}
-
-						oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
-
-						oInlineResponse.invalidate(); // trigger rerendering
-
-						this.onAfterRendering(); //TODO: move it nicely
 					}
 				} catch (ex) {
 					jQuery.sap.log.debug("Error in _onECInterActionFinished: " + ex.message); // eslint-disable-line no-console
@@ -520,24 +523,26 @@ sap.ui.define([
 				var sVendorEmail = this._getValue("/Root/ZVendorEmail");
 				var sAgentEmail = this._getValue("/Root/ZAgentEmail");
 
-				this.sTo = this._oToDataObject.getValue();
-				this.sTo = "";
+				if (this._oToDataObject) {
+					this.sTo = this._oToDataObject.getValue();
+					this.sTo = "";
 
-				if (this.fToAccount && sAccountEmail) {
-					this.sTo = this.sTo.concat(sAccountEmail).concat(cEMailAddressDelimiter);
-				}
+					if (this.fToAccount && sAccountEmail) {
+						this.sTo = this.sTo.concat(sAccountEmail).concat(cEMailAddressDelimiter);
+					}
 
-				if (this.fToVendor && sVendorEmail) {
-					this.sTo = this.sTo.concat(sVendorEmail).concat(cEMailAddressDelimiter);
-				}
+					if (this.fToVendor && sVendorEmail) {
+						this.sTo = this.sTo.concat(sVendorEmail).concat(cEMailAddressDelimiter);
+					}
 
-				if (this.fToAgent && sAgentEmail) {
-					this.sTo = this.sTo.concat(sAgentEmail).concat(cEMailAddressDelimiter);
-				}
+					if (this.fToAgent && sAgentEmail) {
+						this.sTo = this.sTo.concat(sAgentEmail).concat(cEMailAddressDelimiter);
+					}
 
-				this._oToDataObject.setValue(this.sTo);
-				if (this._sToPathOutlook) {
-					this._setValue(this._sToPathOutlook, this.sTo);
+					this._oToDataObject.setValue(this.sTo);
+					if (this._sToPathOutlook) {
+						this._setValue(this._sToPathOutlook, this.sTo);
+					}
 				}
 			} catch (err) {
 				jQuery.sap.log.debug("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
