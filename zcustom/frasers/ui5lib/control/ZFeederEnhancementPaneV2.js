@@ -355,12 +355,14 @@ sap.ui.define([
 				}
 			}
 
-			var oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
+			this._oToDataObject = this._feederECController ? this._feederECController.getDataContainer().getDataObject(
+				this._sToPath) : this.getController().getParentController().getDataContainer().getDataObject(
 				this._sToPath);
-			if (oDataObject) {
-				oDataObject.attachValueChanged(function () {
-					var sReplyEmail = this._getValue("Root/zFeederRelevant/ReplyEmail");
-					var sToList = this._getValue(this._sToPath);
+
+			if (this._oToDataObject) {
+				this._oToDataObject.attachValueChanged(function () {
+					var sReplyEmail = this._getValue("/Root/zFeederRelevant/ReplyEmail");
+					var sToList = this._oToDataObject.getValue();
 					if (sReplyEmail) {
 						if (sReplyEmail !== sToList) {
 							this._onRecipientChange();
@@ -372,11 +374,11 @@ sap.ui.define([
 			}
 
 			if (this._sToPathOutlook) {
-				oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
+				var oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
 					this._sToPathOutlook);
 				if (oDataObject) {
 					oDataObject.attachValueChanged(function () {
-						var sReplyEmail = this._getValue("Root/zFeederRelevant/ReplyEmail");
+						var sReplyEmail = this._getValue("/Root/zFeederRelevant/ReplyEmail");
 						var sNewToEmail = this._getValue(this._sToPathOutlook);
 						if (sReplyEmail) {
 							if (sReplyEmail !== sNewToEmail) {
@@ -518,7 +520,7 @@ sap.ui.define([
 				var sVendorEmail = this._getValue("/Root/ZVendorEmail");
 				var sAgentEmail = this._getValue("/Root/ZAgentEmail");
 
-				this.sTo = this._getValue(this._sToPath);
+				this.sTo = this._oToDataObject.getValue();
 				this.sTo = "";
 
 				if (this.fToAccount && sAccountEmail) {
@@ -533,7 +535,7 @@ sap.ui.define([
 					this.sTo = this.sTo.concat(sAgentEmail).concat(cEMailAddressDelimiter);
 				}
 
-				this._setValue(this._sToPath, this.sTo);
+				this._oToDataObject.setValue(this.sTo);
 				if (this._sToPathOutlook) {
 					this._setValue(this._sToPathOutlook, this.sTo);
 				}
@@ -546,7 +548,14 @@ sap.ui.define([
 			jQuery.sap.log.debug(">> _setFromField", "", "zCustomPane");
 
 			try {
-				this._setValue(this._sFromPath, sValue);
+				if (this._feederECController) {
+					var oFromDataObject = this._feederECController.getDataContainer().getDataObject(this._sFromPath);
+					if (oFromDataObject) {
+						oFromDataObject.setValue(sValue);
+					}
+				} else {
+					this._setValue(this._sFromPath, sValue);
+				}
 			} catch (err) {
 				jQuery.sap.log.debug("Error in _setFromField: " + err.message); // eslint-disable-line no-console	
 			}
