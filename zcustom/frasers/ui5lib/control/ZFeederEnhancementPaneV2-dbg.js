@@ -37,14 +37,16 @@ sap.ui.define([
 
 			this._initParameters();
 
-			this._feederECController = this._fetchFeederECController();
-			if (this._feederECController) {
-				// standard EC already available
-				this._onChildControllerAdded();
-			}
+			if (sap.client.getCurrentApplication().isNewUI()) {
+				this._feederECController = this._fetchFeederECController();
+				if (this._feederECController) {
+					// standard EC already available
+					this._onChildControllerAdded();
+				}
 
-			// listen to event ChildControllerAdded to get any feeder change
-			this.getController().getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this);
+				// listen to event ChildControllerAdded to get any feeder change
+				this.getController().getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this);
+			}
 
 			this._initializeControls();
 
@@ -68,8 +70,6 @@ sap.ui.define([
 				this._sFromPath = "/Root/Feeder/Email/From";
 
 			} else {
-				this._feederECName = "COD_AWS_Conversation";
-				this._feederECName2 = "COD_AWS_Conversation1";
 
 				this._sToPath = "/Root/zFeederRelevant/ToList";
 				this._sToPathOutlook = "/Root/zFeederRelevant/NewToEmail";
@@ -99,7 +99,7 @@ sap.ui.define([
 						oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
 
 						oInlineResponse.invalidate(); // trigger rerendering
-						
+
 						this.onAfterRendering(); //TODO: move it nicely
 					}
 				} catch (ex) {
@@ -259,56 +259,6 @@ sap.ui.define([
 			this._onRecipientChange();
 			this._onFromUserChange(this.fFromUser);
 
-			/*			this.oRecipientLayout = null;
-						this.oFromUser = null;
-						this.oToAccount = null;
-						this.oToVendor = null;
-						this.oToAgent = null;
-
-						this.oFromUser = new sap.ui.commons.CheckBox({
-							text: "Use user’s email as sender",
-							tooltip: "Use user’s email as sender",
-							checked: true,
-							change: function() {
-								that._onFromUserChange();
-							}
-						});
-						this.oFromUser.addStyleClass("outlookBox");
-
-						this.oToAccount = new sap.ui.commons.CheckBox({
-							text: "Use Account’s email as recipient",
-							tooltip: "Use Account’s email as recipient",
-							checked: false,
-							change: function() {
-								that._onToAccountChange();
-							}
-						});
-						this.oToAccount.addStyleClass("outlookBox");
-
-						this.oToVendor = new sap.ui.commons.CheckBox({
-							text: "Use Partner’s email as recipient",
-							tooltip: "Use Partner’s email as recipient",
-							checked: true,
-							change: function() {
-								that._onToVendorChange();
-							}
-						});
-						this.oToVendor.addStyleClass("outlookBox");
-
-						this.oToAgent = new sap.ui.commons.CheckBox({
-							text: "Use Agent’s email as recipient",
-							tooltip: "Use Agent’s email as recipient",
-							checked: false,
-							change: function() {
-								that._onToAgentChange();
-							}
-						});
-						this.oToAgent.addStyleClass("outlookBox");
-
-						this.oRecipientLayout = new sap.ui.commons.layout.VerticalLayout({
-							width: "100%",
-							content: [this.oToAccount, this.oToVendor, this.oToAgent]
-						});*/
 		},
 
 		onBeforeRendering: function () {
