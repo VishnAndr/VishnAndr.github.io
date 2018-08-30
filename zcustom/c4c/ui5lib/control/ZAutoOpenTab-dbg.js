@@ -37,7 +37,10 @@ sap.ui.define([
 						var sNavItemParameter = "NavItem" + i.toString();
 						
 						try {
-							aNavigationMap[aParameters[sBusinessRoleParameter]] = aParameters[sNavItemParameter];
+							if (!aNavigationMap[aParameters[sBusinessRoleParameter]]) {
+								aNavigationMap[aParameters[sBusinessRoleParameter]] = aParameters[sNavItemParameter];
+								aNavigationMap.length++;
+							}
 						} catch (exMap) {
 							continue; //something is missing: either BusinessRole.. or NavItem..; nevermind then
 						}
@@ -47,9 +50,11 @@ sap.ui.define([
 				if (aNavigationMap.length > 0) {
 					var aBusinessRoles = sap.client.getCurrentApplication().getSettings().getUserBusinessRoleIds();
 
-					var sAutoNavigationItemId = aBusinessRoles.find(function (sBusinessRole) {
+					var sRoleWithMapping = aBusinessRoles.find(function (sBusinessRole) {
 						return aNavigationMap[sBusinessRole];
 					});
+
+					var sAutoNavigationItemId = aNavigationMap[sRoleWithMapping];
 
 					if (sAutoNavigationItemId) {
 
