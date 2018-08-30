@@ -31,7 +31,8 @@ sap.ui.define([
 		controls: [
 			"zcustom.c4c.ui5lib.control.ZCustomEmptyPane",
 			"zcustom.c4c.ui5lib.control.ZBarCodeScanner",
-			"zcustom.c4c.ui5lib.contorl.ZPlumberLeadPane"
+			"zcustom.c4c.ui5lib.contorl.ZPlumberLeadPane",
+			"zcustom.c4c.ui5lib.contorl.ZAutoOpenTab"
 		],
 		elements: [],
 		version: "0.1.0"

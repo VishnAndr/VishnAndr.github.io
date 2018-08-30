@@ -297,6 +297,7 @@ sap.ui.define([
 			try {
 				this._ProcessBarCodeResult(mArguments);
 				this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
+				this._setResultIntoNearest("102","/Root/JobType1_3a41b900b57ea2e2555fca9888158af2"); //Job Type as "Replace/New" on scan
 				this._triggerLeadOnSave();
 			} catch (e) {
 				jQuery.sap.log.error("Barcode has not been recognized");
@@ -462,7 +463,14 @@ sap.ui.define([
 				var oInput = this.getAggregation("_inpField");
 				oInput.setValue(this.geoResponseResult.formatted_address);
 
-				this._fillInAddressFromPlace(this.geoResponseResult);
+				this._fillInAddressFromPlace(this.geoResponseResult, true);
+				
+			} else if (oAction === MessageBox.Action.NO) {
+				// if no, then anyway populate the address, but don't save
+				var oInput = this.getAggregation("_inpField");
+				oInput.setValue(this.geoResponseResult.formatted_address);
+
+				this._fillInAddressFromPlace(this.geoResponseResult, false);				
 			}
 
 			this.geoResponseResult = null;
@@ -488,7 +496,7 @@ sap.ui.define([
 			}
 		},
 
-		_fillInAddressFromPlace: function(oPlace) {
+		_fillInAddressFromPlace: function(oPlace, bTriggerSave) {
 			var sStreetNumber = "";
 			var sStreetName = "";
 			var sSuburb = "";
@@ -519,7 +527,9 @@ sap.ui.define([
 			this._setResultIntoNearest(sState, "/Root/RFL_CState_0c757ce9e338b9da7867ee71990b089b");
 			this._setResultIntoNearest(sPostalCode, "/Root/ZRFL_PostCode_7834540e1c06fed78ba92204ff988027");
 
-			this._triggerLeadOnSave();
+			if (bTriggerSave) {
+				this._triggerLeadOnSave();
+			}
 		},
 
 		_fillInAddress: function() {
