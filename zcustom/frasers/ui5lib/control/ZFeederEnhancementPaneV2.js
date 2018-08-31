@@ -46,9 +46,9 @@ sap.ui.define([
 
 				// listen to event ChildControllerAdded to get any feeder change
 				this.getController().getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this);
+			} else {
+				this._initializeControls();
 			}
-
-			this._initializeControls();
 
 			this.getModel().attachDataContainerUpdateFinished(function () {
 				that._onDataContainerUpdateFinished();
@@ -78,32 +78,47 @@ sap.ui.define([
 		},
 
 		_onChildControllerAdded: function (oEvent) {
-			this._fetchFeederECController();
+			try {
+				if (oEvent.oSource._aChildController.length > 0) {
+					if (oEvent.oSource._aChildController[oEvent.oSource._aChildController.length - 1].getEmbeddingContext()._a.embedName === this._feederECName) {
+						// we're checking the latest added child controller above
+						// and if it matches the required one, we will proceed
+						this._fetchFeederECController();
+					}
+				}
+			} catch (ex) {
+				// it may happen, no issues
+				return;
+			}
+
 		},
 
 		_onECInterActionFinished: function (oEvent) {
 			if (sap.client.getCurrentApplication().isNewUI()) {
 				try {
-					if (!this._oInlineResponse) {
-						this._oInlineResponse = this._feederECController.getBaseControl().getContent()[0].getContent();
+					var oNewInlineResponse = this._feederECController.getBaseControl().getContent()[0].getContent();
 
-						if (this._oInlineResponse._sTypeName === "sap.client.cod.seod.RUIResponse.InlineResponse") {
-							// this is the required InlineResponse to add custom checkboxes to
+					if (!this._oInlineResponse || // first call or ...
+						(oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) 
+							&& this._oInlineResponse.getId() !== oNewInlineResponse.getId())) { //... or if InlineResponse changed
 
-							if (!this._oInlineResponse._inlineResponseLayout) {
-								// if Layout is not there yet - create it (it means inlineResponse is not scoped)
-								// (if it's scoped => it's visible)
-								this._oInlineResponse._inlineResponseLayout = new sap.ui.layout.VerticalLayout();
-								this._oInlineResponse._inlineResponseLayout.addStyleClass("ruiResponseInlineResponseLayout");
-							}
+						this._oInlineResponse = oNewInlineResponse;
 
-							this._oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
+						// this is the required InlineResponse to add custom checkboxes to
 
-							this._oInlineResponse.invalidate(); // trigger rerendering
-							
-							this._initializeControls();
-							this.onAfterRendering(); //TODO: move it nicely
+						if (!this._oInlineResponse._inlineResponseLayout) {
+							// if Layout is not there yet - create it (it means inlineResponse is not scoped)
+							// (if it's scoped => it's visible)
+							this._oInlineResponse._inlineResponseLayout = new sap.ui.layout.VerticalLayout();
+							this._oInlineResponse._inlineResponseLayout.addStyleClass("ruiResponseInlineResponseLayout");
 						}
+
+						this._oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
+
+						this._oInlineResponse.invalidate(); // trigger rerendering
+
+						this._initializeControls();
+						this.onAfterRendering(); //TODO: move it nicely
 					}
 				} catch (ex) {
 					jQuery.sap.log.debug("Error in _onECInterActionFinished: " + ex.message); // eslint-disable-line no-console
