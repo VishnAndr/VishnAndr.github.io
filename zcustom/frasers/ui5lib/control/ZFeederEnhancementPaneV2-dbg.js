@@ -111,15 +111,22 @@ sap.ui.define([
 
 						this._oInlineResponse = oNewInlineResponse;
 
+						//detach event listner from previous
+						try {
+							this._oInlineResponse.getController().getEventProcessor().detachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback, this);
+						} catch (ex) {
+							
+						}
 						//Attach event listner for UIDesigner events to understand Reply button
 						this._oInlineResponse.getController().getEventProcessor().attachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
 							this);
 
 						this._oToDataObject = this._feederECController.getDataContainer().getDataObject(this._sToPath);
 						this._oFromDataObject = this._feederECController.getDataContainer().getDataObject(this._sFromPath);
-
+						this._oURIDataObject = this._feederECController.getDataContainer().getDataObject("/Root/Feeder/Email/EmailURI");
+						
 						if (this._oToDataObject) {
-							this._oToDataObject.attachValueChanged(function () {
+							this._oToDataObject.attachValueChanged(function (oEventValueChanged) {
 								if (!this._bInReply) {
 									var sToList = this._oToDataObject.getValue();
 									if (sToList !== this.sTo) {
@@ -138,6 +145,30 @@ sap.ui.define([
 									this._setFromField(this.sUserEmail);
 								}
 							}.bind(this));
+						}
+						
+						if (this._oURIDataObject) {
+							this._oURI.attachValueChanged(function (oEventValueChanged) {
+									// Outlook workaround
+									if (!this._bInReply) {
+										try {
+											var sMailtoOutlook = oEventValueChanged.getParameter("value");
+										
+											var sPrefixRemoved = sMailtoOutlook.split("mailto:")[1];
+											var sMailtoPart = sPrefixRemoved.split("?Subject=")[0];
+											var sSubjectPart = sPrefixRemoved.split("?Subject=")[1];
+											
+											this._set_sTo();
+											if (sMailtoPart !== this.sTo) {
+												sMailtoOutlook = "mailto:".concat(this.sTo.concat("?Subject=".concat(sSubjectPart)));
+											}
+										} catch (ex) {
+											
+										}
+									} else {
+										this._bInReply = false; // ok, we skipped the change in reply mode
+									}
+								}.bind(this));								
 						}
 
 						// this is the required InlineResponse to add custom checkboxes to
@@ -212,6 +243,7 @@ sap.ui.define([
 			// Reply with outlook buttons
 			case "Reply_with_outlook":
 			case "ReplyTo_Interaction_with_outlook":
+				this._bInReply = true;
 				break;
 				
 			// Forward button
@@ -592,16 +624,8 @@ sap.ui.define([
 				this._onRecipientChange();
 			}
 		},
-
-		_onRecipientChange: function () {
-			jQuery.sap.log.debug(">> _onRecipientChange", "", "zCustomPane");
-
-			if (this.oCurrentFeeder) {
-				if (this.oCurrentFeeder.bComposeNewEmail || this.oCurrentFeeder.bIsReply) {
-					return;
-				}
-			}
-
+		
+		_set_sTo: function () {
 			try {
 				var cEMailAddressDelimiter = "; ";
 				var sAccountEmail = this._getValue("/Root/ZAccountEmail");
@@ -623,6 +647,25 @@ sap.ui.define([
 					if (this.fToAgent && sAgentEmail) {
 						this.sTo = this.sTo.concat(sAgentEmail).concat(cEMailAddressDelimiter);
 					}
+				}
+			} catch (err) {
+				jQuery.sap.log.debug("Error in _set_sTo: " + err.message); // eslint-disable-line no-console
+			}			
+		},
+
+		_onRecipientChange: function () {
+			jQuery.sap.log.debug(">> _onRecipientChange", "", "zCustomPane");
+
+			if (this.oCurrentFeeder) {
+				if (this.oCurrentFeeder.bComposeNewEmail || this.oCurrentFeeder.bIsReply) {
+					return;
+				}
+			}
+
+			try {
+
+				if (this._oToDataObject) {
+					this._set_sTo();
 
 					this._oToDataObject.setValue(this.sTo);
 					if (this._sToPathOutlook) {
