@@ -99,10 +99,36 @@ sap.ui.define([
 					var oNewInlineResponse = this._feederECController.getBaseControl().getContent()[0].getContent();
 
 					if (!this._oInlineResponse || // first call or ...
-						(oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) 
-							&& this._oInlineResponse.getId() !== oNewInlineResponse.getId())) { //... or if InlineResponse changed
+						(oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) && this._oInlineResponse.getId() !==
+							oNewInlineResponse.getId())) { //... or if InlineResponse changed
 
 						this._oInlineResponse = oNewInlineResponse;
+
+						this._oToDataObject = this._feederECController.getDataContainer().getDataObject(this._sToPath);
+						this._oFromDataObject = this._feederECController.getDataContainer().getDataObject(this._sFromPath);
+
+						if (this._oToDataObject) {
+							this._oToDataObject.attachValueChanged(function () {
+								var sReplyEmail = this._getValue("/Root/zFeederRelevant/ReplyEmail");
+								var sToList = this._oToDataObject.getValue();
+								if (sReplyEmail) {
+									if (sReplyEmail !== sToList) {
+										this._onRecipientChange();
+									}
+								} else if (sToList !== this.sTo) {
+									this._onRecipientChange();
+								}
+							}.bind(this));
+						}
+
+						if (this._oFromDataObject) {
+							this._oFromDataObject.attachValueChanged(function (oEventValueChanged) {
+								this.sUserEmail = this._getUserEmail();
+								if (this.fFromUser && oEventValueChanged.getParameter("value") !== this.sUserEmail) {
+									this._setFromField(this.sUserEmail);
+								}
+							}.bind(this));
+						}
 
 						// this is the required InlineResponse to add custom checkboxes to
 
