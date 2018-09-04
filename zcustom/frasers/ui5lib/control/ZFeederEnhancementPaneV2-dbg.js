@@ -69,6 +69,11 @@ sap.ui.define([
 				this._sToPathOutlook = "";
 				this._sFromPath = "/Root/Feeder/Email/From";
 
+				// for Fiori we're doing it here once, controls will stay
+				this.fFromUser = true;
+				this.fToAccount = false;
+				this.fToVendor = true;
+				this.fToAgent = false;
 			} else {
 
 				this._sToPath = "/Root/zFeederRelevant/ToList";
@@ -143,8 +148,8 @@ sap.ui.define([
 
 						this._oInlineResponse.invalidate(); // trigger rerendering
 
-						this._initializeControls();
-						this.onAfterRendering(); //TODO: move it nicely
+						this._onRecipientChange();
+						this._onFromUserChange(this.fFromUser);
 					}
 				} catch (ex) {
 					jQuery.sap.log.debug("Error in _onECInterActionFinished: " + ex.message); // eslint-disable-line no-console
@@ -399,39 +404,40 @@ sap.ui.define([
 				}
 			}
 
-			this._oToDataObject = this._feederECController ? this._feederECController.getDataContainer().getDataObject(
-				this._sToPath) : this.getController().getParentController().getDataContainer().getDataObject(
-				this._sToPath);
+			if (!sap.client.getCurrentApplication().isNewUI()) {
+				this._oToDataObject = this.getController().getParentController().getDataContainer().getDataObject(
+					this._sToPath);
 
-			if (this._oToDataObject) {
-				this._oToDataObject.attachValueChanged(function () {
-					var sReplyEmail = this._getValue("/Root/zFeederRelevant/ReplyEmail");
-					var sToList = this._oToDataObject.getValue();
-					if (sReplyEmail) {
-						if (sReplyEmail !== sToList) {
-							this._onRecipientChange();
-						}
-					} else if (sToList !== this.sTo) {
-						this._onRecipientChange();
-					}
-				}.bind(this));
-			}
-
-			if (this._sToPathOutlook) {
-				var oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
-					this._sToPathOutlook);
-				if (oDataObject) {
-					oDataObject.attachValueChanged(function () {
+				if (this._oToDataObject) {
+					this._oToDataObject.attachValueChanged(function () {
 						var sReplyEmail = this._getValue("/Root/zFeederRelevant/ReplyEmail");
-						var sNewToEmail = this._getValue(this._sToPathOutlook);
+						var sToList = this._oToDataObject.getValue();
 						if (sReplyEmail) {
-							if (sReplyEmail !== sNewToEmail) {
+							if (sReplyEmail !== sToList) {
 								this._onRecipientChange();
 							}
-						} else if (sNewToEmail !== this.sTo) {
+						} else if (sToList !== this.sTo) {
 							this._onRecipientChange();
 						}
 					}.bind(this));
+				}
+
+				if (this._sToPathOutlook) {
+					var oDataObject = this.getController().getParentController().getDataContainer().getDataObject(
+						this._sToPathOutlook);
+					if (oDataObject) {
+						oDataObject.attachValueChanged(function () {
+							var sReplyEmail = this._getValue("/Root/zFeederRelevant/ReplyEmail");
+							var sNewToEmail = this._getValue(this._sToPathOutlook);
+							if (sReplyEmail) {
+								if (sReplyEmail !== sNewToEmail) {
+									this._onRecipientChange();
+								}
+							} else if (sNewToEmail !== this.sTo) {
+								this._onRecipientChange();
+							}
+						}.bind(this));
+					}
 				}
 			}
 		},
@@ -586,7 +592,7 @@ sap.ui.define([
 					}
 				}
 			} catch (err) {
-				jQuery.sap.log.debug("Error in _onFromUserChange: " + err.message); // eslint-disable-line no-console
+				jQuery.sap.log.debug("Error in _onRecipientChange: " + err.message); // eslint-disable-line no-console
 			}
 		},
 
