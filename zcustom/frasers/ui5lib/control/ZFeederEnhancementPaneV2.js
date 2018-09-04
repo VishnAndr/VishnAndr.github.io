@@ -149,7 +149,11 @@ sap.ui.define([
 						this._oInlineResponse.invalidate(); // trigger rerendering
 
 						this._onRecipientChange();
-						this._onFromUserChange(this.fFromUser);
+						if (this.fFromUser) {
+							this.sUserEmail = this._getUserEmail();
+
+							this._setFromField(this.sUserEmail);							
+						}
 					}
 				} catch (ex) {
 					jQuery.sap.log.debug("Error in _onECInterActionFinished: " + ex.message); // eslint-disable-line no-console
