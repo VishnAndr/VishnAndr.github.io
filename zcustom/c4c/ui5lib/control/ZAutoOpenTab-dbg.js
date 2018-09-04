@@ -23,26 +23,31 @@ sap.ui.define([
 
 			try {
 				var aNavigationMap = [];
-				
-				var sThingType = this.getController().getParentController().getComponentModel().getThingType(); //for example, sThingType = COD_MKT_PROSPECT
-				
-				var iStart = this.getParameter("iStart") ? parseInt(this.getParameter("iStart")) : 1;
-				var iFinish = this.getParameter("iFinish") ? parseInt(this.getParameter("iFinish")) : 99;
 
-				var aParameters = this.getParameters();				
-				for (var i = iStart; i <= iFinish; i++) {
-					var sThingTypeParameter = "ThingType" + i.toString();
-					if (aParameters[sThingTypeParameter] === sThingType) {
-						var sBusinessRoleParameter = "BusinessRole" + i.toString();
-						var sNavItemParameter = "NavItem" + i.toString();
-						
-						try {
-							if (!aNavigationMap[aParameters[sBusinessRoleParameter]]) {
-								aNavigationMap[aParameters[sBusinessRoleParameter]] = aParameters[sNavItemParameter];
-								aNavigationMap.length++;
+				var sThingType = this.getController().getParentController().getComponentModel().getThingType(); //for example, sThingType = COD_MKT_PROSPECT
+
+				if (sThingType === "COD_MKT_PROSPECT") { //one day it will be good to have custom object to easy configure it, but for now....
+					aNavigationMap["EXTERNAL PLUMBER"] = "NAVIGATIONITEMID_84725a3667e647aebd85df505632ea82";
+					aNavigationMap.length++;
+				} else {
+					var iStart = this.getParameter("iStart") ? parseInt(this.getParameter("iStart"), 10) : 1;
+					var iFinish = this.getParameter("iFinish") ? parseInt(this.getParameter("iFinish"), 10) : 99;
+
+					var aParameters = this.getParameters();
+					for (var i = iStart; i <= iFinish; i++) {
+						var sThingTypeParameter = "ThingType" + i.toString();
+						if (aParameters[sThingTypeParameter] === sThingType) {
+							var sBusinessRoleParameter = "BusinessRole" + i.toString();
+							var sNavItemParameter = "NavItem" + i.toString();
+
+							try {
+								if (!aNavigationMap[aParameters[sBusinessRoleParameter]]) {
+									aNavigationMap[aParameters[sBusinessRoleParameter]] = aParameters[sNavItemParameter];
+									aNavigationMap.length++;
+								}
+							} catch (exMap) {
+								continue; //something is missing: either BusinessRole.. or NavItem..; nevermind then
 							}
-						} catch (exMap) {
-							continue; //something is missing: either BusinessRole.. or NavItem..; nevermind then
 						}
 					}
 				}
@@ -64,7 +69,7 @@ sap.ui.define([
 							selectedNavigationItemIdFieldPath = "/Root/UIState/ViewSwitchSelectedItem";
 						}
 						var oDO = oTIDataContainer.getDataObject(selectedNavigationItemIdFieldPath);
-						
+
 						if (sAutoNavigationItemId !== oDO.getValue()) {
 							oDO.setValue(sAutoNavigationItemId);
 						}
