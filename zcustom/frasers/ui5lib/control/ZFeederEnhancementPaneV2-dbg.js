@@ -109,12 +109,6 @@ sap.ui.define([
 						(oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) && this._oInlineResponse.getId() !==
 							oNewInlineResponse.getId())) { //... or if InlineResponse changed
 
-						if (this._oInlineResponse) {
-							// sort of destroy
-							this._oInlineResponse.getController().getEventProcessor().detachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
-								this);
-						}
-
 						this._oInlineResponse = oNewInlineResponse;
 
 						//Attach event listner for UIDesigner events to understand Reply button
@@ -203,6 +197,10 @@ sap.ui.define([
 			switch (eventContext.getParameter("event")) {
 			// New button
 			case "CIP_New_Button":
+				break;
+				
+			// New with Outlook button
+			case "CIP_NewMail_Outlook":
 				break;
 				
 			// Reply buttons
