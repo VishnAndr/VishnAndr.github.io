@@ -162,6 +162,8 @@ sap.ui.define([
 										this._set_sTo();
 										if (sMailtoPart !== this.sTo) {
 											sMailtoOutlook = "mailto:".concat(this.sTo.concat("?Subject=".concat(sSubjectPart)));
+										
+											this._oURIDataObject.setValue(sMailtoOutlook);
 										}
 									} catch (ex) {
 
