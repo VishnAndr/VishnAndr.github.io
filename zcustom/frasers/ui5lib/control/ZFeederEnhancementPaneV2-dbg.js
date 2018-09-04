@@ -74,6 +74,8 @@ sap.ui.define([
 				this.fToAccount = false;
 				this.fToVendor = true;
 				this.fToAgent = false;
+
+				this._bInReply = false;
 			} else {
 
 				this._sToPath = "/Root/zFeederRelevant/ToList";
@@ -107,21 +109,30 @@ sap.ui.define([
 						(oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) && this._oInlineResponse.getId() !==
 							oNewInlineResponse.getId())) { //... or if InlineResponse changed
 
+						if (this._oInlineResponse) {
+							// sort of destroy
+							this._oInlineResponse.getController().getEventProcessor().detachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
+								this);
+						}
+
 						this._oInlineResponse = oNewInlineResponse;
+
+						//Attach event listner for UIDesigner events to understand Reply button
+						this._oInlineResponse.getController().getEventProcessor().attachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
+							this);
 
 						this._oToDataObject = this._feederECController.getDataContainer().getDataObject(this._sToPath);
 						this._oFromDataObject = this._feederECController.getDataContainer().getDataObject(this._sFromPath);
 
 						if (this._oToDataObject) {
 							this._oToDataObject.attachValueChanged(function () {
-								var sReplyEmail = this._getValue("/Root/zFeederRelevant/ReplyEmail");
-								var sToList = this._oToDataObject.getValue();
-								if (sReplyEmail) {
-									if (sReplyEmail !== sToList) {
+								if (!this._bInReply) {
+									var sToList = this._oToDataObject.getValue();
+									if (sToList !== this.sTo) {
 										this._onRecipientChange();
 									}
-								} else if (sToList !== this.sTo) {
-									this._onRecipientChange();
+								} else {
+									this._bInReply = false; // ok, we skipped the change in reply mode
 								}
 							}.bind(this));
 						}
@@ -152,7 +163,7 @@ sap.ui.define([
 						if (this.fFromUser) {
 							this.sUserEmail = this._getUserEmail();
 
-							this._setFromField(this.sUserEmail);							
+							this._setFromField(this.sUserEmail);
 						}
 					}
 				} catch (ex) {
@@ -185,6 +196,31 @@ sap.ui.define([
 		fToAgent: false,
 		sUserEmail: "",
 		oCurrentFeeder: null,
+
+		_eventCallback: function (eventContext) {
+			// Currently we're working here only with Reply issue
+			// However, it might be possible to move all determination and substitution here
+			switch (eventContext.getParameter("event")) {
+			// New button
+			case "CIP_New_Button":
+				break;
+				
+			// Reply buttons
+			case "Reply_To_Latest_Interaction":
+			case "Reply_To_Selected_Interaction":
+				this._bInReply = true;
+				break;
+				
+			// Reply with outlook buttons
+			case "Reply_with_outlook":
+			case "ReplyTo_Interaction_with_outlook":
+				break;
+				
+			// Forward button
+			case "Forward_Selected_Interaction":
+				break;
+			}
+		},
 
 		_getControls: function (iIndex) {
 			jQuery.sap.log.debug(">> _getControls", "", "zCustomPane");
