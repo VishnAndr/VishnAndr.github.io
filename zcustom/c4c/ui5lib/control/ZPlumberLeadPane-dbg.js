@@ -88,12 +88,15 @@ sap.ui.define([
 
 			this.geoResponseResult = null;
 
-			var vGoogleURL = "https://maps.googleapis.com/maps/api/js?libraries=places&key=";
+			var vGoogleURL = "https://maps.googleapis.com/maps/api/js?libraries=places";
 			var vAPIKey = this.getParameter("API_KEY"); //API Key is stored in Custom Pane Parameters under API_KEY parameter
+			var vClientId = this.getParamater("CLIENT"); // ClientID is stored in Custom Pane Parameters under CLIENT parameter
 			if (vAPIKey) {
-				vGoogleURL += vAPIKey;
+				vGoogleURL += "&key=" + vAPIKey;
+			} else if (vClientId) {
+				vGoogleURL += "&client=" + vClientId;
 			} else {
-				jQuery.sap.log.error("API_KEY is missing");
+				jQuery.sap.log.error("API_KEY or CLIENT id is missing");
 			}
 
 			jQuery.sap.includeScript(vGoogleURL,
