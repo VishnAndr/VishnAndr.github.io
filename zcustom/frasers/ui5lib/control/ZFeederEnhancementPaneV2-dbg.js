@@ -76,6 +76,8 @@ sap.ui.define([
 				this.fToAgent = false;
 
 				this._bIsReply = false;
+
+				this._loadFirstTime = true;
 			} else {
 
 				this._sToPath = "/Root/zFeederRelevant/ToList";
@@ -111,69 +113,65 @@ sap.ui.define([
 
 						this._oInlineResponse = oNewInlineResponse;
 
-						//detach event listner from previous first
-						try {
-							this._oInlineResponse.getController().getEventProcessor().detachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
+						if (this._loadFirstTime) {
+							this._loadFirstTime = false;
+
+							//Attach event listner for UIDesigner events to understand Reply button
+							this._oInlineResponse.getController().getEventProcessor().attachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
 								this);
-						} catch (ex) {
 
-						}
-						//Attach event listner for UIDesigner events to understand Reply button
-						this._oInlineResponse.getController().getEventProcessor().attachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
-							this);
+							this._oToDataObject = this._feederECController.getDataContainer().getDataObject(this._sToPath);
+							this._oFromDataObject = this._feederECController.getDataContainer().getDataObject(this._sFromPath);
+							this._oURIDataObject = this._feederECController.getDataContainer().getDataObject("/Root/Feeder/Email/EmailURI");
 
-						this._oToDataObject = this._feederECController.getDataContainer().getDataObject(this._sToPath);
-						this._oFromDataObject = this._feederECController.getDataContainer().getDataObject(this._sFromPath);
-						this._oURIDataObject = this._feederECController.getDataContainer().getDataObject("/Root/Feeder/Email/EmailURI");
-
-						if (this._oToDataObject) {
-							this._oToDataObject.attachValueChanged(function (oEventValueChanged) {
-								if (!this._bIsReply) {
-									var sToList = this._oToDataObject.getValue();
-									if (sToList !== this.sTo) {
-										this._onRecipientChange();
-									}
-								} else {
-									this._bIsReply = false; // ok, we skipped the change in reply mode
-								}
-							}.bind(this));
-						}
-
-						if (this._oFromDataObject) {
-							this._oFromDataObject.attachValueChanged(function (oEventValueChanged) {
-								this.sUserEmail = this._getUserEmail();
-								if (this.fFromUser && oEventValueChanged.getParameter("value") !== this.sUserEmail) {
-									this._setFromField(this.sUserEmail);
-								}
-							}.bind(this));
-						}
-
-						if (this._oURIDataObject) {
-							this._oURIDataObject.attachValueChanged(function (oEventValueChanged) {
-								// Outlook workaround
-								if (!this._bIsReply) {
-									try {
-										var sMailtoOutlook = oEventValueChanged.getParameter("value");
-
-										var sPrefixRemoved = sMailtoOutlook.split("mailto:")[1];
-										var sMailtoPart = sPrefixRemoved.split("?Subject=")[0];
-										var sSubjectPart = sPrefixRemoved.split("?Subject=")[1];
-
-										this._set_sTo();
-										if (sMailtoPart !== this.sTo) {
-											sMailtoOutlook = "mailto:".concat(this.sTo.concat("?Subject=".concat(sSubjectPart)));
-										
-											this._oURIDataObject.setValue(sMailtoOutlook);
+							if (this._oToDataObject) {
+								this._oToDataObject.attachValueChanged(function (oEventValueChanged) {
+									if (!this._bIsReply) {
+										var sToList = this._oToDataObject.getValue();
+										if (sToList !== this.sTo) {
+											this._onRecipientChange();
 										}
-									} catch (ex) {
-
+									} else {
+										this._bIsReply = false; // ok, we skipped the change in reply mode
 									}
-								} else {
-									this._bIsReply = false; // ok, we skipped the change in reply mode
-								}
-							}.bind(this));
-						}
+								}.bind(this));
+							}
 
+							if (this._oFromDataObject) {
+								this._oFromDataObject.attachValueChanged(function (oEventValueChanged) {
+									this.sUserEmail = this._getUserEmail();
+									if (this.fFromUser && oEventValueChanged.getParameter("value") !== this.sUserEmail) {
+										this._setFromField(this.sUserEmail);
+									}
+								}.bind(this));
+							}
+
+							if (this._oURIDataObject) {
+								this._oURIDataObject.attachValueChanged(function (oEventValueChanged) {
+									// Outlook workaround
+									if (!this._bIsReply) {
+										try {
+											var sMailtoOutlook = oEventValueChanged.getParameter("value");
+
+											var sPrefixRemoved = sMailtoOutlook.split("mailto:")[1];
+											var sMailtoPart = sPrefixRemoved.split("?Subject=")[0];
+											var sSubjectPart = sPrefixRemoved.split("?Subject=")[1];
+
+											this._set_sTo();
+											if (sMailtoPart !== this.sTo) {
+												sMailtoOutlook = "mailto:".concat(this.sTo.concat("?Subject=".concat(sSubjectPart)));
+
+												this._oURIDataObject.setValue(sMailtoOutlook);
+											}
+										} catch (ex) {
+
+										}
+									} else {
+										this._bIsReply = false; // ok, we skipped the change in reply mode
+									}
+								}.bind(this));
+							}
+						}
 						// this is the required InlineResponse to add custom checkboxes to
 
 						if (!this._oInlineResponse._inlineResponseLayout) {
