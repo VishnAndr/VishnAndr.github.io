@@ -90,7 +90,7 @@ sap.ui.define([
 
 			var vGoogleURL = "https://maps.googleapis.com/maps/api/js?libraries=places";
 			var vAPIKey = this.getParameter("API_KEY"); //API Key is stored in Custom Pane Parameters under API_KEY parameter
-			var vClientId = this.getParamater("CLIENT"); // ClientID is stored in Custom Pane Parameters under CLIENT parameter
+			var vClientId = this.getParameter("CLIENT"); // ClientID is stored in Custom Pane Parameters under CLIENT parameter
 			if (vAPIKey) {
 				vGoogleURL += "&key=" + vAPIKey;
 			} else if (vClientId) {
