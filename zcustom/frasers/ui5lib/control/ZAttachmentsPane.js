@@ -131,17 +131,18 @@ sap.ui.define([
 
 			this._getCustomParameters();
 
+			this.Documents = []; // current attachments
+			this.Thumbnails = []; // thumbnails mapping
+
 			this._attachedECController = this._getAttachedECController();
 			if (this._attachedECController) {
 				// standard EC already available
 				this._onChildControllerAdded();
+				this._DataContainerUpdateFinished();
 			} else {
 				// listen to event ChildControllerAdded to really attach to DataContainer changes there
 				this.oController.getParentController().attachEvent("ChildControllerAdded", this, this._onChildControllerAdded, this);
 			}
-
-			this.Documents = []; // current attachments
-			this.Thumbnails = []; // thumbnails mapping
 
 			// Now here we're doing pretty much the same as in standard FileUploadWrapper
 			var primaryPath = this._primaryPath;
@@ -422,8 +423,8 @@ sap.ui.define([
 						oDocument.NodeID = oRow.getMember("NodeID").getValue();
 						oDocument.FileName = oRow.getMember("FileName").getValue();
 						oDocument.MimeCode = oRow.getMember("MimeCode").getValue();
-						oDocument.FileContentURI = oRow.getMember("FileContentURI").getValue();
-						oDocument.ThumbnailURL = oRow.getMember("ThumbnailURL").getValue(); // currently gives 401 if trying to access; future proof
+						oDocument.FileContentURI = this._checkAndAdjustImageURL(oRow.getMember("FileContentURI").getValue());
+						oDocument.ThumbnailURL = oRow.getMember("ThumbnailURL").getValue(); // currently we need to add ../sap(<sessionid>)/.. instead of ../sap/.. but works only for existing attachments
 						oDocument.CreatedOn = oRow.getMember("CreatedOn").getValue();
 						oDocument.ChangedOn = oRow.getMember("ChangedOn").getValue();
 						oDocument._sNodeId = oRow.getNodeId();
@@ -443,6 +444,21 @@ sap.ui.define([
 				// rerender tiles (empty this.Documents[] will clear files tiles out)
 				this._buildTiles();
 			}
+		},
+		
+		_checkAndAdjustImageURL: function (sOriginalURI) {
+			var sAdjustedURI = "";
+			if (sOriginalURI && sOriginalURI.indexOf("/ap/ds/wd/doc/") === 0) { // not complete URI, compose complete one then
+				try {
+					sAdjustedURI = this._oApplication.getHostUrl() + "/sap(" + this.oController.getSession().getSessionID() + ")" + sOriginalURI;
+				} catch (exc) {
+					sAdjustedURI = sOriginalURI;
+				}
+			} else {
+				sAdjustedURI = sOriginalURI;
+			}
+			
+			return sAdjustedURI;
 		},
 
 		_buildTiles: function () {
