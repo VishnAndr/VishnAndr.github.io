@@ -79,6 +79,7 @@ sap.ui.define([
 		},
 
 		initializePane: function() {
+			_log(DEBUG, "initializePane called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 
 			var that = this;
 			this.inpField = null;
@@ -88,17 +89,22 @@ sap.ui.define([
 
 			this.geoResponseResult = null;
 
+			// load only once
 			if (!document.getElementById('google.maps')) {
-				// load only if it's not yet loaded
+				_log(DEBUG, "initilizing google.maps", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
+				
 				var vGoogleURL = "https://maps.googleapis.com/maps/api/js?libraries=places";
 				var vAPIKey = this.getParameter("API_KEY"); //API Key is stored in Custom Pane Parameters under API_KEY parameter
 				var vClientId = this.getParameter("CLIENT"); // ClientID is stored in Custom Pane Parameters under CLIENT parameter
 				if (vAPIKey) {
 					vGoogleURL += "&key=" + vAPIKey;
+					_log(DEBUG, "using api key " + vAPIKey, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 				} else if (vClientId) {
 					vGoogleURL += "&client=" + vClientId;
+					_log(DEBUG, "using client id " + vClientId, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");					
 				} else {
 					jQuery.sap.log.error("API_KEY or CLIENT id is missing");
+					_log(ERROR, "API_KEY or CLIENT id is missing", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 				}
 	
 				jQuery.sap.includeScript(vGoogleURL,
@@ -107,6 +113,8 @@ sap.ui.define([
 						jQuery.sap.log.error("Error initializing Google Places API");
 						_log(ERROR, "Error initializing Google Places API", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 					});
+			} else {
+				_log(DEBUG, "google.maps has already been loaded", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 			}
 			
 			// input field for Address and Autocomplete
@@ -494,6 +502,8 @@ sap.ui.define([
 			} else {
 				jQuery.sap.log.info("Cannot determine address at this location.");
 				_log(INFO, "Cannot determine address at this location.", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoResponses");
+				var vMsg = "Cannot determine address at this location." + "\r\n" + GeocoderStatus;
+				MessageToast.Show(vMsg);
 			}
 		},
 
