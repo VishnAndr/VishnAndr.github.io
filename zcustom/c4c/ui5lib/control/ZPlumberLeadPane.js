@@ -88,23 +88,27 @@ sap.ui.define([
 
 			this.geoResponseResult = null;
 
-			var vGoogleURL = "https://maps.googleapis.com/maps/api/js?libraries=places";
-			var vAPIKey = this.getParameter("API_KEY"); //API Key is stored in Custom Pane Parameters under API_KEY parameter
-			var vClientId = this.getParameter("CLIENT"); // ClientID is stored in Custom Pane Parameters under CLIENT parameter
-			if (vAPIKey) {
-				vGoogleURL += "&key=" + vAPIKey;
-			} else if (vClientId) {
-				vGoogleURL += "&client=" + vClientId;
-			} else {
-				jQuery.sap.log.error("API_KEY or CLIENT id is missing");
+			if (!document.getElementById('google.maps')) {
+				// load only if it's not yet loaded
+				var vGoogleURL = "https://maps.googleapis.com/maps/api/js?libraries=places";
+				var vAPIKey = this.getParameter("API_KEY"); //API Key is stored in Custom Pane Parameters under API_KEY parameter
+				var vClientId = this.getParameter("CLIENT"); // ClientID is stored in Custom Pane Parameters under CLIENT parameter
+				if (vAPIKey) {
+					vGoogleURL += "&key=" + vAPIKey;
+				} else if (vClientId) {
+					vGoogleURL += "&client=" + vClientId;
+				} else {
+					jQuery.sap.log.error("API_KEY or CLIENT id is missing");
+				}
+	
+				jQuery.sap.includeScript(vGoogleURL,
+					"google.maps", jQuery.proxy(this._initAutocomplete, this),
+					function() {
+						jQuery.sap.log.error("Error initializing Google Places API");
+						_log(ERROR, "Error initializing Google Places API", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
+					});
 			}
-
-			jQuery.sap.includeScript(vGoogleURL,
-				"google.maps", jQuery.proxy(this._initAutocomplete, this),
-				function() {
-					jQuery.sap.log.error("Error initializing Google Places API");
-				});
-
+			
 			// input field for Address and Autocomplete
 			this.inpField = new sap.m.Input({
 				width: "100%",
@@ -164,14 +168,18 @@ sap.ui.define([
 							}.bind(this),
 							function(oEvent) {
 								jQuery.sap.log.error("Barcode Captuvo failed.");
+								_log(ERROR, "Barcode Captuvo failed.", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 							}.bind(this)
 						);
 						jQuery.sap.log.debug("Cordova CaptuvoPlugin plugin is available!");
+						_log(DEBUG, "Cordova CaptuvoPlugin plugin is available!", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 					} else {
 						jQuery.sap.log.error("CaptuvoPlugin: CaptuvoPlugin is not available");
+						_log(ERROR, "CaptuvoPlugin: CaptuvoPlugin is not available", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 					}
 				} catch (e) {
 					jQuery.sap.log.info("CaptuvoPlugin: CaptuvoPlugin is not available");
+					_log(INFO, "CaptuvoPlugin: CaptuvoPlugin is not available", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.initializePane");
 					return;
 				}
 
@@ -207,6 +215,7 @@ sap.ui.define([
 				});
 			} catch (err) {
 				console.log("Cannot attach to data field: " + err.message);
+				_log(ERROR, "Cannot attach to data field: " + err.message, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane.onAfterRendering");
 			}
 		},
 
@@ -255,6 +264,8 @@ sap.ui.define([
 				}
 			} catch (err) {
 				console.log("Error during _checkBtnState: " + err.message);
+				_log(ERROR, "Error during _checkBtnState: " + err.message, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._checkBtnState");
+				
 			}
 		},
 
@@ -304,6 +315,8 @@ sap.ui.define([
 				this._triggerLeadOnSave();
 			} catch (e) {
 				jQuery.sap.log.error("Barcode has not been recognized");
+				_log(ERROR, "Barcode has not been recognized", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onScanSuccess1");
+				
 			}
 		},
 
@@ -329,19 +342,25 @@ sap.ui.define([
 		},
 
 		_setResultIntoNearest: function(sResult, sPath) {
+			var bFound = false;
 			var oObject = this;
 			var olModel;
 			while (oObject) {
 				olModel = oObject.getModel();
 				if (olModel && olModel.getDataObject(sPath)) {
 					olModel.getDataObject(sPath).setValue(sResult);
+					bFound = true;
 					break;
 				}
 				oObject = oObject.getParent();
 			}
+			if (!bFound) {
+				_log(ERROR, "Can't find " + sPath, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._setResultIntoNearest");
+			}
 		},
 
 		_getValueFromNearest: function(sPath) {
+			var bFound = false;
 			var rValue;
 			var oObject = this;
 			var olModel;
@@ -349,15 +368,20 @@ sap.ui.define([
 				olModel = oObject.getModel();
 				if (olModel && olModel.getDataObject(sPath)) {
 					rValue = olModel.getDataObject(sPath).getValue();
+					bFound = true;
 					break;
 				}
 				oObject = oObject.getParent();
 			}
+			if (!bFound) {
+				_log(ERROR, "Can't find " + sPath, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._getValueFromNearest");
+			}			
 
 			return rValue;
 		},
 
 		_onLocateMe: function() {
+			_log(DEBUG, "_onLocateMe called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onLocateMe");
 			var oControl = this;
 			var options = {
 				enableHighAccuracy: true,
@@ -376,10 +400,13 @@ sap.ui.define([
 		_onGeoCurrentPositionError: function(err) {
 			var oControl = this;
 			sap.ui.core.BusyIndicator.hide(); //oControl.setBusy(false);
+			MessageToast.show("Couldn't get current position");
 			jQuery.sap.log.error("ERROR(" + err.code + "): " + err.message);
+			_log(ERROR, "ERROR(" + err.code + "): " + err.message, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoCurrentPositionError");
 		},
 
 		_onGeoCurrentPositionSuccess: function(oPosition) {
+			_log(DEBUG, "_onGeoCurrentPositionSuccess called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoCurrentPositionSuccess");
 			var oControl = this;
 
 			var position = {};
@@ -391,6 +418,7 @@ sap.ui.define([
 			// if we're triggering OnSave - all data required for model at once
 			//this._setResult(this._getCurrentDate(), "/Root/Lead/ReferenceDate");
 			if (!this.CheckedIn) {
+				_log(DEBUG, "Checking in ....", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoCurrentPositionSuccess");
 				//Check-In
 				this._setResult(position.lat.toFixed(13), "/Root/Lead/ZStartLatitudeMeasure");
 				this._setResult(position.lng.toFixed(13), "/Root/Lead/ZStartLongitudeMeasure");
@@ -403,14 +431,18 @@ sap.ui.define([
 				//geocode coords only if there is no address selected yet
 				var oInput = this.getAggregation("_inpField");
 				if (!oInput.getValue()) {
+					_log(DEBUG, "calling google.maps.Geocoder().geocode", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoCurrentPositionSuccess");
 					new google.maps.Geocoder().geocode({
 						latLng: position
 					}, jQuery.proxy(this._onGeoResponses, this));
 				} else {
+					_log(DEBUG, "Input field alrady populated, skipping geocoding", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoCurrentPositionSuccess");
 					sap.ui.core.BusyIndicator.hide(); //oControl.setBusy(false);
 				}
 			} else {
 				//Check-Out
+				_log(DEBUG, "Checking out ....", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoCurrentPositionSuccess");
+				
 				this._setResult(position.lat.toFixed(13), "/Root/Lead/ZEndLatitudeMeasure");
 				this._setResult(position.lng.toFixed(13), "/Root/Lead/ZEndLongitudeMeasure");
 				this._setResult((new Date().toISOString()), "/Root/Lead/ZEndTime");
@@ -440,10 +472,13 @@ sap.ui.define([
 			return output;
 		},
 
-		_onGeoResponses: function(results) {
+		_onGeoResponses: function(results, GeocoderStatus) {
+			_log(DEBUG, "_onGeoResponses called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoResponses");
+			_log(DEBUG, "GeocoderStatus is " + GeocoderStatus, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoResponses");
 			var oControl = this;
 			sap.ui.core.BusyIndicator.hide(); //oControl.setBusy(false);
 			if (results && results.length > 0) {
+				_log(DEBUG, "geo results are available", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoResponses");				
 				//results.forEach(function (item, index) { jQuery.sap.log.info("Google response " + index + " : " + JSON.stringify(item,null,4)); });
 				this.geoResponseResult = results[0];
 
@@ -458,28 +493,34 @@ sap.ui.define([
 
 			} else {
 				jQuery.sap.log.info("Cannot determine address at this location.");
+				_log(INFO, "Cannot determine address at this location.", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onGeoResponses");
 			}
 		},
 
 		_onConfirm: function(oAction) {
 			if (oAction === MessageBox.Action.YES) {
+				_log(DEBUG, "MessageBox.Action.YES pressed", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onConfirm");				
 				var oInput = this.getAggregation("_inpField");
 				oInput.setValue(this.geoResponseResult.formatted_address);
 
 				this._fillInAddressFromPlace(this.geoResponseResult, true);
 				
 			} else if (oAction === MessageBox.Action.NO) {
+				_log(DEBUG, "MessageBox.Action.NO pressed", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onConfirm");					
 				// if no, then anyway populate the address, but don't save
 				var oInput = this.getAggregation("_inpField");
 				oInput.setValue(this.geoResponseResult.formatted_address);
 
 				this._fillInAddressFromPlace(this.geoResponseResult, false);				
+			} else {
+				_log(ERROR, "Unknown action pressed", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._onConfirm");				
 			}
 
 			this.geoResponseResult = null;
 		},
 
 		_initAutocomplete: function() {
+			_log(INFO, "_initAutocomplete called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._initAutocomplete");
 			var oInput = this.getAggregation("_inpField");
 			if (oInput) {
 				var sInputId = oInput.getId().toString() + "-inner";
@@ -494,12 +535,18 @@ sap.ui.define([
 						this.autocomplete.addListener("place_changed", jQuery.proxy(this._fillInAddress, this));
 					} catch (e) {
 						this.autocomplete = '';
+						_log(ERROR, "Error during autocomplete initialization", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._initAutocomplete");						
 					}
+				} else {
+					_log(ERROR, "eInput is not available", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._initAutocomplete");
 				}
+			} else {
+				_log(ERROR, "oInput is not available", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._initAutocomplete");
 			}
 		},
 
 		_fillInAddressFromPlace: function(oPlace, bTriggerSave) {
+			_log(DEBUG, "_fillInAddressFromPlace called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._fillInAddressFromPlace");
 			var sStreetNumber = "";
 			var sStreetName = "";
 			var sSuburb = "";
@@ -536,6 +583,7 @@ sap.ui.define([
 		},
 
 		_fillInAddress: function() {
+			_log(DEBUG, "_fillInAddress called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._fillInAddress");			
 			// Get the place details from the autocomplete object.
 			var place = this.autocomplete.getPlace();
 
@@ -560,6 +608,7 @@ sap.ui.define([
 		},
 
 		_ProcessBarCodeResult: function(sResult) {
+			_log(DEBUG, "_ProcessBarCodeResult called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._ProcessBarCodeResult");			
 			var vResult = sResult.text;
 			var vFormat = sResult.format;
 			var vModel = "";
@@ -600,6 +649,7 @@ sap.ui.define([
 				if (vFormat !== "CODE_128") {
 					vMsg = "Format has not been recognized\r\n Format = " + vFormat;
 					jQuery.sap.log.error(vMsg);
+					_log(ERROR, vMsg, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._ProcessBarCodeResult");
 					throw vMsg;
 				}
 				if (reCarton.test(vResult)) {
@@ -611,6 +661,7 @@ sap.ui.define([
 				} else {
 					vMsg = "First AI not recognized in Barcode value:" + vResult;
 					jQuery.sap.log.error(vMsg);
+					_log(ERROR, vMsg, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._ProcessBarCodeResult");					
 					throw vMsg;
 				}
 
@@ -623,12 +674,14 @@ sap.ui.define([
 				} else {
 					vMsg = "(AI90)MATNR(AI21)SERNR pattern not recognized in Barcode value:" + vResult;
 					jQuery.sap.log.error(vMsg);
+					_log(ERROR, vMsg, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._ProcessBarCodeResult");
 					throw vMsg;
 				}
 
 				if (!vModel || !vSerial) {
 					vMsg = "vModel (" + vModel + ") or vSerial (" + vSerial + ") not found in Barcode value: " + vResult;
 					jQuery.sap.log.error(vMsg);
+					_log(ERROR, vMsg, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._ProcessBarCodeResult");
 					throw vMsg;
 				}
 
@@ -643,12 +696,14 @@ sap.ui.define([
 				//vMsg = "Barcode could not be read, please try re-scanning or enter manually";
 				vMsg = err + "\r\n" + sResult.text;
 				MessageToast.show(vMsg);
+				_log(ERROR, vMsg, "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._ProcessBarCodeResult");
 				throw vMsg;
 				//MessageBox.alert(vMsg);
 			}
 		},
 
 		_triggerLeadOnSave: function() {
+			_log(DEBUG, "_triggerLeadOnSave called", "zcustom.c4c.ui5lib.control.ZPlumberLeadPane._triggerLeadOnSave");			
 			var oEventContext = new sap.client.evt.EventContext(this);
 			this.getController().getParentController().getEventProcessor().handleEvent("OnSave", oEventContext);
 		}
