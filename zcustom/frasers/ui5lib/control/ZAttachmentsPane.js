@@ -535,7 +535,7 @@ sap.ui.define([
 						oTCAttachmentImageTile.setContent(oThumbnailImage);
 
 						var oAttachmentImageTile = new ZThumbnailTile(this.getControlPrefixId() + "-attaimg-" + oDocument.NodeID, {
-							scope: GenericTileScope.Actions,
+							// scope: GenericTileScope.Actions,
 							press: [this._tilePressed, this]
 						}).addStyleClass("sapUshellTile");
 						oAttachmentImageTile.addTileContent(oTCAttachmentImageTile);
@@ -556,7 +556,7 @@ sap.ui.define([
 
 						var oAttachment = new sap.m.GenericTile(this.getControlPrefixId() + "-atta-" + oDocument.NodeID, {
 							header: oDocument.FileName,
-							scope: GenericTileScope.Actions,
+							// scope: GenericTileScope.Actions,
 							press: [this._tilePressed, this]
 						}).addStyleClass("sapUshellTile");
 						oAttachment.addTileContent(oTileContentAttachmentTile);
