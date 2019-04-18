@@ -38,7 +38,7 @@ sap.ui.define([
 			this._initParameters();
 
 			if (sap.client.getCurrentApplication().isNewUI()) {
-				this._feederECController = this._fetchFeederECController();
+				this._feederECController = this._fetchFeederECController(this._feederECName);
 				if (this._feederECController) {
 					// standard EC already available
 					this._onChildControllerAdded();
@@ -89,10 +89,14 @@ sap.ui.define([
 		_onChildControllerAdded: function (oEvent) {
 			try {
 				if (oEvent.oSource._aChildController.length > 0) {
-					if (oEvent.oSource._aChildController[oEvent.oSource._aChildController.length - 1].getEmbeddingContext()._a.embedName === this._feederECName) {
+//					if (oEvent.oSource._aChildController[oEvent.oSource._aChildController.length - 1].getEmbeddingContext()._a.embedName === this._feederECName) {
+//					fix 18/04/2019 AV: commented above to cover copy-paste use case when this._feederECName copied to somewhere
+//					then it will have this._feederECName + something else as embedName => now we use indexOf to find substrting
+					var embedName = oEvent.oSource._aChildController[oEvent.oSource._aChildController.length - 1].getEmbeddingContext()._a.embedName;
+					if (embedName.indexOf(this._feederECName) !== -1) {
 						// we're checking the latest added child controller above
 						// and if it matches the required one, we will proceed
-						this._fetchFeederECController();
+						this._fetchFeederECController(embedName);
 					}
 				}
 			} catch (ex) {
@@ -198,9 +202,9 @@ sap.ui.define([
 			}
 		},
 
-		_fetchFeederECController: function () {
+		_fetchFeederECController: function (ecControllerName) {
 			try {
-				this._feederECController = this.getController().getParentController().getChildController(this._feederECName);
+				this._feederECController = this.getController().getParentController().getChildController(ecControllerName);
 
 				if (!this._feederECController && !this._feederECName2) {
 					this._feederECController = this.getController().getParentController().getChildController(this._feederECName2);
