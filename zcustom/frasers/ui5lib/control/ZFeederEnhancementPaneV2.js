@@ -109,6 +109,10 @@ sap.ui.define([
 		_onECInterActionFinished: function (oEvent) {
 			if (sap.client.getCurrentApplication().isNewUI()) {
 				try {
+					// get the feeder from the event's source
+					var feederName = oEvent.getSource().getEmbeddingContext()._a.embedName;
+					this._feederECController = this.getController().getParentController().getChildController(feederName);
+					
 					var oNewInlineResponse = this._feederECController.getBaseControl().getContent()[0].getContent();
 
 					if (!this._oInlineResponse || // first call or ...
