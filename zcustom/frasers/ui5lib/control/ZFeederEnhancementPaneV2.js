@@ -32,14 +32,11 @@ sap.ui.define([
 
 			var that = this;
 
-			this._oLayout = null;
-			this._oControls = null;
-
 			this._initParameters();
 
 			if (sap.client.getCurrentApplication().isNewUI()) {
-				this._feederECController = this._fetchFeederECController(this._feederECName);
-				if (this._feederECController) {
+				var _feederECController = this._fetchFeederECController(this._feederECName);
+				if (_feederECController) {
 					// standard EC already available
 					this._onChildControllerAdded();
 				}
@@ -57,7 +54,7 @@ sap.ui.define([
 
 		_initParameters: function () {
 			this._feederECName = "";
-			this._feederECName2 = "";
+
 			this._sToPath = "";
 			this._sToPathOutlook = "";
 			this._sFromPath = "";
@@ -111,9 +108,9 @@ sap.ui.define([
 				try {
 					// get the feeder from the event's source
 					var feederName = oEvent.getSource().getEmbeddingContext()._a.embedName;
-					this._feederECController = this.getController().getParentController().getChildController(feederName);
+					var _feederECController = this.getController().getParentController().getChildController(feederName);
 					
-					var oNewInlineResponse = this._feederECController.getBaseControl().getContent()[0].getContent();
+					var oNewInlineResponse = _feederECController.getBaseControl().getContent()[0].getContent();
 
 					if (!this._oInlineResponse || // first call or ...
 						(oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) && this._oInlineResponse.getId() !==
@@ -128,9 +125,9 @@ sap.ui.define([
 							this._oInlineResponse.getController().getEventProcessor().attachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
 								this);
 
-							this._oToDataObject = this._feederECController.getDataContainer().getDataObject(this._sToPath);
-							this._oFromDataObject = this._feederECController.getDataContainer().getDataObject(this._sFromPath);
-							this._oURIDataObject = this._feederECController.getDataContainer().getDataObject("/Root/Feeder/Email/EmailURI");
+							this._oToDataObject = _feederECController.getDataContainer().getDataObject(this._sToPath);
+							this._oFromDataObject = _feederECController.getDataContainer().getDataObject(this._sFromPath);
+							this._oURIDataObject = _feederECController.getDataContainer().getDataObject("/Root/Feeder/Email/EmailURI");
 
 							if (this._oToDataObject) {
 								this._oToDataObject.attachValueChanged(function (oEventValueChanged) {
@@ -208,19 +205,15 @@ sap.ui.define([
 
 		_fetchFeederECController: function (ecControllerName) {
 			try {
-				this._feederECController = this.getController().getParentController().getChildController(ecControllerName);
+				var _feederECController = this.getController().getParentController().getChildController(ecControllerName);
 
-				if (!this._feederECController && !this._feederECName2) {
-					this._feederECController = this.getController().getParentController().getChildController(this._feederECName2);
-				}
-
-				if (this._feederECController) {
-					this._feederECController.attachEvent("ECInterActionFinished", this, this._onECInterActionFinished, this);
+				if (_feederECController) {
+					_feederECController.attachEvent("ECInterActionFinished", this, this._onECInterActionFinished, this);
 				}
 			} catch (ex) {
-				this._feederECController = undefined;
+				_feederECController = undefined;
 			}
-			return this._feederECController;
+			return _feederECController;
 		},
 
 		aControls: [],
@@ -323,13 +316,12 @@ sap.ui.define([
 		_getControlsRUI: function () {
 			jQuery.sap.log.debug(">> _getControlsRUI", "", "zCustomPane");
 
-			if (!this._oControls) {
 				var oControls = {};
 
 				oControls.oFromUser = new sap.m.CheckBox({
 					text: "Use user’s email as sender",
 					tooltip: "Use user’s email as sender",
-					selected: true,
+					selected: this.fFromUser,
 					select: function (oControlEvent) {
 						this._onFromUserChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
@@ -338,7 +330,7 @@ sap.ui.define([
 				oControls.oToAccount = new sap.m.CheckBox({
 					text: "Use Account’s email as recipient",
 					tooltip: "Use Account’s email as recipient",
-					selected: false,
+					selected: this.fToAccount,
 					select: function (oControlEvent) {
 						this._onToAccountChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
@@ -347,7 +339,7 @@ sap.ui.define([
 				oControls.oToVendor = new sap.m.CheckBox({
 					text: "Use Partner’s email as recipient",
 					tooltip: "Use Partner’s email as recipient",
-					selected: true,
+					selected: this.fToVendor,
 					select: function (oControlEvent) {
 						this._onToVendorChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
@@ -356,7 +348,7 @@ sap.ui.define([
 				oControls.oToAgent = new sap.m.CheckBox({
 					text: "Use Agent’s email as recipient",
 					tooltip: "Use Agent’s email as recipient",
-					selected: false,
+					selected: this.fToAgent,
 					select: function (oControlEvent) {
 						this._onToAgentChange(oControlEvent.getParameter("selected"));
 					}.bind(this)
@@ -367,10 +359,7 @@ sap.ui.define([
 					content: [oControls.oToAccount, oControls.oToVendor, oControls.oToAgent]
 				});
 
-				this._oControls = oControls;
-			}
-
-			return this._oControls;
+			return oControls;
 		},
 
 		_initializeControls: function () {
@@ -539,17 +528,16 @@ sap.ui.define([
 		_getNewLayoutRUI: function () {
 			jQuery.sap.log.debug(">> _getNewLayoutRUI", "", "zCustomPane");
 
-			if (!this._oLayout) {
-				this._oControls = this._getControlsRUI();
-				if (this._oControls) {
-					this._oLayout = new sap.ui.layout.VerticalLayout({
+				var oControls = this._getControlsRUI();
+				var oLayout = null;
+				if (oControls) {
+					oLayout = new sap.ui.layout.VerticalLayout({
 						width: "100%",
-						content: [this._oControls.oFromUser, this._oControls.oRecipientLayout]
+						content: [oControls.oFromUser, oControls.oRecipientLayout]
 					});
 				}
-			}
 
-			return this._oLayout;
+			return oLayout;
 		},
 
 		_onDataContainerUpdateFinished: function () {
@@ -690,11 +678,8 @@ sap.ui.define([
 			jQuery.sap.log.debug(">> _setFromField", "", "zCustomPane");
 
 			try {
-				if (this._feederECController) {
-					var oFromDataObject = this._feederECController.getDataContainer().getDataObject(this._sFromPath);
-					if (oFromDataObject) {
-						oFromDataObject.setValue(sValue);
-					}
+				if (this._oFromDataObject) {
+					this._oFromDataObject.setValue(sValue);
 				} else {
 					this._setValue(this._sFromPath, sValue);
 				}
