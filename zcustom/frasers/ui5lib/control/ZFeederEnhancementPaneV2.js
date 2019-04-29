@@ -86,9 +86,9 @@ sap.ui.define([
 		_onChildControllerAdded: function (oEvent) {
 			try {
 				if (oEvent.oSource._aChildController.length > 0) {
-//					if (oEvent.oSource._aChildController[oEvent.oSource._aChildController.length - 1].getEmbeddingContext()._a.embedName === this._feederECName) {
-//					fix 18/04/2019 AV: commented above to cover copy-paste use case when this._feederECName copied to somewhere
-//					then it will have this._feederECName + something else as embedName => now we use indexOf to find substrting
+					//					if (oEvent.oSource._aChildController[oEvent.oSource._aChildController.length - 1].getEmbeddingContext()._a.embedName === this._feederECName) {
+					//					fix 18/04/2019 AV: commented above to cover copy-paste use case when this._feederECName copied to somewhere
+					//					then it will have this._feederECName + something else as embedName => now we use indexOf to find substrting
 					var embedName = oEvent.oSource._aChildController[oEvent.oSource._aChildController.length - 1].getEmbeddingContext()._a.embedName;
 					if (embedName.indexOf(this._feederECName) !== -1) {
 						// we're checking the latest added child controller above
@@ -109,13 +109,24 @@ sap.ui.define([
 					// get the feeder from the event's source
 					var feederName = oEvent.getSource().getEmbeddingContext()._a.embedName;
 					var _feederECController = this.getController().getParentController().getChildController(feederName);
-					
-					var oNewInlineResponse = _feederECController.getBaseControl().getContent()[0].getContent();
 
+					var oNewInlineResponse = _feederECController.getBaseControl().getContent()[0].getContent();
+				} catch (ex) {
+					// inlineResponse is not found or some error - we're leaving
+					return;
+				}
+				
+				try {
 					if (!this._oInlineResponse || // first call or ...
 						(oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) && this._oInlineResponse.getId() !==
 							oNewInlineResponse.getId())) { //... or if InlineResponse changed
 
+						// if it's a new inlineResponse instance ->> we need to initialize data objects
+						if (this._oInlineResponse && oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) && this._oInlineResponse.getId() !==
+							oNewInlineResponse.getId()) {
+							this._loadFirstTime = true;
+						}
+						
 						this._oInlineResponse = oNewInlineResponse;
 
 						if (this._loadFirstTime) {
@@ -316,56 +327,54 @@ sap.ui.define([
 		_getControlsRUI: function () {
 			jQuery.sap.log.debug(">> _getControlsRUI", "", "zCustomPane");
 
-				var oControls = {};
+			var oControls = {};
 
-				oControls.oFromUser = new sap.m.CheckBox({
-					text: "Use user’s email as sender",
-					tooltip: "Use user’s email as sender",
-					selected: this.fFromUser,
-					select: function (oControlEvent) {
-						this._onFromUserChange(oControlEvent.getParameter("selected"));
-					}.bind(this)
-				});
+			oControls.oFromUser = new sap.m.CheckBox({
+				text: "Use user’s email as sender",
+				tooltip: "Use user’s email as sender",
+				selected: this.fFromUser,
+				select: function (oControlEvent) {
+					this._onFromUserChange(oControlEvent.getParameter("selected"));
+				}.bind(this)
+			});
 
-				oControls.oToAccount = new sap.m.CheckBox({
-					text: "Use Account’s email as recipient",
-					tooltip: "Use Account’s email as recipient",
-					selected: this.fToAccount,
-					select: function (oControlEvent) {
-						this._onToAccountChange(oControlEvent.getParameter("selected"));
-					}.bind(this)
-				});
+			oControls.oToAccount = new sap.m.CheckBox({
+				text: "Use Account’s email as recipient",
+				tooltip: "Use Account’s email as recipient",
+				selected: this.fToAccount,
+				select: function (oControlEvent) {
+					this._onToAccountChange(oControlEvent.getParameter("selected"));
+				}.bind(this)
+			});
 
-				oControls.oToVendor = new sap.m.CheckBox({
-					text: "Use Partner’s email as recipient",
-					tooltip: "Use Partner’s email as recipient",
-					selected: this.fToVendor,
-					select: function (oControlEvent) {
-						this._onToVendorChange(oControlEvent.getParameter("selected"));
-					}.bind(this)
-				});
+			oControls.oToVendor = new sap.m.CheckBox({
+				text: "Use Partner’s email as recipient",
+				tooltip: "Use Partner’s email as recipient",
+				selected: this.fToVendor,
+				select: function (oControlEvent) {
+					this._onToVendorChange(oControlEvent.getParameter("selected"));
+				}.bind(this)
+			});
 
-				oControls.oToAgent = new sap.m.CheckBox({
-					text: "Use Agent’s email as recipient",
-					tooltip: "Use Agent’s email as recipient",
-					selected: this.fToAgent,
-					select: function (oControlEvent) {
-						this._onToAgentChange(oControlEvent.getParameter("selected"));
-					}.bind(this)
-				});
+			oControls.oToAgent = new sap.m.CheckBox({
+				text: "Use Agent’s email as recipient",
+				tooltip: "Use Agent’s email as recipient",
+				selected: this.fToAgent,
+				select: function (oControlEvent) {
+					this._onToAgentChange(oControlEvent.getParameter("selected"));
+				}.bind(this)
+			});
 
-				oControls.oRecipientLayout = new sap.ui.layout.HorizontalLayout({
-					width: "100%",
-					content: [oControls.oToAccount, oControls.oToVendor, oControls.oToAgent]
-				});
+			oControls.oRecipientLayout = new sap.ui.layout.HorizontalLayout({
+				width: "100%",
+				content: [oControls.oToAccount, oControls.oToVendor, oControls.oToAgent]
+			});
 
 			return oControls;
 		},
 
 		_initializeControls: function () {
 			jQuery.sap.log.debug(">> _initializeControls", "", "zCustomPane");
-
-			var that = this;
 
 			this.aControls = [];
 			this.fFromUser = true;
@@ -528,14 +537,14 @@ sap.ui.define([
 		_getNewLayoutRUI: function () {
 			jQuery.sap.log.debug(">> _getNewLayoutRUI", "", "zCustomPane");
 
-				var oControls = this._getControlsRUI();
-				var oLayout = null;
-				if (oControls) {
-					oLayout = new sap.ui.layout.VerticalLayout({
-						width: "100%",
-						content: [oControls.oFromUser, oControls.oRecipientLayout]
-					});
-				}
+			var oControls = this._getControlsRUI();
+			var oLayout = null;
+			if (oControls) {
+				oLayout = new sap.ui.layout.VerticalLayout({
+					width: "100%",
+					content: [oControls.oFromUser, oControls.oRecipientLayout]
+				});
+			}
 
 			return oLayout;
 		},
