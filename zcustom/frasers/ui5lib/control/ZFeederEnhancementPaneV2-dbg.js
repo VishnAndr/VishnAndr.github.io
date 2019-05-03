@@ -140,18 +140,18 @@ sap.ui.define([
 							this._oFromDataObject = _feederECController.getDataContainer().getDataObject(this._sFromPath);
 							this._oURIDataObject = _feederECController.getDataContainer().getDataObject("/Root/Feeder/Email/EmailURI");
 
-							if (this._oToDataObject) {
-								this._oToDataObject.attachValueChanged(function (oEventValueChanged) {
-									if (!this._bIsReply) {
-										var sToList = this._oToDataObject.getValue();
-										if (sToList !== this.sTo) {
-											this._onRecipientChange();
-										}
-									} else {
-										this._bIsReply = false; // ok, we skipped the change in reply mode
-									}
-								}.bind(this));
-							}
+							//if (this._oToDataObject) {
+							//	this._oToDataObject.attachValueChanged(function (oEventValueChanged) {
+							//		if (!this._bIsReply) {
+							//			var sToList = this._oToDataObject.getValue();
+							//			if (sToList !== this.sTo) {
+							//				this._onRecipientChange();
+							//			}
+							//		} else {
+							//			this._bIsReply = false; // ok, we skipped the change in reply mode
+							//		}
+							//	}.bind(this));
+							//}
 
 							if (this._oFromDataObject) {
 								this._oFromDataObject.attachValueChanged(function (oEventValueChanged) {
@@ -162,31 +162,11 @@ sap.ui.define([
 								}.bind(this));
 							}
 
-							if (this._oURIDataObject) {
-								this._oURIDataObject.attachValueChanged(function (oEventValueChanged) {
-									// Outlook workaround
-									if (!this._bIsReply) {
-										try {
-											var sMailtoOutlook = oEventValueChanged.getParameter("value");
-
-											var sPrefixRemoved = sMailtoOutlook.split("mailto:")[1];
-											var sMailtoPart = sPrefixRemoved.split("?Subject=")[0];
-											var sSubjectPart = sPrefixRemoved.split("?Subject=")[1];
-
-											this._set_sTo();
-											if (sMailtoPart !== this.sTo) {
-												sMailtoOutlook = "mailto:".concat(this.sTo.concat("?Subject=".concat(sSubjectPart)));
-
-												this._oURIDataObject.setValue(sMailtoOutlook);
-											}
-										} catch (ex) {
-
-										}
-									} else {
-										this._bIsReply = false; // ok, we skipped the change in reply mode
-									}
-								}.bind(this));
-							}
+							//if (this._oURIDataObject) {
+							//	this._oURIDataObject.attachValueChanged(function (oEventValueChanged) {
+							//		this._updateEmailURI();
+							//	}.bind(this));
+							//}
 						}
 						// this is the required InlineResponse to add custom checkboxes to
 
@@ -207,6 +187,7 @@ sap.ui.define([
 
 							this._setFromField(this.sUserEmail);
 						}
+						this._composeEmailURI();
 					}
 				} catch (ex) {
 					jQuery.sap.log.debug("Error in _onECInterActionFinished: " + ex.message); // eslint-disable-line no-console
@@ -234,17 +215,19 @@ sap.ui.define([
 		fToAgent: false,
 		sUserEmail: "",
 		oCurrentFeeder: null,
+		newButtonPressed: false,
 
 		_eventCallback: function (eventContext) {
-			// Currently we're working here only with Reply issue
-			// However, it might be possible to move all determination and substitution here
+			// it might be possible to move all determination and substitution here
+			jQuery.sap.log.debug("_eventCallback: ", eventContext.getParameter("event"));
 			switch (eventContext.getParameter("event")) {
 				// New button
 			case "CIP_New_Button":
-				break;
-
 				// New with Outlook button
 			case "CIP_NewMail_Outlook":
+				this._onRecipientChange();
+				this._composeEmailURI();
+				this.newButtonPressed = true;
 				break;
 
 				// Reply buttons
@@ -257,10 +240,19 @@ sap.ui.define([
 			case "Reply_with_outlook":
 			case "ReplyTo_Interaction_with_outlook":
 				this._bIsReply = true;
+				this._composeEmailURI();
 				break;
 
 				// Forward button
 			case "Forward_Selected_Interaction":
+				break;
+
+				//Feeder_ValueChange
+			case "Feeder_ValueChange":
+				if (this.newButtonPressed) { //after newButtonPressed, call redetermination of recipients
+					this._onRecipientChange();
+					this.newButtonPressed = false;
+				}
 				break;
 			}
 		},
@@ -633,7 +625,7 @@ sap.ui.define([
 
 		_set_sTo: function () {
 			try {
-				var cEMailAddressDelimiter = "; ";
+				var cEMailAddressDelimiter = ", "; // used to be: "; ";
 				var sAccountEmail = this._getValue("/Root/ZAccountEmail");
 				var sVendorEmail = this._getValue("/Root/ZVendorEmail");
 				var sAgentEmail = this._getValue("/Root/ZAgentEmail");
@@ -643,15 +635,15 @@ sap.ui.define([
 					this.sTo = "";
 
 					if (this.fToAccount && sAccountEmail) {
-						this.sTo = this.sTo.concat(sAccountEmail).concat(cEMailAddressDelimiter);
+						this.sTo = this.sTo === "" ? sAccountEmail : this.sTo.concat(cEMailAddressDelimiter).concat(sAccountEmail);
 					}
 
 					if (this.fToVendor && sVendorEmail) {
-						this.sTo = this.sTo.concat(sVendorEmail).concat(cEMailAddressDelimiter);
+						this.sTo = this.sTo === "" ? sVendorEmail : this.sTo.concat(cEMailAddressDelimiter).concat(sVendorEmail);
 					}
 
 					if (this.fToAgent && sAgentEmail) {
-						this.sTo = this.sTo.concat(sAgentEmail).concat(cEMailAddressDelimiter);
+						this.sTo = this.sTo === "" ? sAgentEmail : this.sTo.concat(cEMailAddressDelimiter).concat(sAgentEmail);
 					}
 				}
 			} catch (err) {
@@ -681,6 +673,31 @@ sap.ui.define([
 			} catch (err) {
 				jQuery.sap.log.debug("Error in _onRecipientChange: " + err.message); // eslint-disable-line no-console
 			}
+		},
+
+		_composeEmailURI: function () {
+									// Outlook workaround
+									if (!this._bIsReply) {
+										try {
+											var sMailtoOutlook = this._oURIDataObject.getValue();//oEventValueChanged.getParameter("value");
+											if (sMailtoOutlook) {
+											var sPrefixRemoved = sMailtoOutlook.split("mailto:")[1];
+											var sMailtoPart = sPrefixRemoved.split("?Subject=")[0];
+											var sSubjectPart = sPrefixRemoved.split("?Subject=")[1];
+
+											this._set_sTo();
+											if (sMailtoPart !== this.sTo) {
+												sMailtoOutlook = "mailto:".concat(this.sTo.concat("?Subject=".concat(sSubjectPart)));
+
+												this._oURIDataObject.setValue(sMailtoOutlook);
+											}
+											}
+										} catch (ex) {
+
+										}
+									} else {
+										this._bIsReply = false; // ok, we skipped the change in reply mode
+									};	
 		},
 
 		_setFromField: function (sValue) {
