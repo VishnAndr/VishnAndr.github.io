@@ -229,10 +229,11 @@ sap.ui.define([
 			case "InlineResponse_Initialize":
 				//InlineResponse loaded, we need to recreate out UI controls
 				if (this.wait4InlineResponse) {
-
+					this._enhanceInlineResponse();
 					this.wait4InlineResponse = false;
 				}
 				break;
+				
 				// New button
 			case "CIP_New_Button":
 				// New with Outlook button
