@@ -103,6 +103,22 @@ sap.ui.define([
 
 		},
 
+		_enhanceInlineResponse: function () {
+
+			if (this._oInlineResponse && this._oInlineResponse._inlineResponseLayout) {
+				this._oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
+
+				this._oInlineResponse.invalidate(); // trigger rerendering
+
+				this._onRecipientChange();
+				if (this.fFromUser) {
+					this.sUserEmail = this._getUserEmail();
+
+					this._setFromField(this.sUserEmail);
+				}
+			}
+		},
+
 		_onECInterActionFinished: function (oEvent) {
 			if (sap.client.getCurrentApplication().isNewUI()) {
 				try {
@@ -115,24 +131,25 @@ sap.ui.define([
 					// inlineResponse is not found or some error - we're leaving
 					return;
 				}
-				
+
 				try {
 					if (!this._oInlineResponse || // first call or ...
 						(oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) && this._oInlineResponse.getId() !==
 							oNewInlineResponse.getId())) { //... or if InlineResponse changed
 
 						// if it's a new inlineResponse instance ->> we need to initialize data objects
-						if (this._oInlineResponse && oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) && this._oInlineResponse.getId() !==
+						if (this._oInlineResponse && oNewInlineResponse && (oNewInlineResponse instanceof sap.client.cod.seod.RUIResponse.InlineResponse) &&
+							this._oInlineResponse.getId() !==
 							oNewInlineResponse.getId()) {
 							this._loadFirstTime = true;
 						}
-						
+
 						this._oInlineResponse = oNewInlineResponse;
 
 						if (this._loadFirstTime) {
 							this._loadFirstTime = false;
 
-							//Attach event listner for UIDesigner events to understand Reply button
+							//Attach event listner for UIDesigner events
 							this._oInlineResponse.getController().getEventProcessor().attachEvent(sap.client.evt.EventProcessor.EVENTS.EVENT_FIRED, this._eventCallback,
 								this);
 
@@ -140,18 +157,9 @@ sap.ui.define([
 							this._oFromDataObject = _feederECController.getDataContainer().getDataObject(this._sFromPath);
 							this._oURIDataObject = _feederECController.getDataContainer().getDataObject("/Root/Feeder/Email/EmailURI");
 
-							//if (this._oToDataObject) {
-							//	this._oToDataObject.attachValueChanged(function (oEventValueChanged) {
-							//		if (!this._bIsReply) {
-							//			var sToList = this._oToDataObject.getValue();
-							//			if (sToList !== this.sTo) {
-							//				this._onRecipientChange();
-							//			}
-							//		} else {
-							//			this._bIsReply = false; // ok, we skipped the change in reply mode
-							//		}
-							//	}.bind(this));
-							//}
+							//we don't need to subscribe to this._oToDataObject on valuechanged anymore
+							//because we moved the logic to _eventCallback to prevent reseting To field if the user adds the entry manually
+							//from + button (employee, contact, customer)
 
 							if (this._oFromDataObject) {
 								this._oFromDataObject.attachValueChanged(function (oEventValueChanged) {
@@ -162,32 +170,29 @@ sap.ui.define([
 								}.bind(this));
 							}
 
-							//if (this._oURIDataObject) {
-							//	this._oURIDataObject.attachValueChanged(function (oEventValueChanged) {
-							//		this._updateEmailURI();
-							//	}.bind(this));
-							//}
+							if (this._oURIDataObject) {
+								this._oURIDataObject.attachValueChanged(function (oEventValueChanged) {
+									this._composeEmailURI();
+								}.bind(this));
+							}
 						}
 						// this is the required InlineResponse to add custom checkboxes to
 
 						if (!this._oInlineResponse._inlineResponseLayout) {
-							// if Layout is not there yet - create it (it means inlineResponse is not scoped)
-							// (if it's scoped => it's visible)
-							this._oInlineResponse._inlineResponseLayout = new sap.ui.layout.VerticalLayout();
-							this._oInlineResponse._inlineResponseLayout.addStyleClass("ruiResponseInlineResponseLayout");
+
+							if (this._oInlineResponse._initializeInlineControl.getFormattedValue() == true) {
+								// inlineResponse is scoped, but not yet rendered completely, we need to wait
+								this.wait4InlineResponse = true;
+							} else {
+								// inlineResponse is not scoped, no layout will be there, we need to create a new one
+								this._oInlineResponse._inlineResponseLayout = new sap.ui.layout.VerticalLayout();
+								this._oInlineResponse._inlineResponseLayout.addStyleClass("ruiResponseInlineResponseLayout");
+							}
 						}
 
-						this._oInlineResponse._inlineResponseLayout.addContent(this._getNewLayoutRUI());
-
-						this._oInlineResponse.invalidate(); // trigger rerendering
-
-						this._onRecipientChange();
-						if (this.fFromUser) {
-							this.sUserEmail = this._getUserEmail();
-
-							this._setFromField(this.sUserEmail);
+						if (this._oInlineResponse._inlineResponseLayout) {
+							this._enhanceInlineResponse();
 						}
-						this._composeEmailURI();
 					}
 				} catch (ex) {
 					jQuery.sap.log.debug("Error in _onECInterActionFinished: " + ex.message); // eslint-disable-line no-console
@@ -216,17 +221,22 @@ sap.ui.define([
 		sUserEmail: "",
 		oCurrentFeeder: null,
 		newButtonPressed: false,
+		wait4InlineResponse: false,
 
 		_eventCallback: function (eventContext) {
 			// it might be possible to move all determination and substitution here
-			jQuery.sap.log.debug("_eventCallback: ", eventContext.getParameter("event"));
 			switch (eventContext.getParameter("event")) {
+			case "InlineResponse_Initialize":
+				//InlineResponse loaded, we need to recreate out UI controls
+				if (this.wait4InlineResponse) {
+
+					this.wait4InlineResponse = false;
+				}
+				break;
 				// New button
 			case "CIP_New_Button":
 				// New with Outlook button
 			case "CIP_NewMail_Outlook":
-				this._onRecipientChange();
-				this._composeEmailURI();
 				this.newButtonPressed = true;
 				break;
 
@@ -240,7 +250,6 @@ sap.ui.define([
 			case "Reply_with_outlook":
 			case "ReplyTo_Interaction_with_outlook":
 				this._bIsReply = true;
-				this._composeEmailURI();
 				break;
 
 				// Forward button
@@ -251,6 +260,7 @@ sap.ui.define([
 			case "Feeder_ValueChange":
 				if (this.newButtonPressed) { //after newButtonPressed, call redetermination of recipients
 					this._onRecipientChange();
+					this._composeEmailURI();
 					this.newButtonPressed = false;
 				}
 				break;
@@ -676,28 +686,28 @@ sap.ui.define([
 		},
 
 		_composeEmailURI: function () {
-									// Outlook workaround
-									if (!this._bIsReply) {
-										try {
-											var sMailtoOutlook = this._oURIDataObject.getValue();//oEventValueChanged.getParameter("value");
-											if (sMailtoOutlook) {
-											var sPrefixRemoved = sMailtoOutlook.split("mailto:")[1];
-											var sMailtoPart = sPrefixRemoved.split("?Subject=")[0];
-											var sSubjectPart = sPrefixRemoved.split("?Subject=")[1];
+			// Outlook workaround
+			if (!this._bIsReply) {
+				try {
+					var sMailtoOutlook = this._oURIDataObject.getValue(); //oEventValueChanged.getParameter("value");
+					if (sMailtoOutlook) {
+						var sPrefixRemoved = sMailtoOutlook.split("mailto:")[1];
+						var sMailtoPart = sPrefixRemoved.split("?Subject=")[0];
+						var sSubjectPart = sPrefixRemoved.split("?Subject=")[1];
 
-											this._set_sTo();
-											if (sMailtoPart !== this.sTo) {
-												sMailtoOutlook = "mailto:".concat(this.sTo.concat("?Subject=".concat(sSubjectPart)));
+						this._set_sTo();
+						if (sMailtoPart !== this.sTo) {
+							sMailtoOutlook = "mailto:".concat(this.sTo.concat("?Subject=".concat(sSubjectPart)));
 
-												this._oURIDataObject.setValue(sMailtoOutlook);
-											}
-											}
-										} catch (ex) {
+							this._oURIDataObject.setValue(sMailtoOutlook);
+						}
+					}
+				} catch (ex) {
 
-										}
-									} else {
-										this._bIsReply = false; // ok, we skipped the change in reply mode
-									};	
+				}
+			} else {
+				this._bIsReply = false; // ok, we skipped the change in reply mode
+			};
 		},
 
 		_setFromField: function (sValue) {
