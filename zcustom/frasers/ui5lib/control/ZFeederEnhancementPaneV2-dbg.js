@@ -19,6 +19,11 @@ sap.ui.define([
 			if (!oControl.getVisible()) {
 				return;
 			}
+			
+			if (sap.client.getCurrentApplication.isApplicationInPersonalizationOrAdaptaionMode()) {
+				// in adaptation mode (or personalization mode) we'd like to see something within this 'hidden' control
+				oRM.write("<div><br>ZFeederEnhancementPaneV2<br>for adaptation mode</div>");
+			}
 
 			oRM.write("<div");
 			oRM.writeControlData(oControl);
