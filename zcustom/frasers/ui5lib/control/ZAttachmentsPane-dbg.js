@@ -282,7 +282,9 @@ sap.ui.define([
 
 			var oDataContainer = this._attachedECController.getDataContainer();
 			this.fUpdateFinished = $.proxy(this._DataContainerUpdateFinished, this);
-			oDataContainer.attachDataContainerUpdateFinished(this.fUpdateFinished);
+			if (oDataContainer) {
+				oDataContainer.attachDataContainerUpdateFinished(this.fUpdateFinished);
+			}
 		},
 
 		destroy: function () {
@@ -292,7 +294,9 @@ sap.ui.define([
 
 			var oDataContainer = this._attachedECController.getDataContainer();
 			if (this.fUpdateFinished) {
-				oDataContainer.detachDataContainerUpdateFinished(this.fUpdateFinished);
+				if (oDataContainer) {
+					oDataContainer.detachDataContainerUpdateFinished(this.fUpdateFinished);
+				}
 				this.fUpdateFinished = null;
 			}
 		},

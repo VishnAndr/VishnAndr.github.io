@@ -16,6 +16,9 @@ sap.ui.define([
 		renderer: function (oRM, oControl) {
 			jQuery.sap.log.debug(">> renderer", "", "zCustomPane");
 
+            // we're not redering anything for this component explicitly
+            // only attaching custom controls to the Feeder
+            /*
 			if (!oControl.getVisible()) {
 				return;
 			}
@@ -25,11 +28,14 @@ sap.ui.define([
 				oRM.write("<div><br>ZFeederEnhancementPaneV2<br>for adaptation mode</div>");
 			}
 
-			oRM.write("<div");
-			oRM.writeControlData(oControl);
-			oRM.addClass("sapClientCodSeodFeeder");
-			// oRM.renderControl(oControl.oLayout);
-			oRM.write("</div>");
+            // if we rednder anything and if EC is in the header of the ticket, it will cause various troubles with visual elements
+            // (collapse button is moved, titles of sections rendered in white color etc etc etc)
+			//oRM.write("<div");
+			//oRM.writeControlData(oControl);
+			//oRM.addClass("sapClientCodSeodFeeder");
+			// // oRM.renderControl(oControl.oLayout);
+			//oRM.write("</div>");
+            */
 		},
 
 		initializePane: function () {
